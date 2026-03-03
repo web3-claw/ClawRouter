@@ -1214,7 +1214,9 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     console.log(`[ClawRouter] Payment signed on ${chain} (${network})`);
   });
 
-  const payFetch = createPayFetchWithPreAuth(fetch, x402);
+  const payFetch = createPayFetchWithPreAuth(fetch, x402, undefined, {
+    skipPreAuth: paymentChain === "solana",
+  });
 
   // Create balance monitor for pre-request checks (chain-appropriate)
   const balanceMonitor: AnyBalanceMonitor =
@@ -2519,7 +2521,7 @@ async function proxyRequest(
         // This ensures new users with empty wallets can still use ClawRouter
         const originalModel = modelId;
         console.log(
-          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} ($${sufficiency.info.balanceUSD}), falling back to free model: ${FREE_MODEL} (requested: ${originalModel})`,
+          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${FREE_MODEL} (requested: ${originalModel})`,
         );
         modelId = FREE_MODEL;
         // Update the body with new model

@@ -27,6 +27,7 @@ export function createPayFetchWithPreAuth(
   baseFetch: FetchFn,
   client: x402Client,
   ttlMs = DEFAULT_TTL_MS,
+  options?: { skipPreAuth?: boolean },
 ): FetchFn {
   const httpClient = new x402HTTPClient(client);
   const cache = new Map<string, CachedEntry>();
@@ -36,7 +37,9 @@ export function createPayFetchWithPreAuth(
     const urlPath = new URL(request.url).pathname;
 
     // Try pre-auth if we have cached payment requirements
-    const cached = cache.get(urlPath);
+    // Skip for Solana: payments use per-tx blockhashes that expire ~60-90s,
+    // making cached requirements useless and causing double charges.
+    const cached = !options?.skipPreAuth ? cache.get(urlPath) : undefined;
     if (cached && Date.now() - cached.cachedAt < ttlMs) {
       try {
         const payload = await client.createPaymentPayload(cached.paymentRequired);
