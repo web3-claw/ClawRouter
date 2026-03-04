@@ -64,7 +64,8 @@ export function route(
     const isAutoAgentic = agenticScore >= 0.5;
     const isExplicitAgentic = config.overrides.agenticMode ?? false;
     const hasToolsInRequest = options.hasTools ?? false;
-    const useAgenticTiers = (hasToolsInRequest || isAutoAgentic || isExplicitAgentic) && config.agenticTiers != null;
+    const useAgenticTiers =
+      (hasToolsInRequest || isAutoAgentic || isExplicitAgentic) && config.agenticTiers != null;
     tierConfigs = useAgenticTiers ? config.agenticTiers! : config.tiers;
     profileSuffix = useAgenticTiers ? ` | agentic${hasToolsInRequest ? " (tools)" : ""}` : "";
   }

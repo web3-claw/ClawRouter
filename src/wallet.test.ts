@@ -128,9 +128,7 @@ describe("wallet key derivation", () => {
     it("produces different keys from same mnemonic", () => {
       const slip10 = deriveSolanaKeyBytes(TEST_MNEMONIC);
       const legacy = deriveSolanaKeyBytesLegacy(TEST_MNEMONIC);
-      expect(Buffer.from(slip10).toString("hex")).not.toBe(
-        Buffer.from(legacy).toString("hex"),
-      );
+      expect(Buffer.from(slip10).toString("hex")).not.toBe(Buffer.from(legacy).toString("hex"));
     });
 
     it("produces different Solana addresses from same mnemonic", async () => {
@@ -157,9 +155,7 @@ describe("wallet key derivation", () => {
 
     it("uses SLIP-10 derivation for Solana key", () => {
       const keys = deriveAllKeys(TEST_MNEMONIC);
-      expect(Buffer.from(keys.solanaPrivateKeyBytes).toString("hex")).toBe(
-        EXPECTED_SLIP10_KEY_HEX,
-      );
+      expect(Buffer.from(keys.solanaPrivateKeyBytes).toString("hex")).toBe(EXPECTED_SLIP10_KEY_HEX);
     });
 
     it("EVM and Solana keys are different", () => {

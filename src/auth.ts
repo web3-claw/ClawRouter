@@ -277,7 +277,9 @@ export async function resolveOrGenerateWalletKey(): Promise<WalletResolution> {
 
       // Migration detection: compare legacy (secp256k1) vs new (SLIP-10) Solana keys
       const legacyKeyBytes = deriveSolanaKeyBytesLegacy(mnemonic);
-      if (Buffer.from(legacyKeyBytes).toString("hex") !== Buffer.from(solanaKeyBytes).toString("hex")) {
+      if (
+        Buffer.from(legacyKeyBytes).toString("hex") !== Buffer.from(solanaKeyBytes).toString("hex")
+      ) {
         result.legacySolanaKeyBytes = legacyKeyBytes;
         await logMigrationWarning(legacyKeyBytes, solanaKeyBytes);
       }
@@ -307,7 +309,9 @@ export async function resolveOrGenerateWalletKey(): Promise<WalletResolution> {
 
       // Migration detection
       const legacyKeyBytes = deriveSolanaKeyBytesLegacy(mnemonic);
-      if (Buffer.from(legacyKeyBytes).toString("hex") !== Buffer.from(solanaKeyBytes).toString("hex")) {
+      if (
+        Buffer.from(legacyKeyBytes).toString("hex") !== Buffer.from(solanaKeyBytes).toString("hex")
+      ) {
         result.legacySolanaKeyBytes = legacyKeyBytes;
         await logMigrationWarning(legacyKeyBytes, solanaKeyBytes);
       }

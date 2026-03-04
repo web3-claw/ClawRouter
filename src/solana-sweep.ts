@@ -161,11 +161,7 @@ export async function sweepSolanaWallet(
   const oldTokenAccounts: TokenAccountEntry[] = [];
   try {
     const response = await rpc
-      .getTokenAccountsByOwner(
-        solAddress(oldAddress),
-        { mint },
-        { encoding: "jsonParsed" },
-      )
+      .getTokenAccountsByOwner(solAddress(oldAddress), { mint }, { encoding: "jsonParsed" })
       .send();
 
     if (response.value.length > 0) {
@@ -224,7 +220,7 @@ export async function sweepSolanaWallet(
 
     // Build instructions: create ATA (idempotent, paid by new wallet) + one transfer per source account
     const createAtaIx = buildCreateAtaIdempotentInstruction(
-      newSigner.address,  // new wallet pays for ATA creation
+      newSigner.address, // new wallet pays for ATA creation
       newAta,
       solAddress(newAddress),
       mint,
@@ -234,23 +230,20 @@ export async function sweepSolanaWallet(
       buildTokenTransferInstruction(
         solAddress(acct.pubkey),
         newAta,
-        oldSigner.address,  // old wallet authorizes the token transfer
+        oldSigner.address, // old wallet authorizes the token transfer
         acct.amount,
       ),
     );
 
     const txMessage = pipe(
       createTransactionMessage({ version: 0 }),
-      (msg) => setTransactionMessageFeePayer(newSigner.address, msg),  // new wallet pays gas
+      (msg) => setTransactionMessageFeePayer(newSigner.address, msg), // new wallet pays gas
       (msg) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, msg),
       (msg) => appendTransactionMessageInstructions([createAtaIx, ...transferIxs], msg),
     );
 
     // Attach both signers so signTransactionMessageWithSigners can find them
-    const txMessageWithSigners = addSignersToTransactionMessage(
-      [newSigner, oldSigner],
-      txMessage,
-    );
+    const txMessageWithSigners = addSignersToTransactionMessage([newSigner, oldSigner], txMessage);
 
     const signedTx = await signTransactionMessageWithSigners(txMessageWithSigners);
     const txSignature = getSignatureFromTransaction(signedTx);

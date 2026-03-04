@@ -16,12 +16,7 @@ import { sha512 } from "@noble/hashes/sha512";
 import { privateKeyToAccount } from "viem/accounts";
 
 const ETH_DERIVATION_PATH = "m/44'/60'/0'/0/0";
-const SOLANA_HARDENED_INDICES = [
-  44 + 0x80000000,
-  501 + 0x80000000,
-  0 + 0x80000000,
-  0 + 0x80000000,
-]; // m/44'/501'/0'/0'
+const SOLANA_HARDENED_INDICES = [44 + 0x80000000, 501 + 0x80000000, 0 + 0x80000000, 0 + 0x80000000]; // m/44'/501'/0'/0'
 
 export interface DerivedKeys {
   mnemonic: string;
