@@ -1064,7 +1064,7 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
         "google/gemini-2.5-pro",
         "deepseek/deepseek-chat",
         "xai/grok-4-0709",
-        "openai/gpt-5.2", // Newer and cheaper input than gpt-4o
+        "openai/gpt-5.4", // Newest flagship, same price as 4o
         "openai/gpt-4o",
         "anthropic/claude-sonnet-4.6",
       ],
@@ -1122,6 +1122,7 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
     COMPLEX: {
       primary: "anthropic/claude-opus-4.6", // Best quality for complex tasks
       fallback: [
+        "openai/gpt-5.4", // Newest flagship
         "openai/gpt-5.2-codex",
         "anthropic/claude-opus-4.6",
         "anthropic/claude-sonnet-4.6",
@@ -1164,7 +1165,7 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
       primary: "anthropic/claude-sonnet-4.6",
       fallback: [
         "anthropic/claude-opus-4.6", // Latest Opus - best agentic
-        "openai/gpt-5.2",
+        "openai/gpt-5.4", // Newest flagship
         "google/gemini-3.1-pro", // Newest Gemini
         "google/gemini-3-pro-preview",
         "xai/grok-4-0709",
