@@ -18,10 +18,13 @@ Complete reference for ClawRouter configuration options.
 
 ## Environment Variables
 
-| Variable              | Default | Description                                                              |
-| --------------------- | ------- | ------------------------------------------------------------------------ |
-| `BLOCKRUN_WALLET_KEY` | -       | Ethereum private key (hex, 0x-prefixed). Used if no saved wallet exists. |
-| `BLOCKRUN_PROXY_PORT` | `8402`  | Port for the local x402 proxy server.                                    |
+| Variable                    | Default                               | Description                                                              |
+| --------------------------- | ------------------------------------- | ------------------------------------------------------------------------ |
+| `BLOCKRUN_WALLET_KEY`       | -                                     | Ethereum private key (hex, 0x-prefixed). Used if no saved wallet exists. |
+| `BLOCKRUN_PROXY_PORT`       | `8402`                                | Port for the local x402 proxy server.                                    |
+| `CLAWROUTER_SOLANA_RPC_URL` | `https://api.mainnet-beta.solana.com` | Solana RPC endpoint for USDC balance checks.                             |
+| `CLAWROUTER_DISABLED`       | `false`                               | Set to `true` to disable smart routing (pass requests through as-is).    |
+| `CLAWROUTER_WORKER`         | -                                     | Set to `1` to enable Worker Mode (earn USDC by running health checks).   |
 
 ### BLOCKRUN_WALLET_KEY
 
@@ -56,31 +59,63 @@ openclaw gateway restart
 
 **Valid values:** 1-65535 (integers only). Invalid values fall back to 8402.
 
+### CLAWROUTER_SOLANA_RPC_URL
+
+Override the Solana RPC endpoint used for USDC balance checks (Solana chain only):
+
+```bash
+export CLAWROUTER_SOLANA_RPC_URL=https://your-rpc-provider.com
+openclaw gateway restart
+```
+
+Public RPC may rate-limit on heavy usage. Use a dedicated RPC for production.
+
 ---
 
 ## Wallet Configuration
 
+ClawRouter supports **two payment chains**: Base (EVM) and Solana. Both are USDC only — no SOL or ETH accepted for payments.
+
 ### Check Active Wallet
 
 ```bash
-# View wallet address
-curl http://localhost:8402/health | jq .wallet
+# View wallet address + balance (both chains shown)
+/wallet
 
-# View wallet with balance info
+# Or via HTTP
+curl http://localhost:8402/health | jq .wallet
 curl "http://localhost:8402/health?full=true" | jq
 ```
 
-Response:
+Response (dual-chain):
 
 ```json
 {
   "status": "ok",
-  "wallet": "0x...",
+  "wallet": "0x1234...abcd",
+  "solanaWallet": "7Xkr...xyz",
+  "paymentChain": "base",
   "balance": "$2.50",
   "isLow": false,
   "isEmpty": false
 }
 ```
+
+### Switch Payment Chain
+
+```bash
+/wallet solana    # Switch to Solana USDC payments
+/wallet base      # Switch back to Base (EVM) USDC payments
+```
+
+Or use the `/chain` command:
+
+```bash
+/chain solana
+/chain base
+```
+
+The selected chain is persisted across gateway restarts.
 
 ### Switch Wallets
 
@@ -109,21 +144,19 @@ cat ~/.openclaw/blockrun/wallet.key
 
 ### Wallet Backup & Recovery
 
-Your wallet private key is stored at `~/.openclaw/blockrun/wallet.key`. **Back up this file before terminating any VPS or machine!**
+ClawRouter generates a **BIP-39 mnemonic** on first install — stored at `~/.openclaw/blockrun/wallet.key`. This single mnemonic derives both your EVM (Base) and Solana addresses. **Back up this file before terminating any VPS or machine!**
 
 #### Using the `/wallet` Command
 
-ClawRouter provides a built-in command for wallet management:
-
 ```bash
-# Check wallet status (address, balance, file location)
+# Check wallet status (address, balance, chain, file location)
 /wallet
 
-# Export private key for backup (shows the actual key)
+# Export mnemonic + private keys for backup
 /wallet export
 ```
 
-The `/wallet export` command displays your private key so you can copy it before terminating a machine.
+The `/wallet export` command displays your mnemonic and keys so you can copy them before terminating a machine.
 
 #### Manual Backup
 
@@ -131,20 +164,23 @@ The `/wallet export` command displays your private key so you can copy it before
 # Option 1: Copy the key file
 cp ~/.openclaw/blockrun/wallet.key ~/backup-wallet.key
 
-# Option 2: View and copy the key
+# Option 2: View mnemonic
 cat ~/.openclaw/blockrun/wallet.key
 ```
 
 #### Restore on a New Machine
 
 ```bash
-# Option 1: Set environment variable (before installing ClawRouter)
-export BLOCKRUN_WALLET_KEY=0x...your_key_here...
+# Option 1: Recover from mnemonic
+npx @blockrun/clawrouter wallet recover "word1 word2 ... word12"
+
+# Option 2: Set environment variable (before installing ClawRouter)
+export BLOCKRUN_WALLET_KEY=0x...your_private_key...
 openclaw plugins install @blockrun/clawrouter
 
-# Option 2: Create the key file directly
+# Option 3: Create the key file directly
 mkdir -p ~/.openclaw/blockrun
-echo "0x...your_key_here..." > ~/.openclaw/blockrun/wallet.key
+echo "your twelve word mnemonic here" > ~/.openclaw/blockrun/wallet.key
 chmod 600 ~/.openclaw/blockrun/wallet.key
 openclaw plugins install @blockrun/clawrouter
 ```

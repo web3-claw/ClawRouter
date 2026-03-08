@@ -18,17 +18,20 @@ Quick solutions for common ClawRouter issues.
 ## Quick Checklist
 
 ```bash
-# 1. Check your version (should be 0.5.7+)
+# 1. Check your version (should be 0.12+)
 cat ~/.openclaw/extensions/clawrouter/package.json | grep version
 
 # 2. Check proxy is running
 curl http://localhost:8402/health
 
-# 3. Watch routing in action
-openclaw logs --follow
-# Should see: gemini-2.5-flash $0.0012 (saved 99%)
+# 3. Check wallet (both EVM + Solana addresses and balance)
+/wallet
 
-# 4. View cost savings
+# 4. Watch routing in action
+openclaw logs --follow
+# Should see: kimi-k2.5 $0.0012 (saved 99%)
+
+# 5. View cost savings
 /stats
 ```
 
@@ -56,14 +59,16 @@ Plugin directory was removed but config still references it. This blocks all Ope
 
 ### "No USDC balance" / "Insufficient funds"
 
-Wallet needs funding.
+Wallet needs funding. ClawRouter accepts **USDC** (not SOL or ETH) on either chain.
 
 **Fix:**
 
-1. Find your wallet address (printed during install)
-2. Send USDC on **Base network** to that address
-3. $1-5 is enough for hundreds of requests
-4. Restart OpenClaw
+1. Find your wallet address: run `/wallet` in any OpenClaw conversation
+2. Choose your preferred chain and send **USDC** to that address:
+   - **Base (EVM):** Send USDC on Base network to your EVM address (`0x...`)
+   - **Solana:** Send USDC on Solana network to your Solana address (base58)
+3. $1–5 is enough for hundreds of requests
+4. Restart OpenClaw (or wait up to 60s for balance cache to refresh)
 
 ---
 
@@ -126,11 +131,16 @@ lsof -i :8402
 ## How to Update
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/BlockRunAI/ClawRouter/main/scripts/reinstall.sh | bash
+npx @blockrun/clawrouter@latest
 openclaw gateway restart
 ```
 
-This removes the old version, installs the latest, and restarts the gateway.
+This installs the latest version and restarts the gateway. Alternatively:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/BlockRunAI/ClawRouter/main/scripts/reinstall.sh | bash
+openclaw gateway restart
+```
 
 ---
 

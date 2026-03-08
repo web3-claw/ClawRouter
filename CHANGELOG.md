@@ -4,6 +4,83 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.24 — Mar 8, 2026
+
+- **Preserve user-defined blockrun/* allowlist entries** — `injectModelsConfig()` no longer removes user-added `blockrun/*` allowlist entries on gateway restarts
+
+---
+
+## v0.12.14 — Mar 6, 2026
+
+- **`/chain` command** — persist payment chain selection (Base or Solana) across restarts via `/chain solana` or `/chain base`
+- **Update nudge improved** — now shows `npx @blockrun/clawrouter@latest` instead of `curl | bash`
+- **Zero balance cache fix** — funded wallets are detected immediately (zero balance never cached)
+- **`wallet recover` command** — restore `wallet.key` from BIP-39 mnemonic on a new machine
+- **Solana balance retry** — retries once on empty to handle flaky public RPC endpoints
+- **Balance cache invalidated at startup** — prevents false free-model fallback after fresh install
+
+---
+
+## v0.12.13 — Mar 5, 2026
+
+- **openai/ prefix routing fix** — virtual profiles (`blockrun/auto`, etc.) now handle `openai/` prefix injected by some clients
+- **Body-read timeout increased** — 5-minute timeout for slow reasoning models prevents proxy hangs
+
+---
+
+## v0.12.11 — Mar 5, 2026
+
+- **Server-side update nudge** — 429 responses from BlockRun now surface update hints when running an outdated ClawRouter version
+- **Body-read timeout** — prevents proxy from hanging on stalled upstream streams
+- **@solana/kit version fix** — pinned to `^5.0.0` to resolve cross-version signing bug causing `transaction_simulation_failed` (#74)
+- **`/stats clear` command** — reset usage statistics
+- **Gemini 3 models excluded from tool-heavy routing** (#73)
+- **GPT-5.4 and GPT-5.4 Pro** — added to model catalog
+
+---
+
+## v0.12.5 — Mar 4, 2026
+
+- **Force agentic tiers on tool presence** — requests with `tools` array always route to agentic-capable models
+
+---
+
+## v0.12.4 — Mar 4, 2026
+
+- **Solana sweep fix** — correctly attaches signers to sweep transaction message (#70)
+
+---
+
+## v0.12.3 — Mar 4, 2026
+
+- **Multi-account sweep** — correctly handles partial reads and JSONL resilience in sweep migration
+- **SPL Token Program ID fix** — corrected in Solana sweep transaction
+
+---
+
+## v0.12.0 — Mar 3, 2026
+
+### Solana USDC Payments
+
+Full Solana chain support. Pay with **USDC on Solana** (not SOL) alongside Base (EVM).
+
+- **SLIP-10 Ed25519 derivation** — Solana wallet uses BIP-44 path `m/44'/501'/0'/0'`, compatible with Phantom and other wallets (#69)
+- **`SolanaBalanceMonitor`** — reads SPL Token USDC balance; `proxy.ts` selects EVM or Solana monitor based on active chain
+- **Solana address shown in `/wallet`** — displays both EVM (`0x...`) and Solana (base58) addresses
+- **Health endpoint** — returns Solana address alongside EVM address
+- **Pre-auth cache skipped for Solana** — prevents double payment on Solana chain
+- **Startup balance uses chain-aware monitor** — fixes EVM-only startup log when Solana is active
+- **Chain-aware proxy reuse** — validates payment chain matches on EADDRINUSE path
+- **`ethers` peer dep** — added for `@x402/evm` via SIWE compatibility
+
+---
+
+## v0.11.14 — Mar 2, 2026
+
+- **Free model fallback notification** — notifies user when routing to `gpt-oss-120b` due to insufficient USDC balance
+
+---
+
 ## v0.11.11 — Mar 2, 2026
 
 - **Input token logging** — usage logs now include `inputTokens` from provider responses

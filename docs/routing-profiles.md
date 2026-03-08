@@ -78,4 +78,4 @@ The router picks the cheapest model capable of handling your query's tier.
 
 ---
 
-_Last updated: v0.10.0_
+_Last updated: v0.12.24_

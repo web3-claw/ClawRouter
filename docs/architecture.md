@@ -26,20 +26,27 @@ Technical deep-dive into ClawRouter's internals.
 │                 ClawRouter Proxy (localhost)                │
 │  ┌─────────────┐  ┌─────────────┐  ┌───────────────────┐   │
 │  │   Dedup     │→ │   Router    │→ │   x402 Payment    │   │
-│  │   Cache     │  │  (14-dim)   │  │   (EIP-712 USDC)  │   │
-│  └─────────────┘  └─────────────┘  └───────────────────┘   │
-│                                                             │
+│  │   Cache     │  │  (15-dim)   │  │  (USDC on Base    │   │
+│  └─────────────┘  └─────────────┘  │   or Solana)      │   │
+│                                    └───────────────────┘   │
 │  ┌─────────────┐  ┌─────────────┐  ┌───────────────────┐   │
 │  │  Fallback   │  │   Balance   │  │   SSE Heartbeat   │   │
-│  │   Chain     │  │   Monitor   │  │   (streaming)     │   │
+│  │   Chain     │  │  Monitor    │  │   (streaming)     │   │
+│  │             │  │ (EVM/Solana)│  │                   │   │
 │  └─────────────┘  └─────────────┘  └───────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                               │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      BlockRun API                           │
-│    402 → Sign Payment → Retry → OpenAI/Anthropic/Google    │
-└─────────────────────────────────────────────────────────────┘
+                    ┌─────────┴──────────┐
+                    ▼                    ▼
+┌────────────────────────┐  ┌────────────────────────────────┐
+│  blockrun.ai/api       │  │  sol.blockrun.ai/api           │
+│  (EVM / Base USDC)     │  │  (Solana USDC)                 │
+│  x402 EIP-712 signing  │  │  x402 SVM signing              │
+└────────────────────────┘  └────────────────────────────────┘
+         │                               │
+         └──────────────┬────────────────┘
+                        ▼
+              OpenAI / Anthropic / Google
 ```
 
 **Key Principles:**
@@ -47,6 +54,7 @@ Technical deep-dive into ClawRouter's internals.
 - **100% local routing** — No API calls for model selection
 - **Client-side only** — Your wallet key never leaves your machine
 - **Non-custodial** — USDC stays in your wallet until spent
+- **Dual-chain** — USDC on Base (EVM) or USDC on Solana; **no SOL token accepted**
 
 ---
 
@@ -141,23 +149,48 @@ if (isStreaming) {
 
 ### 6. x402 Payment Flow
 
+**Base (EVM) — EIP-712 USDC:**
+
 ```
-1. Request → BlockRun API
+1. Request → blockrun.ai/api
 2. ← 402 Payment Required
    {
      "x402Version": 1,
      "accepts": [{
        "scheme": "exact",
        "network": "base",
-       "maxAmountRequired": "5000",  // $0.005
+       "maxAmountRequired": "5000",  // $0.005 USDC
        "resource": "https://blockrun.ai/api/v1/chat/completions",
        "payTo": "0x..."
      }]
    }
-3. Sign EIP-712 typed data with wallet key
+3. Sign EIP-712 typed data (EIP-3009 TransferWithAuthorization) with EVM wallet key
 4. Retry with X-PAYMENT header
 5. ← 200 OK with response
 ```
+
+**Solana — SVM USDC:**
+
+```
+1. Request → sol.blockrun.ai/api
+2. ← 402 Payment Required
+   {
+     "x402Version": 1,
+     "accepts": [{
+       "scheme": "exact",
+       "network": "solana",
+       "maxAmountRequired": "5000",  // $0.005 USDC (6 decimals)
+       "resource": "https://sol.blockrun.ai/api/v1/chat/completions",
+       "payTo": "<base58 address>"
+     }]
+   }
+3. Build and sign Solana transaction (SPL Token USDC transfer) with Solana wallet key
+   - Wallet derived via SLIP-10 Ed25519 (BIP-44 m/44'/501'/0'/0', Phantom-compatible)
+4. Retry with X-PAYMENT header (base64-encoded signed transaction)
+5. ← 200 OK with response
+```
+
+> **Important:** Both chains accept only **USDC** tokens. Sending SOL or ETH to the wallet will not fund API payments.
 
 ### 7. Fallback Chain (on provider errors)
 
@@ -204,7 +237,7 @@ data: [DONE]
 
 ### Weighted Scorer
 
-The routing engine uses a 14-dimension weighted scorer that runs entirely locally:
+The routing engine uses a 15-dimension weighted scorer that runs entirely locally:
 
 ```typescript
 function classifyByRules(
@@ -229,7 +262,7 @@ function classifyByRules(
     signals.push("code");
   }
 
-  // ... 12 more dimensions
+  // ... 13 more dimensions
 
   // Sigmoid calibration
   const confidence = sigmoid(score, (k = 8), (midpoint = 0.5));
@@ -280,13 +313,13 @@ if (systemPrompt?.includes("json") || systemPrompt?.includes("yaml")) {
 
 ### x402 Protocol
 
-ClawRouter uses the [x402 protocol](https://x402.org) for micropayments:
+ClawRouter uses the [x402 protocol](https://x402.org) for micropayments. Both chains use the same flow; the signing step differs:
 
 ```
-┌────────────┐     ┌────────────┐     ┌────────────┐
-│   Client   │────▶│  BlockRun  │────▶│  Provider  │
-│ (ClawRouter)     │    API     │     │ (OpenAI)   │
-└────────────┘     └────────────┘     └────────────┘
+┌────────────┐     ┌──────────────────────┐     ┌────────────┐
+│   Client   │────▶│  BlockRun API        │────▶│  Provider  │
+│ (ClawRouter)     │  (Base: blockrun.ai  │     │ (OpenAI)   │
+└────────────┘     │   Sol: sol.blockrun) │     └────────────┘
       │                  │
       │ 1. Request       │
       │─────────────────▶│
@@ -295,7 +328,9 @@ ClawRouter uses the [x402 protocol](https://x402.org) for micropayments:
       │◀─────────────────│
       │                  │
       │ 3. Sign payment  │
-      │ (EIP-712 USDC)   │
+      │  Base: EIP-712   │
+      │  Solana: SVM tx  │
+      │  (USDC only)     │
       │                  │
       │ 4. Retry + sig   │
       │─────────────────▶│
@@ -304,33 +339,52 @@ ClawRouter uses the [x402 protocol](https://x402.org) for micropayments:
       │◀─────────────────│
 ```
 
-### EIP-712 Signing
+### EVM Signing (Base — EIP-712)
 
 ```typescript
 const typedData = {
   types: {
-    Payment: [
-      { name: "scheme", type: "string" },
-      { name: "network", type: "string" },
-      { name: "amount", type: "uint256" },
-      { name: "resource", type: "string" },
-      { name: "payTo", type: "address" },
-      { name: "nonce", type: "uint256" },
+    TransferWithAuthorization: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+      { name: "validAfter", type: "uint256" },
+      { name: "validBefore", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
     ],
   },
-  primaryType: "Payment",
-  domain: { name: "x402", version: "1" },
+  primaryType: "TransferWithAuthorization",
+  domain: { name: "USD Coin", version: "2", chainId: 8453, verifyingContract: USDC_BASE },
   message: {
-    scheme: "exact",
-    network: "base",
-    amount: "5000", // 0.005 USDC (6 decimals)
-    resource: "https://blockrun.ai/api/v1/chat/completions",
-    payTo: "0x...",
-    nonce: Date.now(),
+    from: walletAddress,
+    to: payTo,
+    value: BigInt(5000), // 0.005 USDC (6 decimals)
+    validAfter: BigInt(0),
+    validBefore: BigInt(Math.floor(Date.now() / 1000) + 3600),
+    nonce: crypto.getRandomValues(new Uint8Array(32)),
   },
 };
 
 const signature = await account.signTypedData(typedData);
+```
+
+### Solana Signing (SLIP-10 Ed25519)
+
+```typescript
+// Wallet derived via SLIP-10 Ed25519 — Phantom-compatible
+// Path: m/44'/501'/0'/0'
+const solanaAccount = await deriveSlip10Ed25519Key(mnemonic, "m/44'/501'/0'/0'");
+
+// Build SPL Token USDC transfer instruction
+const transaction = buildSolanaPaymentTransaction({
+  from: solanaAddress,
+  to: payTo,            // base58 recipient
+  mint: USDC_SOLANA,   // EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+  amount: BigInt(5000), // 0.005 USDC (6 decimals)
+});
+
+const signedTx = await signTransaction(transaction, solanaAccount);
+// Encoded as base64 in X-PAYMENT header
 ```
 
 ### Pre-Authorization
@@ -393,9 +447,10 @@ Prevents upstream timeout while waiting for x402 payment:
 
 ### 3. Balance Caching
 
-Avoids RPC calls on every request:
+Avoids RPC calls on every request. Dual-chain monitors are chain-aware:
 
 ```typescript
+// EVM monitor (Base): reads USDC balance via eth_call on Base RPC
 class BalanceMonitor {
   private cachedBalance: bigint | undefined;
   private cacheTime = 0;
@@ -406,20 +461,32 @@ class BalanceMonitor {
       return this.formatBalance(this.cachedBalance);
     }
 
-    // Fetch from Base RPC
-    const balance = await this.fetchUSDCBalance();
+    // Fetch USDC balance from Base RPC
+    const balance = await this.fetchUSDCBalance(); // ERC-20 balanceOf call
     this.cachedBalance = balance;
     this.cacheTime = Date.now();
     return this.formatBalance(balance);
   }
 
-  // Optimistic deduction after successful payment
   deductEstimated(amount: bigint): void {
     if (this.cachedBalance !== undefined) {
       this.cachedBalance -= amount;
     }
   }
 }
+
+// Solana monitor: reads SPL Token USDC balance via getTokenAccountBalance
+class SolanaBalanceMonitor {
+  // Same interface as BalanceMonitor — proxy.ts uses AnyBalanceMonitor union type
+  // Retries once on empty to handle flaky public RPC endpoints
+  // Cache TTL 60s; startup balance never cached (forces fresh read after install)
+}
+
+// proxy.ts selects the correct monitor at startup:
+const balanceMonitor: AnyBalanceMonitor =
+  paymentChain === "solana"
+    ? new SolanaBalanceMonitor(solanaAddress, rpcUrl)
+    : new BalanceMonitor(evmAddress, rpcUrl);
 ```
 
 ### 4. Proxy Reuse
@@ -455,33 +522,38 @@ async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
 
 ```
 src/
-├── index.ts          # Plugin entry, OpenClaw integration
-├── proxy.ts          # HTTP proxy server, request handling
-├── provider.ts       # OpenClaw provider registration
-├── models.ts         # 30+ model definitions with pricing
-├── auth.ts           # Wallet key resolution (file → env → generate)
-├── x402.ts           # EIP-712 payment signing, @x402/fetch
-├── balance.ts        # USDC balance monitoring, caching
-├── dedup.ts          # Request deduplication (SHA-256 → cache)
-├── payment-cache.ts  # Pre-authorization caching
-├── logger.ts         # JSON usage logging to disk
-├── errors.ts         # Custom error types
-├── retry.ts          # Fetch retry with exponential backoff
-├── version.ts        # Version from package.json
+├── index.ts              # Plugin entry, OpenClaw integration
+├── proxy.ts              # HTTP proxy server, request handling, chain selection
+├── provider.ts           # OpenClaw provider registration
+├── models.ts             # 41+ model definitions with pricing
+├── auth.ts               # Wallet key resolution (file → env → generate)
+├── wallet.ts             # BIP-39 mnemonic, EVM + Solana key derivation (SLIP-10)
+├── x402.ts               # EVM EIP-712 payment signing, @x402/fetch
+├── balance.ts            # EVM USDC balance monitoring (Base RPC)
+├── solana-balance.ts     # Solana USDC balance monitoring (SPL Token)
+├── payment-preauth.ts    # Pre-authorization caching (EVM only)
+├── dedup.ts              # Request deduplication (SHA-256 → cache)
+├── logger.ts             # JSON usage logging to disk
+├── errors.ts             # Custom error types
+├── retry.ts              # Fetch retry with exponential backoff
+├── version.ts            # Version from package.json
 └── router/
-    ├── index.ts      # route() entry point
-    ├── rules.ts      # 14-dimension weighted scorer
-    ├── selector.ts   # Tier → model selection + fallback
-    ├── config.ts     # Default routing configuration
-    └── types.ts      # TypeScript type definitions
+    ├── index.ts          # route() entry point
+    ├── rules.ts          # 15-dimension weighted scorer (9-language)
+    ├── selector.ts       # Tier → model selection + fallback
+    ├── config.ts         # Default routing configuration (ECO/AUTO/PREMIUM/AGENTIC)
+    └── types.ts          # TypeScript type definitions
 ```
 
 ### Key Files
 
-| File              | Purpose                                               |
-| ----------------- | ----------------------------------------------------- |
-| `proxy.ts`        | Core request handling, SSE simulation, fallback chain |
-| `router/rules.ts` | 14-dimension weighted scorer, multilingual keywords   |
-| `x402.ts`         | EIP-712 typed data signing, payment header formatting |
-| `balance.ts`      | USDC balance via Base RPC, caching, thresholds        |
-| `dedup.ts`        | SHA-256 hashing, 30s response cache                   |
+| File                  | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `proxy.ts`            | Core request handling, SSE simulation, fallback chain       |
+| `wallet.ts`           | BIP-39 mnemonic generation, EVM + Solana (SLIP-10) derivation |
+| `router/rules.ts`     | 15-dimension weighted scorer, 9-language keyword sets       |
+| `x402.ts`             | EIP-712 typed data signing, payment header formatting       |
+| `balance.ts`          | USDC balance via Base RPC (EVM), caching, thresholds        |
+| `solana-balance.ts`   | USDC balance via Solana RPC (SPL Token), caching, retries   |
+| `payment-preauth.ts`  | Pre-authorization cache (EVM; skipped for Solana)           |
+| `dedup.ts`            | SHA-256 hashing, 30s response cache                         |

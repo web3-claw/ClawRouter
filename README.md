@@ -202,14 +202,17 @@ Request → 402 (price: $0.003) → wallet signs USDC → retry → response
 
 USDC stays in your wallet until spent - non-custodial. Price is visible in the 402 header before signing.
 
-**Dual-chain support:** Pay with USDC on **Base (EVM)** or **Solana**. Both wallets are derived from a single BIP-39 mnemonic on first run. Existing EVM-only users can enable Solana with `/wallet setup-solana`.
+**Dual-chain support:** Pay with **USDC** on **Base (EVM)** or **USDC on Solana** — no SOL token accepted. Both wallets are derived from a single BIP-39 mnemonic on first run.
 
 ```bash
 /wallet              # Check balance and address (both chains)
-/wallet export       # Export keys and mnemonic for backup
-/wallet solana       # Enable Solana payments / switch to Solana
-/wallet base         # Switch back to Base (EVM)
+/wallet export       # Export mnemonic + keys for backup
+/wallet recover      # Restore wallet from mnemonic on a new machine
+/wallet solana       # Switch to Solana USDC payments
+/wallet base         # Switch back to Base (EVM) USDC payments
+/chain solana        # Alias for /wallet solana
 /stats               # View usage and savings
+/stats clear         # Reset usage statistics
 ```
 
 **Fund your wallet:**
@@ -262,7 +265,7 @@ npx @blockrun/clawrouter doctor
 This collects diagnostics and sends them to Claude Sonnet for AI-powered analysis:
 
 ```
-🩺 BlockRun Doctor v0.10.4
+🩺 BlockRun Doctor v0.12.24
 
 System
   ✓ OS: darwin arm64
