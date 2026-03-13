@@ -2845,16 +2845,9 @@ async function proxyRequest(
             balanceFallbackNotice = `> **💡 Tip:** Not satisfied with free model quality? Fund your wallet to unlock deepseek-chat, gemini-flash, and 30+ premium models — starting at $0.001/request.\n\n`;
           }
 
-          // Log usage for free profile
-          await logUsage({
-            timestamp: new Date().toISOString(),
-            model: freeModel,
-            tier: "SIMPLE",
-            cost: 0,
-            baselineCost: 0,
-            savings: 1.0, // 100% savings
-            latencyMs: 0,
-          });
+          // Set routing decision so end-of-request logging uses correct tier
+          // (no early logUsage here — the request will be logged after upstream call)
+          routingDecision = { model: freeModel, tier: "SIMPLE" as Tier, confidence: 1, method: "rules", reasoning: "free profile" };
         } else {
           // eco/auto/premium - use tier routing
           // Check for session persistence - use pinned model if available
