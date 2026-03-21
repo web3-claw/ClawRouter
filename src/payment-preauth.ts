@@ -36,10 +36,33 @@ export function createPayFetchWithPreAuth(
     const request = new Request(input, init);
     const urlPath = new URL(request.url).pathname;
 
+    // Extract model from request body to create model-specific cache keys.
+    // Without this, a cached payment from a paid model (e.g. sonnet) would be
+    // incorrectly applied to a free model (nvidia/gpt-oss-120b), causing
+    // payment errors even when the server wouldn't charge for the request.
+    let requestModel = "";
+    if (init?.body) {
+      try {
+        const bodyStr =
+          init.body instanceof Uint8Array
+            ? new TextDecoder().decode(init.body)
+            : typeof init.body === "string"
+              ? init.body
+              : "";
+        if (bodyStr) {
+          const parsed = JSON.parse(bodyStr) as { model?: string };
+          requestModel = parsed.model ?? "";
+        }
+      } catch {
+        /* not JSON, use empty model */
+      }
+    }
+    const cacheKey = `${urlPath}:${requestModel}`;
+
     // Try pre-auth if we have cached payment requirements
     // Skip for Solana: payments use per-tx blockhashes that expire ~60-90s,
     // making cached requirements useless and causing double charges.
-    const cached = !options?.skipPreAuth ? cache.get(urlPath) : undefined;
+    const cached = !options?.skipPreAuth ? cache.get(cacheKey) : undefined;
     if (cached && Date.now() - cached.cachedAt < ttlMs) {
       try {
         const payload = await client.createPaymentPayload(cached.paymentRequired);
@@ -53,10 +76,10 @@ export function createPayFetchWithPreAuth(
           return response; // Pre-auth worked — saved ~200ms
         }
         // Pre-auth rejected (params may have changed) — invalidate and fall through
-        cache.delete(urlPath);
+        cache.delete(cacheKey);
       } catch {
         // Pre-auth signing failed — invalidate and fall through
-        cache.delete(urlPath);
+        cache.delete(cacheKey);
       }
     }
 
@@ -84,7 +107,7 @@ export function createPayFetchWithPreAuth(
         /* empty body is fine */
       }
       paymentRequired = httpClient.getPaymentRequiredResponse(getHeader, body);
-      cache.set(urlPath, { paymentRequired, cachedAt: Date.now() });
+      cache.set(cacheKey, { paymentRequired, cachedAt: Date.now() });
     } catch (error) {
       throw new Error(
         `Failed to parse payment requirements: ${error instanceof Error ? error.message : "Unknown error"}`,
