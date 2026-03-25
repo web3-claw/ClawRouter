@@ -279,7 +279,10 @@ try {
     'deepseek/deepseek-chat', 'deepseek/deepseek-reasoner', 'moonshot/kimi-k2.5',
     'xai/grok-3', 'xai/grok-4-0709', 'xai/grok-4-1-fast-reasoning',
     'minimax/minimax-m2.7', 'minimax/minimax-m2.5',
-    'nvidia/gpt-oss-120b',
+    'nvidia/gpt-oss-120b', 'nvidia/gpt-oss-20b',
+    'nvidia/nemotron-ultra-253b', 'nvidia/deepseek-v3.2', 'nvidia/mistral-large-3-675b',
+    'nvidia/qwen3-coder-480b', 'nvidia/devstral-2-123b', 'nvidia/llama-4-maverick',
+    'nvidia/nemotron-3-super-120b', 'nvidia/nemotron-super-49b', 'nvidia/glm-4.7',
     'zai/glm-5', 'zai/glm-5-turbo'
   ];
 

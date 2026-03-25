@@ -329,7 +329,10 @@ try {
     'deepseek/deepseek-chat', 'deepseek/deepseek-reasoner', 'moonshot/kimi-k2.5',
     'xai/grok-3', 'xai/grok-4-0709', 'xai/grok-4-1-fast-reasoning',
     'minimax/minimax-m2.7', 'minimax/minimax-m2.5',
-    'nvidia/gpt-oss-120b',
+    'nvidia/gpt-oss-120b', 'nvidia/gpt-oss-20b',
+    'nvidia/nemotron-ultra-253b', 'nvidia/deepseek-v3.2', 'nvidia/mistral-large-3-675b',
+    'nvidia/qwen3-coder-480b', 'nvidia/devstral-2-123b', 'nvidia/llama-4-maverick',
+    'nvidia/nemotron-3-super-120b', 'nvidia/nemotron-super-49b', 'nvidia/glm-4.7',
     'zai/glm-5', 'zai/glm-5-turbo'
   ];
 
@@ -446,12 +449,19 @@ echo ""
 echo "Run: openclaw gateway restart"
 echo ""
 echo "Model aliases available:"
-echo "  /model sonnet    → claude-sonnet-4"
-echo "  /model opus      → claude-opus-4"
+echo "  /model sonnet    → claude-sonnet-4.6"
+echo "  /model opus      → claude-opus-4.6"
 echo "  /model codex     → openai/gpt-5.3-codex"
 echo "  /model deepseek  → deepseek/deepseek-chat"
-echo "  /model minimax   → minimax/minimax-m2.5"
-echo "  /model free      → gpt-oss-120b (FREE)"
+echo "  /model free      → 11 free NVIDIA models (smart routed)"
+echo ""
+echo "Free models (no wallet needed):"
+echo "  /model nemotron       → nemotron-ultra-253b (strongest free)"
+echo "  /model deepseek-free  → deepseek-v3.2"
+echo "  /model mistral-free   → mistral-large-675b"
+echo "  /model devstral       → devstral-2-123b (coding)"
+echo "  /model qwen-coder     → qwen3-coder-480b (coding)"
+echo "  /model maverick       → llama-4-maverick"
 echo ""
 echo "Image generation:"
 echo "  /imagegen <prompt>                           # default: nano-banana"

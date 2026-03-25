@@ -4,7 +4,7 @@ All notable changes to ClawRouter.
 
 ---
 
-## v0.12.77 — Mar 25, 2026
+## v0.12.78 — Mar 25, 2026
 
 ### Added
 
