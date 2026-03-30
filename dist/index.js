@@ -50264,6 +50264,19 @@ data: [DONE]
         }
       }
       let responseBody = Buffer.concat(bodyParts);
+      if (responseBody.length > 0) {
+        try {
+          const parsed = JSON.parse(responseBody.toString());
+          if (parsed.choices?.[0]?.message?.content) {
+            const stripped = stripThinkingTokens(parsed.choices[0].message.content);
+            if (stripped !== parsed.choices[0].message.content) {
+              parsed.choices[0].message.content = stripped;
+              responseBody = Buffer.from(JSON.stringify(parsed));
+            }
+          }
+        } catch {
+        }
+      }
       if (balanceFallbackNotice && responseBody.length > 0) {
         try {
           const parsed = JSON.parse(responseBody.toString());
@@ -50392,9 +50405,9 @@ data: [DONE]
         maxTokens,
         routingProfile ?? void 0
       );
-      logCost = costs.costEstimate;
+      logCost = FREE_MODELS.has(logModel) ? 0 : costs.costEstimate;
       logBaseline = costs.baselineCost;
-      logSavings = costs.savings;
+      logSavings = FREE_MODELS.has(logModel) ? 1 : costs.savings;
     }
     const entry = {
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),

@@ -4605,7 +4605,6 @@ async function proxyRequest(
       logBaseline = baseline.baselineCost;
       logSavings = logBaseline > 0 ? Math.max(0, (logBaseline - logCost) / logBaseline) : 0;
     } else {
-      // Free model — no payment, calculate locally
       const chargedInputTokens = Math.ceil(body.length / 4);
       const costs = calculateModelCost(
         logModel,
@@ -4614,9 +4613,11 @@ async function proxyRequest(
         maxTokens,
         routingProfile ?? undefined,
       );
-      logCost = costs.costEstimate;
+      // Free models: actual cost is $0 (no x402 payment ever made).
+      // MIN_PAYMENT_USD floor in calculateModelCost would falsely inflate stats.
+      logCost = FREE_MODELS.has(logModel) ? 0 : costs.costEstimate;
       logBaseline = costs.baselineCost;
-      logSavings = costs.savings;
+      logSavings = FREE_MODELS.has(logModel) ? 1 : costs.savings;
     }
 
     const entry: UsageEntry = {

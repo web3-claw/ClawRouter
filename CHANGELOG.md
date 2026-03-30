@@ -4,6 +4,14 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.86 — Mar 29, 2026
+
+### Fixed
+
+- **Free model cost logging** — Usage stats incorrectly showed non-zero cost for free models (e.g. `free/gpt-oss-120b` showed $0.001 per request due to the `MIN_PAYMENT_USD` floor in `calculateModelCost`). Free models now log `cost: $0.00` and `savings: 100%`, accurately reflecting that no payment is made.
+
+---
+
 ## v0.12.84 — Mar 26, 2026
 
 ### Fixed
