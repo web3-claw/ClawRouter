@@ -67,7 +67,8 @@ export function deriveSolanaKeyBytes(mnemonic: string): Uint8Array {
   const seed = mnemonicToSeedSync(mnemonic);
 
   // Master key from SLIP-10
-  let I = hmac(sha512, "ed25519 seed", seed);
+  // @noble/hashes v2 requires Uint8Array keys (v1 accepted strings)
+  let I = hmac(sha512, new TextEncoder().encode("ed25519 seed"), seed);
   let key = I.slice(0, 32);
   let chainCode = I.slice(32);
 
