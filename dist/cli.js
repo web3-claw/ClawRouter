@@ -80734,7 +80734,9 @@ ClawRouter Partner APIs (v${VERSION})
       await savePaymentChain("base");
       console.log(`[ClawRouter] Payment chain \u2192 Base (EVM)`);
     }
-    console.log(`[ClawRouter] Restart gateway to apply: systemctl --user restart openclaw-gateway.service`);
+    console.log(
+      `[ClawRouter] Restart gateway to apply: systemctl --user restart openclaw-gateway.service`
+    );
     console.log(`[ClawRouter]   or: openclaw gateway restart`);
     process.exit(0);
   }

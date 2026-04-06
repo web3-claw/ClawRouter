@@ -2138,7 +2138,11 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
             res.end(text);
             return;
           }
-          let result: { created?: number; model?: string; data?: Array<{ url?: string; duration_seconds?: number; lyrics?: string }> };
+          let result: {
+            created?: number;
+            model?: string;
+            data?: Array<{ url?: string; duration_seconds?: number; lyrics?: string }>;
+          };
           try {
             result = JSON.parse(text);
           } catch {

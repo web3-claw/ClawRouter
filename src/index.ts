@@ -966,7 +966,11 @@ function buildMusicGenerationProvider(): MusicGenerationProviderPlugin {
       const allLyrics = (result.data ?? [])
         .map((t) => t.lyrics)
         .filter((l): l is string => Boolean(l));
-      return { tracks, model: result.model ?? req.model, lyrics: allLyrics.length ? allLyrics : undefined };
+      return {
+        tracks,
+        model: result.model ?? req.model,
+        lyrics: allLyrics.length ? allLyrics : undefined,
+      };
     },
   };
 }
@@ -999,9 +1003,7 @@ function restartProxyForChainSwitch(api: OpenClawPluginApi): void {
   });
 }
 
-function createWalletCommand(
-  api?: OpenClawPluginApi,
-): OpenClawPluginCommandDefinition {
+function createWalletCommand(api?: OpenClawPluginApi): OpenClawPluginCommandDefinition {
   return {
     name: "wallet",
     description: "Show BlockRun wallet info, usage stats, or export private key",

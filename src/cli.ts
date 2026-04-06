@@ -464,7 +464,9 @@ async function main(): Promise<void> {
       console.log(`[ClawRouter] Payment chain → Base (EVM)`);
     }
 
-    console.log(`[ClawRouter] Restart gateway to apply: systemctl --user restart openclaw-gateway.service`);
+    console.log(
+      `[ClawRouter] Restart gateway to apply: systemctl --user restart openclaw-gateway.service`,
+    );
     console.log(`[ClawRouter]   or: openclaw gateway restart`);
     process.exit(0);
   }

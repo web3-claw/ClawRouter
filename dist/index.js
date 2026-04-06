@@ -80964,7 +80964,11 @@ function buildMusicGenerationProvider() {
         })
       );
       const allLyrics = (result.data ?? []).map((t) => t.lyrics).filter((l2) => Boolean(l2));
-      return { tracks, model: result.model ?? req.model, lyrics: allLyrics.length ? allLyrics : void 0 };
+      return {
+        tracks,
+        model: result.model ?? req.model,
+        lyrics: allLyrics.length ? allLyrics : void 0
+      };
     }
   };
 }
