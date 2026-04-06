@@ -76441,8 +76441,8 @@ function truncateMessages(messages) {
 }
 var KIMI_BLOCK_RE = /<[｜|][^<>]*begin[^<>]*[｜|]>[\s\S]*?<[｜|][^<>]*end[^<>]*[｜|]>/gi;
 var KIMI_TOKEN_RE = /<[｜|][^<>]*[｜|]>/g;
-var THINKING_TAG_RE = /<\s*\/?\s*(?:think(?:ing)?|thought|antthinking)\b[^>]*>/gi;
-var THINKING_BLOCK_RE = /<\s*(?:think(?:ing)?|thought|antthinking)\b[^>]*>[\s\S]*?<\s*\/\s*(?:think(?:ing)?|thought|antthinking)\s*>/gi;
+var THINKING_TAG_RE = /<\s*\/?\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\b[^>]*>/gi;
+var THINKING_BLOCK_RE = /<\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\b[^>]*>[\s\S]*?<\s*\/\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\s*>/gi;
 function stripThinkingTokens(content) {
   if (!content) return content;
   let cleaned = content.replace(KIMI_BLOCK_RE, "");
@@ -76538,6 +76538,7 @@ async function proxyPartnerRequest(req, res, apiBase, payFetch, getActualPayment
   for (const [key, value] of Object.entries(req.headers)) {
     if (key === "host" || key === "connection" || key === "transfer-encoding" || key === "content-length")
       continue;
+    if (key.startsWith("x-stainless-") || key.startsWith("anthropic-")) continue;
     if (typeof value === "string") headers[key] = value;
   }
   if (!headers["content-type"]) headers["content-type"] = "application/json";
@@ -78281,6 +78282,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   for (const [key, value] of Object.entries(req.headers)) {
     if (key === "host" || key === "connection" || key === "transfer-encoding" || key === "content-length")
       continue;
+    if (key.startsWith("x-stainless-") || key.startsWith("anthropic-")) continue;
     if (typeof value === "string") {
       headers[key] = value;
     }
@@ -78825,7 +78827,13 @@ data: [DONE]
             }
           }
         } catch {
-          const sseData = `data: ${jsonStr}
+          const errPayload = JSON.stringify({
+            error: {
+              message: `Upstream response could not be parsed: ${jsonStr.slice(0, 200)}`,
+              type: "proxy_error"
+            }
+          });
+          const sseData = `data: ${errPayload}
 
 `;
           safeWrite(res, sseData);
@@ -80031,6 +80039,8 @@ ClawRouter Partner APIs (v${VERSION})
     console.log(`[ClawRouter] Generated new wallet: ${wallet.address}`);
   } else if (wallet.source === "saved") {
     console.log(`[ClawRouter] Using saved wallet: ${wallet.address}`);
+  } else if (wallet.source === "config") {
+    console.log(`[ClawRouter] Using wallet from plugin config: ${wallet.address}`);
   } else {
     console.log(`[ClawRouter] Using wallet from BLOCKRUN_WALLET_KEY: ${wallet.address}`);
   }

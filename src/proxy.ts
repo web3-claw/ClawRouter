@@ -1087,11 +1087,12 @@ const KIMI_BLOCK_RE = /<[｜|][^<>]*begin[^<>]*[｜|]>[\s\S]*?<[｜|][^<>]*end[^
 const KIMI_TOKEN_RE = /<[｜|][^<>]*[｜|]>/g;
 
 // Standard thinking tags that may leak through from various models
-const THINKING_TAG_RE = /<\s*\/?\s*(?:think(?:ing)?|thought|antthinking)\b[^>]*>/gi;
+// Includes namespaced antml:thinking (Anthropic internal monologue, stripped by OpenClaw v2026.4.2+)
+const THINKING_TAG_RE = /<\s*\/?\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\b[^>]*>/gi;
 
 // Full thinking blocks: <think>content</think>
 const THINKING_BLOCK_RE =
-  /<\s*(?:think(?:ing)?|thought|antthinking)\b[^>]*>[\s\S]*?<\s*\/\s*(?:think(?:ing)?|thought|antthinking)\s*>/gi;
+  /<\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\b[^>]*>[\s\S]*?<\s*\/\s*(?:think(?:ing)?|thought|antthinking|antml:thinking)\s*>/gi;
 
 /**
  * Strip thinking tokens and blocks from model response content.
@@ -1364,7 +1365,7 @@ async function proxyPartnerRequest(
   }
   const body = Buffer.concat(bodyChunks);
 
-  // Forward headers (strip hop-by-hop)
+  // Forward headers (strip hop-by-hop + SDK/provider-specific)
   const headers: Record<string, string> = {};
   for (const [key, value] of Object.entries(req.headers)) {
     if (
@@ -1374,6 +1375,7 @@ async function proxyPartnerRequest(
       key === "content-length"
     )
       continue;
+    if (key.startsWith("x-stainless-") || key.startsWith("anthropic-")) continue;
     if (typeof value === "string") headers[key] = value;
   }
   if (!headers["content-type"]) headers["content-type"] = "application/json";
@@ -3678,7 +3680,9 @@ async function proxyRequest(
     }, HEARTBEAT_INTERVAL_MS);
   }
 
-  // Forward headers, stripping host, connection, and content-length
+  // Forward headers, stripping hop-by-hop and provider-specific headers.
+  // OpenClaw v2026.4.2 centralizes provider header handling (native vs proxy),
+  // but we strip SDK/provider headers defensively for older clients too.
   const headers: Record<string, string> = {};
   for (const [key, value] of Object.entries(req.headers)) {
     if (
@@ -3688,6 +3692,9 @@ async function proxyRequest(
       key === "content-length"
     )
       continue;
+    // SDK attribution headers (OpenAI x-stainless-*, Anthropic anthropic-*)
+    // These are client-side telemetry/protocol headers — not meaningful to BlockRun.
+    if (key.startsWith("x-stainless-") || key.startsWith("anthropic-")) continue;
     if (typeof value === "string") {
       headers[key] = value;
     }
