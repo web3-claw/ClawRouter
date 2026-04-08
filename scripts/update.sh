@@ -635,6 +635,23 @@ if (fs.existsSync(configPath)) {
 }
 "
 
+# Clean up stale install-stage directories — these contain old plugin versions
+# that OpenClaw may auto-load instead of the current install, causing payment
+# failures and "duplicate plugin" warnings.
+echo "→ Cleaning up stale install stages..."
+CLEANED=0
+for stage_dir in "$HOME/.openclaw/extensions/.openclaw-install-stage-"*; do
+  if [ -d "$stage_dir" ]; then
+    rm -rf "$stage_dir"
+    CLEANED=$((CLEANED + 1))
+  fi
+done
+if [ "$CLEANED" -gt 0 ]; then
+  echo "  ✓ Removed $CLEANED stale install stage(s)"
+else
+  echo "  ✓ No stale install stages found"
+fi
+
 # Clean up stale plugin backups — these cause "duplicate plugin" warnings on restart
 echo "→ Cleaning up stale plugin backups..."
 CLEANED=0
@@ -649,6 +666,48 @@ if [ "$CLEANED" -gt 0 ]; then
 else
   echo "  ✓ No stale backups found"
 fi
+
+# Clean plugin registry — remove entries pointing to stale install-stage paths
+echo "→ Cleaning plugin registry..."
+node -e "
+const fs = require('fs');
+const configPath = '$CONFIG_PATH';
+if (!fs.existsSync(configPath)) process.exit(0);
+try {
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  let changed = false;
+  // Remove plugins.entries pointing to install-stage directories
+  if (config?.plugins?.entries) {
+    for (const [key, val] of Object.entries(config.plugins.entries)) {
+      const path = typeof val === 'string' ? val : val?.path || val?.main || '';
+      if (path.includes('.openclaw-install-stage-')) {
+        delete config.plugins.entries[key];
+        changed = true;
+        console.log('  Removed plugins.entries.' + key + ' (stale stage)');
+      }
+    }
+  }
+  // Remove plugins.installs pointing to install-stage directories
+  if (config?.plugins?.installs) {
+    for (const [key, val] of Object.entries(config.plugins.installs)) {
+      const path = typeof val === 'string' ? val : val?.path || val?.main || '';
+      if (path.includes('.openclaw-install-stage-')) {
+        delete config.plugins.installs[key];
+        changed = true;
+        console.log('  Removed plugins.installs.' + key + ' (stale stage)');
+      }
+    }
+  }
+  if (changed) {
+    const tmp = configPath + '.tmp.' + process.pid;
+    fs.writeFileSync(tmp, JSON.stringify(config, null, 2));
+    fs.renameSync(tmp, configPath);
+    console.log('  ✓ Registry cleaned');
+  } else {
+    console.log('  ✓ Registry clean');
+  }
+} catch (e) { console.log('  Skipped: ' + e.message); }
+"
 
 # ── Summary ─────────────────────────────────────────────────────
 echo ""

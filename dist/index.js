@@ -57264,7 +57264,7 @@ var init_src2 = __esm({
   }
 });
 
-// node_modules/@x402/svm/dist/esm/chunk-TZGEGCWJ.mjs
+// node_modules/@x402/svm/dist/esm/chunk-HEVXVNO4.mjs
 function normalizeNetwork(network) {
   if (network.includes(":")) {
     const supported = [SOLANA_MAINNET_CAIP2, SOLANA_DEVNET_CAIP2, SOLANA_TESTNET_CAIP2];
@@ -57299,8 +57299,8 @@ function createRpcClient(network, customRpcUrl) {
   }
 }
 var MEMO_PROGRAM_ADDRESS, DEVNET_RPC_URL, TESTNET_RPC_URL, MAINNET_RPC_URL, DEFAULT_COMPUTE_UNIT_PRICE_MICROLAMPORTS, DEFAULT_COMPUTE_UNIT_LIMIT, SOLANA_MAINNET_CAIP2, SOLANA_DEVNET_CAIP2, SOLANA_TESTNET_CAIP2, V1_TO_V2_NETWORK_MAP;
-var init_chunk_TZGEGCWJ = __esm({
-  "node_modules/@x402/svm/dist/esm/chunk-TZGEGCWJ.mjs"() {
+var init_chunk_HEVXVNO4 = __esm({
+  "node_modules/@x402/svm/dist/esm/chunk-HEVXVNO4.mjs"() {
     "use strict";
     init_index_node37();
     MEMO_PROGRAM_ADDRESS = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
@@ -57382,12 +57382,12 @@ var init_src3 = __esm({
   }
 });
 
-// node_modules/@x402/svm/dist/esm/chunk-HJV6TMZE.mjs
+// node_modules/@x402/svm/dist/esm/chunk-6GZCHEXV.mjs
 var ExactSvmScheme;
-var init_chunk_HJV6TMZE = __esm({
-  "node_modules/@x402/svm/dist/esm/chunk-HJV6TMZE.mjs"() {
+var init_chunk_6GZCHEXV = __esm({
+  "node_modules/@x402/svm/dist/esm/chunk-6GZCHEXV.mjs"() {
     "use strict";
-    init_chunk_TZGEGCWJ();
+    init_chunk_HEVXVNO4();
     init_src3();
     init_src();
     init_src2();
@@ -57487,12 +57487,12 @@ var init_chunk_WWACQNRQ = __esm({
   }
 });
 
-// node_modules/@x402/svm/dist/esm/chunk-V5GMZRSA.mjs
+// node_modules/@x402/svm/dist/esm/chunk-EO43QE5K.mjs
 var ExactSvmSchemeV1;
-var init_chunk_V5GMZRSA = __esm({
-  "node_modules/@x402/svm/dist/esm/chunk-V5GMZRSA.mjs"() {
+var init_chunk_EO43QE5K = __esm({
+  "node_modules/@x402/svm/dist/esm/chunk-EO43QE5K.mjs"() {
     "use strict";
-    init_chunk_TZGEGCWJ();
+    init_chunk_HEVXVNO4();
     init_src3();
     init_src();
     init_src2();
@@ -57586,20 +57586,20 @@ var init_chunk_V5GMZRSA = __esm({
   }
 });
 
-// node_modules/@x402/svm/dist/esm/chunk-UIASIAEW.mjs
-var init_chunk_UIASIAEW = __esm({
-  "node_modules/@x402/svm/dist/esm/chunk-UIASIAEW.mjs"() {
+// node_modules/@x402/svm/dist/esm/chunk-KCM7FK7D.mjs
+var init_chunk_KCM7FK7D = __esm({
+  "node_modules/@x402/svm/dist/esm/chunk-KCM7FK7D.mjs"() {
     "use strict";
-    init_chunk_TZGEGCWJ();
+    init_chunk_HEVXVNO4();
   }
 });
 
-// node_modules/@x402/svm/dist/esm/chunk-SV64M7KA.mjs
-var init_chunk_SV64M7KA = __esm({
-  "node_modules/@x402/svm/dist/esm/chunk-SV64M7KA.mjs"() {
+// node_modules/@x402/svm/dist/esm/chunk-GOPQSG4N.mjs
+var init_chunk_GOPQSG4N = __esm({
+  "node_modules/@x402/svm/dist/esm/chunk-GOPQSG4N.mjs"() {
     "use strict";
-    init_chunk_UIASIAEW();
-    init_chunk_TZGEGCWJ();
+    init_chunk_KCM7FK7D();
+    init_chunk_HEVXVNO4();
   }
 });
 
@@ -57630,12 +57630,12 @@ function registerExactSvmScheme(client, config) {
 var init_client = __esm({
   "node_modules/@x402/svm/dist/esm/exact/client/index.mjs"() {
     "use strict";
-    init_chunk_HJV6TMZE();
+    init_chunk_6GZCHEXV();
     init_chunk_WWACQNRQ();
-    init_chunk_V5GMZRSA();
-    init_chunk_SV64M7KA();
-    init_chunk_UIASIAEW();
-    init_chunk_TZGEGCWJ();
+    init_chunk_EO43QE5K();
+    init_chunk_GOPQSG4N();
+    init_chunk_KCM7FK7D();
+    init_chunk_HEVXVNO4();
   }
 });
 
@@ -71159,7 +71159,7 @@ function safeBase64Decode(data) {
   return Buffer.from(data, "base64").toString("utf-8");
 }
 
-// node_modules/@x402/core/dist/esm/chunk-ACVTKVCM.mjs
+// node_modules/@x402/core/dist/esm/chunk-JFGRL3BL.mjs
 var verifyResponseSchema = external_exports.object({
   isValid: external_exports.boolean(),
   invalidReason: external_exports.string().nullish().transform((v) => v ?? void 0),
@@ -71695,12 +71695,7 @@ function createPayFetchWithPreAuth(baseFetch, client, ttlMs = DEFAULT_TTL_MS, op
   };
 }
 
-// node_modules/@x402/evm/dist/esm/chunk-GD4MKCN7.mjs
-var EIP2612_GAS_SPONSORING_KEY = "eip2612GasSponsoring";
-var ERC20_APPROVAL_GAS_SPONSORING_KEY = "erc20ApprovalGasSponsoring";
-var ERC20_APPROVAL_GAS_SPONSORING_VERSION = "1";
-
-// node_modules/@x402/evm/dist/esm/chunk-IZEI7JTG.mjs
+// node_modules/@x402/evm/dist/esm/chunk-C4ZQMS77.mjs
 var authorizationTypes = {
   TransferWithAuthorization: [
     { name: "from", type: "address" },
@@ -71800,6 +71795,8 @@ function createPermit2Nonce() {
   const randomBytes3 = getCrypto().getRandomValues(new Uint8Array(32));
   return BigInt(toHex(randomBytes3)).toString();
 }
+
+// node_modules/@x402/evm/dist/esm/chunk-YUJQ7TLD.mjs
 var ExactEvmSchemeV1 = class {
   /**
    * Creates a new ExactEvmClientV1 instance.
@@ -71898,7 +71895,9 @@ var EVM_NETWORK_CHAIN_ID_MAP = {
   educhain: 41923,
   "skale-base-sepolia": 324705682,
   megaeth: 4326,
-  monad: 143
+  monad: 143,
+  stable: 988,
+  "stable-testnet": 2201
 };
 var NETWORKS = Object.keys(EVM_NETWORK_CHAIN_ID_MAP);
 function getEvmChainIdV1(network) {
@@ -71909,59 +71908,11 @@ function getEvmChainIdV1(network) {
   return chainId;
 }
 
-// node_modules/@x402/evm/dist/esm/chunk-WJWNS4G4.mjs
-async function createEIP3009Payload(signer, x402Version2, paymentRequirements) {
-  const nonce = createNonce();
-  const now = Math.floor(Date.now() / 1e3);
-  const authorization = {
-    from: signer.address,
-    to: getAddress(paymentRequirements.payTo),
-    value: paymentRequirements.amount,
-    validAfter: (now - 600).toString(),
-    validBefore: (now + paymentRequirements.maxTimeoutSeconds).toString(),
-    nonce
-  };
-  const signature2 = await signEIP3009Authorization(signer, authorization, paymentRequirements);
-  const payload = {
-    authorization,
-    signature: signature2
-  };
-  return {
-    x402Version: x402Version2,
-    payload
-  };
-}
-async function signEIP3009Authorization(signer, authorization, requirements) {
-  const chainId = getEvmChainId(requirements.network);
-  if (!requirements.extra?.name || !requirements.extra?.version) {
-    throw new Error(
-      `EIP-712 domain parameters (name, version) are required in payment requirements for asset ${requirements.asset}`
-    );
-  }
-  const { name, version: version4 } = requirements.extra;
-  const domain = {
-    name,
-    version: version4,
-    chainId,
-    verifyingContract: getAddress(requirements.asset)
-  };
-  const message = {
-    from: getAddress(authorization.from),
-    to: getAddress(authorization.to),
-    value: BigInt(authorization.value),
-    validAfter: BigInt(authorization.validAfter),
-    validBefore: BigInt(authorization.validBefore),
-    nonce: authorization.nonce
-  };
-  return await signer.signTypedData({
-    domain,
-    types: authorizationTypes,
-    primaryType: "TransferWithAuthorization",
-    message
-  });
-}
-var MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-async function createPermit2Payload(signer, x402Version2, paymentRequirements) {
+// node_modules/@x402/evm/dist/esm/chunk-CRT6YNY5.mjs
+var EIP2612_GAS_SPONSORING_KEY = "eip2612GasSponsoring";
+var ERC20_APPROVAL_GAS_SPONSORING_KEY = "erc20ApprovalGasSponsoring";
+var ERC20_APPROVAL_GAS_SPONSORING_VERSION = "1";
+async function createPermit2PayloadForProxy(proxyAddress, signer, x402Version2, paymentRequirements) {
   const now = Math.floor(Date.now() / 1e3);
   const nonce = createPermit2Nonce();
   const validAfter = (now - 600).toString();
@@ -71972,7 +71923,7 @@ async function createPermit2Payload(signer, x402Version2, paymentRequirements) {
       token: getAddress(paymentRequirements.asset),
       amount: paymentRequirements.amount
     },
-    spender: x402ExactPermit2ProxyAddress,
+    spender: proxyAddress,
     nonce,
     deadline,
     witness: {
@@ -71985,41 +71936,42 @@ async function createPermit2Payload(signer, x402Version2, paymentRequirements) {
     permit2Authorization,
     paymentRequirements
   );
-  const payload = {
-    signature: signature2,
-    permit2Authorization
-  };
   return {
     x402Version: x402Version2,
-    payload
+    payload: { signature: signature2, permit2Authorization }
   };
 }
 async function signPermit2Authorization(signer, permit2Authorization, requirements) {
   const chainId = getEvmChainId(requirements.network);
-  const domain = {
-    name: "Permit2",
-    chainId,
-    verifyingContract: PERMIT2_ADDRESS
-  };
-  const message = {
-    permitted: {
-      token: getAddress(permit2Authorization.permitted.token),
-      amount: BigInt(permit2Authorization.permitted.amount)
-    },
-    spender: getAddress(permit2Authorization.spender),
-    nonce: BigInt(permit2Authorization.nonce),
-    deadline: BigInt(permit2Authorization.deadline),
-    witness: {
-      to: getAddress(permit2Authorization.witness.to),
-      validAfter: BigInt(permit2Authorization.witness.validAfter)
-    }
-  };
   return await signer.signTypedData({
-    domain,
+    domain: { name: "Permit2", chainId, verifyingContract: PERMIT2_ADDRESS },
     types: permit2WitnessTypes,
     primaryType: "PermitWitnessTransferFrom",
-    message
+    message: {
+      permitted: {
+        token: getAddress(permit2Authorization.permitted.token),
+        amount: BigInt(permit2Authorization.permitted.amount)
+      },
+      spender: getAddress(permit2Authorization.spender),
+      nonce: BigInt(permit2Authorization.nonce),
+      deadline: BigInt(permit2Authorization.deadline),
+      witness: {
+        to: getAddress(permit2Authorization.witness.to),
+        validAfter: BigInt(permit2Authorization.witness.validAfter)
+      }
+    }
   });
+}
+
+// node_modules/@x402/evm/dist/esm/chunk-WKBC5YMI.mjs
+var MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+async function createPermit2Payload(signer, x402Version2, paymentRequirements) {
+  return createPermit2PayloadForProxy(
+    x402ExactPermit2ProxyAddress,
+    signer,
+    x402Version2,
+    paymentRequirements
+  );
 }
 async function signEip2612Permit(signer, tokenAddress, tokenName, tokenVersion, chainId, deadline, permittedAmount) {
   const owner = signer.address;
@@ -72155,6 +72107,143 @@ function resolveExtensionRpcCapabilities(network, signer, options) {
   }
   return capabilities;
 }
+async function trySignEip2612PermitExtension(signer, options, requirements, result, context) {
+  const capabilities = resolveExtensionRpcCapabilities(requirements.network, signer, options);
+  if (!capabilities.readContract) {
+    return void 0;
+  }
+  if (!context?.extensions?.[EIP2612_GAS_SPONSORING_KEY]) {
+    return void 0;
+  }
+  const tokenName = requirements.extra?.name;
+  const tokenVersion = requirements.extra?.version;
+  if (!tokenName || !tokenVersion) {
+    return void 0;
+  }
+  const chainId = getEvmChainId(requirements.network);
+  const tokenAddress = getAddress(requirements.asset);
+  try {
+    const allowance = await capabilities.readContract({
+      address: tokenAddress,
+      abi: erc20AllowanceAbi,
+      functionName: "allowance",
+      args: [signer.address, PERMIT2_ADDRESS]
+    });
+    if (allowance >= BigInt(requirements.amount)) {
+      return void 0;
+    }
+  } catch {
+  }
+  const permit2Auth = result.payload?.permit2Authorization;
+  const deadline = permit2Auth?.deadline ?? Math.floor(Date.now() / 1e3 + requirements.maxTimeoutSeconds).toString();
+  const info = await signEip2612Permit(
+    {
+      address: signer.address,
+      signTypedData: (msg) => signer.signTypedData(msg),
+      readContract: capabilities.readContract
+    },
+    tokenAddress,
+    tokenName,
+    tokenVersion,
+    chainId,
+    deadline,
+    requirements.amount
+  );
+  return {
+    [EIP2612_GAS_SPONSORING_KEY]: { info }
+  };
+}
+async function trySignErc20ApprovalExtension(signer, options, requirements, context) {
+  const capabilities = resolveExtensionRpcCapabilities(requirements.network, signer, options);
+  if (!capabilities.readContract) {
+    return void 0;
+  }
+  if (!context?.extensions?.[ERC20_APPROVAL_GAS_SPONSORING_KEY]) {
+    return void 0;
+  }
+  if (!capabilities.signTransaction || !capabilities.getTransactionCount) {
+    return void 0;
+  }
+  const chainId = getEvmChainId(requirements.network);
+  const tokenAddress = getAddress(requirements.asset);
+  try {
+    const allowance = await capabilities.readContract({
+      address: tokenAddress,
+      abi: erc20AllowanceAbi,
+      functionName: "allowance",
+      args: [signer.address, PERMIT2_ADDRESS]
+    });
+    if (allowance >= BigInt(requirements.amount)) {
+      return void 0;
+    }
+  } catch {
+  }
+  const info = await signErc20ApprovalTransaction(
+    {
+      address: signer.address,
+      signTransaction: capabilities.signTransaction,
+      getTransactionCount: capabilities.getTransactionCount,
+      estimateFeesPerGas: capabilities.estimateFeesPerGas
+    },
+    tokenAddress,
+    chainId
+  );
+  return {
+    [ERC20_APPROVAL_GAS_SPONSORING_KEY]: { info }
+  };
+}
+
+// node_modules/@x402/evm/dist/esm/chunk-RN3WQM6A.mjs
+async function createEIP3009Payload(signer, x402Version2, paymentRequirements) {
+  const nonce = createNonce();
+  const now = Math.floor(Date.now() / 1e3);
+  const authorization = {
+    from: signer.address,
+    to: getAddress(paymentRequirements.payTo),
+    value: paymentRequirements.amount,
+    validAfter: (now - 600).toString(),
+    validBefore: (now + paymentRequirements.maxTimeoutSeconds).toString(),
+    nonce
+  };
+  const signature2 = await signEIP3009Authorization(signer, authorization, paymentRequirements);
+  const payload = {
+    authorization,
+    signature: signature2
+  };
+  return {
+    x402Version: x402Version2,
+    payload
+  };
+}
+async function signEIP3009Authorization(signer, authorization, requirements) {
+  const chainId = getEvmChainId(requirements.network);
+  if (!requirements.extra?.name || !requirements.extra?.version) {
+    throw new Error(
+      `EIP-712 domain parameters (name, version) are required in payment requirements for asset ${requirements.asset}`
+    );
+  }
+  const { name, version: version4 } = requirements.extra;
+  const domain = {
+    name,
+    version: version4,
+    chainId,
+    verifyingContract: getAddress(requirements.asset)
+  };
+  const message = {
+    from: getAddress(authorization.from),
+    to: getAddress(authorization.to),
+    value: BigInt(authorization.value),
+    validAfter: BigInt(authorization.validAfter),
+    validBefore: BigInt(authorization.validBefore),
+    nonce: authorization.nonce
+  };
+  return await signer.signTypedData({
+    domain,
+    types: authorizationTypes,
+    primaryType: "TransferWithAuthorization",
+    message
+  });
+}
 var ExactEvmScheme = class {
   /**
    * Creates a new ExactEvmClient instance.
@@ -72187,7 +72276,9 @@ var ExactEvmScheme = class {
     const assetTransferMethod = paymentRequirements.extra?.assetTransferMethod ?? "eip3009";
     if (assetTransferMethod === "permit2") {
       const result = await createPermit2Payload(this.signer, x402Version2, paymentRequirements);
-      const eip2612Extensions = await this.trySignEip2612Permit(
+      const eip2612Extensions = await trySignEip2612PermitExtension(
+        this.signer,
+        this.options,
         paymentRequirements,
         result,
         context
@@ -72198,7 +72289,12 @@ var ExactEvmScheme = class {
           extensions: eip2612Extensions
         };
       }
-      const erc20Extensions = await this.trySignErc20Approval(paymentRequirements, result, context);
+      const erc20Extensions = await trySignErc20ApprovalExtension(
+        this.signer,
+        this.options,
+        paymentRequirements,
+        context
+      );
       if (erc20Extensions) {
         return {
           ...result,
@@ -72208,133 +72304,6 @@ var ExactEvmScheme = class {
       return result;
     }
     return createEIP3009Payload(this.signer, x402Version2, paymentRequirements);
-  }
-  /**
-   * Attempts to sign an EIP-2612 permit for gasless Permit2 approval.
-   *
-   * Returns extension data if:
-   * 1. Server advertises eip2612GasSponsoring
-   * 2. Signer has readContract capability
-   * 3. Current Permit2 allowance is insufficient
-   *
-   * Returns undefined if the extension should not be used.
-   *
-   * @param requirements - The payment requirements from the server
-   * @param result - The payment payload result from the scheme
-   * @param context - Optional context containing server extensions and metadata
-   * @returns Extension data for EIP-2612 gas sponsoring, or undefined if not applicable
-   */
-  async trySignEip2612Permit(requirements, result, context) {
-    const capabilities = resolveExtensionRpcCapabilities(
-      requirements.network,
-      this.signer,
-      this.options
-    );
-    if (!capabilities.readContract) {
-      return void 0;
-    }
-    if (!context?.extensions?.[EIP2612_GAS_SPONSORING_KEY]) {
-      return void 0;
-    }
-    const tokenName = requirements.extra?.name;
-    const tokenVersion = requirements.extra?.version;
-    if (!tokenName || !tokenVersion) {
-      return void 0;
-    }
-    const chainId = getEvmChainId(requirements.network);
-    const tokenAddress = getAddress(requirements.asset);
-    try {
-      const allowance = await capabilities.readContract({
-        address: tokenAddress,
-        abi: erc20AllowanceAbi,
-        functionName: "allowance",
-        args: [this.signer.address, PERMIT2_ADDRESS]
-      });
-      if (allowance >= BigInt(requirements.amount)) {
-        return void 0;
-      }
-    } catch {
-    }
-    const permit2Auth = result.payload?.permit2Authorization;
-    const deadline = permit2Auth?.deadline ?? Math.floor(Date.now() / 1e3 + requirements.maxTimeoutSeconds).toString();
-    const info = await signEip2612Permit(
-      {
-        address: this.signer.address,
-        signTypedData: (msg) => this.signer.signTypedData(msg),
-        readContract: capabilities.readContract
-      },
-      tokenAddress,
-      tokenName,
-      tokenVersion,
-      chainId,
-      deadline,
-      requirements.amount
-    );
-    return {
-      [EIP2612_GAS_SPONSORING_KEY]: { info }
-    };
-  }
-  /**
-   * Attempts to sign an ERC-20 approval transaction for gasless Permit2 approval.
-   *
-   * This is the fallback path when the token does not support EIP-2612. The client
-   * signs (but does not broadcast) a raw `approve(Permit2, MaxUint256)` transaction.
-   * The facilitator broadcasts it atomically before settling.
-   *
-   * Returns extension data if:
-   * 1. Server advertises erc20ApprovalGasSponsoring
-   * 2. Signer has signTransaction + getTransactionCount capabilities
-   * 3. Current Permit2 allowance is insufficient
-   *
-   * Returns undefined if the extension should not be used.
-   *
-   * @param requirements - The payment requirements from the server
-   * @param _result - The payment payload result from the scheme (unused)
-   * @param context - Optional context containing server extensions and metadata
-   * @returns Extension data for ERC-20 approval gas sponsoring, or undefined if not applicable
-   */
-  async trySignErc20Approval(requirements, _result, context) {
-    const capabilities = resolveExtensionRpcCapabilities(
-      requirements.network,
-      this.signer,
-      this.options
-    );
-    if (!capabilities.readContract) {
-      return void 0;
-    }
-    if (!context?.extensions?.[ERC20_APPROVAL_GAS_SPONSORING_KEY]) {
-      return void 0;
-    }
-    if (!capabilities.signTransaction || !capabilities.getTransactionCount) {
-      return void 0;
-    }
-    const chainId = getEvmChainId(requirements.network);
-    const tokenAddress = getAddress(requirements.asset);
-    try {
-      const allowance = await capabilities.readContract({
-        address: tokenAddress,
-        abi: erc20AllowanceAbi,
-        functionName: "allowance",
-        args: [this.signer.address, PERMIT2_ADDRESS]
-      });
-      if (allowance >= BigInt(requirements.amount)) {
-        return void 0;
-      }
-    } catch {
-    }
-    const info = await signErc20ApprovalTransaction(
-      {
-        address: this.signer.address,
-        signTransaction: capabilities.signTransaction,
-        getTransactionCount: capabilities.getTransactionCount,
-        estimateFeesPerGas: capabilities.estimateFeesPerGas
-      },
-      tokenAddress,
-      chainId
-    );
-    return {
-      [ERC20_APPROVAL_GAS_SPONSORING_KEY]: { info }
-    };
   }
 };
 function registerExactEvmScheme(client, config) {
@@ -76374,7 +76343,6 @@ var ROUTING_PROFILES = /* @__PURE__ */ new Set([
   "blockrun/premium",
   "premium"
 ]);
-var FREE_MODEL = "free/gpt-oss-120b";
 var FREE_MODELS = /* @__PURE__ */ new Set([
   "free/gpt-oss-120b",
   "free/gpt-oss-20b",
@@ -76388,6 +76356,13 @@ var FREE_MODELS = /* @__PURE__ */ new Set([
   "free/glm-4.7",
   "free/llama-4-maverick"
 ]);
+function pickFreeModel(excludeList) {
+  for (const m of FREE_MODELS) {
+    if (!excludeList?.has(m)) return m;
+  }
+  return void 0;
+}
+var FREE_MODEL = "free/gpt-oss-120b";
 function toUpstreamModelId(modelId) {
   if (modelId.startsWith("free/")) {
     return "nvidia/" + modelId.slice("free/".length);
@@ -76487,21 +76462,22 @@ function transformPaymentError(errorBody) {
       const debugLower = parsed.debug.toLowerCase();
       const wallet = parsed.payer || "unknown";
       const shortWallet = wallet.length > 12 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
+      const chain3 = wallet.startsWith("0x") ? "Base" : "Solana";
       if (debugLower.includes("insufficient")) {
         return JSON.stringify({
           error: {
-            message: "Insufficient Solana USDC balance.",
+            message: `Insufficient ${chain3} USDC balance.`,
             type: "insufficient_funds",
             wallet,
-            help: `Fund wallet ${shortWallet} with USDC on Solana, or switch to Base: /wallet base`
+            help: chain3 === "Solana" ? `Fund wallet ${shortWallet} with USDC on Solana, or switch to Base: /wallet base` : `Fund wallet ${shortWallet} with USDC on Base, or use free model: /model free`
           }
         });
       }
       if (debugLower.includes("transaction_simulation_failed") || debugLower.includes("simulation")) {
-        console.error(`[ClawRouter] Solana transaction simulation failed: ${parsed.debug}`);
+        console.error(`[ClawRouter] ${chain3} transaction simulation failed: ${parsed.debug}`);
         return JSON.stringify({
           error: {
-            message: "Solana payment simulation failed. Retrying with a different model.",
+            message: `${chain3} payment simulation failed. Retrying with a different model.`,
             type: "transaction_simulation_failed",
             help: "This is usually temporary. If it persists, try: /model free"
           }
@@ -76510,7 +76486,7 @@ function transformPaymentError(errorBody) {
       if (debugLower.includes("invalid signature") || debugLower.includes("invalid_signature")) {
         return JSON.stringify({
           error: {
-            message: "Solana payment signature invalid.",
+            message: `${chain3} payment signature invalid.`,
             type: "invalid_payload",
             help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash"
           }
@@ -76519,21 +76495,21 @@ function transformPaymentError(errorBody) {
       if (debugLower.includes("expired")) {
         return JSON.stringify({
           error: {
-            message: "Solana payment expired. Retrying.",
+            message: `${chain3} payment expired. Retrying.`,
             type: "expired",
             help: "This is usually temporary."
           }
         });
       }
       console.error(
-        `[ClawRouter] Solana payment verification failed: ${parsed.debug} payer=${wallet}`
+        `[ClawRouter] ${chain3} payment verification failed: ${parsed.debug} payer=${wallet}`
       );
       return JSON.stringify({
         error: {
-          message: `Solana payment verification failed: ${parsed.debug}`,
+          message: `${chain3} payment verification failed: ${parsed.debug}`,
           type: "payment_invalid",
           wallet,
-          help: "Try again or switch to Base: /wallet base"
+          help: chain3 === "Solana" ? "Try again or switch to Base: /wallet base" : "Try again. If this persists, try: /model free"
         }
       });
     }
@@ -78775,11 +78751,12 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         );
       }
       if (sufficiency && (sufficiency.info.isEmpty || !sufficiency.sufficient)) {
+        const freeFallback = pickFreeModel(loadExcludeList()) ?? FREE_MODEL;
         const originalModel = modelId;
         console.log(
-          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${FREE_MODEL} (requested: ${originalModel})`
+          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${freeFallback} (requested: ${originalModel})`
         );
-        modelId = FREE_MODEL;
+        modelId = freeFallback;
         isFreeModel = true;
         const parsed = JSON.parse(body.toString());
         parsed.model = toUpstreamModelId(FREE_MODEL);
@@ -78936,7 +78913,13 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   try {
     let modelsToTry;
     const excludeList = options.excludeModels ?? loadExcludeList();
-    if (routingDecision) {
+    if (isFreeModel && routingDecision && !options.skipBalanceCheck) {
+      const freeFallback = pickFreeModel(excludeList) ?? FREE_MODEL;
+      modelsToTry = [freeFallback];
+      console.log(
+        `[ClawRouter] Wallet empty \u2014 skipping routing chain, using free model: ${freeFallback}`
+      );
+    } else if (routingDecision) {
       const estimatedInputTokens = Math.ceil(body.length / 4);
       const estimatedTotalTokens = estimatedInputTokens + maxTokens;
       const tierConfigs = routingDecision.tierConfigs ?? routerOpts.config.tiers;
@@ -78994,8 +78977,11 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
     } else {
       modelsToTry = modelId ? [modelId] : [];
     }
-    if (!hasTools && !modelsToTry.includes(FREE_MODEL) && !excludeList.has(FREE_MODEL)) {
-      modelsToTry.push(FREE_MODEL);
+    if (!hasTools) {
+      const freeFallback = pickFreeModel(excludeList);
+      if (freeFallback && !modelsToTry.includes(freeFallback)) {
+        modelsToTry.push(freeFallback);
+      }
     }
     if (options.maxCostPerRunUsd && effectiveSessionId && !isFreeModel && (options.maxCostPerRunMode ?? "graceful") === "graceful") {
       const runCostUsd = sessionStore.getSessionCostUsd(effectiveSessionId);
@@ -79126,16 +79112,21 @@ data: [DONE]
           ...failedAttempts[failedAttempts.length - 1],
           reason: "payment_error"
         });
-        const freeIdx = modelsToTry.indexOf(FREE_MODEL);
-        if (freeIdx > i + 1) {
-          console.log(`[ClawRouter] Payment error \u2014 skipping to free model: ${FREE_MODEL}`);
-          i = freeIdx - 1;
+        const freeInChain = modelsToTry.findIndex((m, idx) => idx > i && FREE_MODELS.has(m));
+        if (freeInChain > i + 1) {
+          console.log(
+            `[ClawRouter] Payment error \u2014 skipping to free model: ${modelsToTry[freeInChain]}`
+          );
+          i = freeInChain - 1;
           continue;
         }
-        if (freeIdx === -1) {
-          modelsToTry.push(FREE_MODEL);
-          console.log(`[ClawRouter] Payment error \u2014 appending free model: ${FREE_MODEL}`);
-          continue;
+        if (freeInChain === -1) {
+          const freeFallback = pickFreeModel(excludeList);
+          if (freeFallback) {
+            modelsToTry.push(freeFallback);
+            console.log(`[ClawRouter] Payment error \u2014 appending free model: ${freeFallback}`);
+            continue;
+          }
         }
       }
       if (result.isProviderError && !isLastAttempt) {
@@ -79995,6 +79986,122 @@ function buildPartnerTools(proxyBaseUrl) {
   return PARTNER_SERVICES.map((service) => buildTool(service, proxyBaseUrl));
 }
 
+// src/commands/stats.ts
+function createStatsCommand() {
+  return {
+    name: "stats",
+    description: "Show ClawRouter usage statistics and cost savings",
+    acceptsArgs: true,
+    requireAuth: false,
+    handler: async (ctx) => {
+      const arg = ctx.args?.trim().toLowerCase() || "7";
+      if (arg === "clear" || arg === "reset") {
+        try {
+          const { deletedFiles } = await clearStats();
+          return {
+            text: `Stats cleared \u2014 ${deletedFiles} log file(s) deleted. Fresh start!`
+          };
+        } catch (err) {
+          return {
+            text: `Failed to clear stats: ${err instanceof Error ? err.message : String(err)}`,
+            isError: true
+          };
+        }
+      }
+      const days = parseInt(arg, 10) || 7;
+      try {
+        const stats = await getStats(Math.min(days, 30));
+        const ascii = formatStatsAscii(stats);
+        return {
+          text: ["```", ascii, "```"].join("\n")
+        };
+      } catch (err) {
+        return {
+          text: `Failed to load stats: ${err instanceof Error ? err.message : String(err)}`,
+          isError: true
+        };
+      }
+    }
+  };
+}
+
+// src/commands/exclude.ts
+function createExcludeCommand() {
+  return {
+    name: "exclude",
+    description: "Manage excluded models \u2014 /exclude add|remove|clear <model>",
+    acceptsArgs: true,
+    requireAuth: true,
+    handler: async (ctx) => {
+      const args = ctx.args?.trim() || "";
+      const parts = args.split(/\s+/);
+      const subcommand = parts[0]?.toLowerCase() || "";
+      const modelArg = parts.slice(1).join(" ").trim();
+      if (!subcommand) {
+        const list = loadExcludeList();
+        if (list.size === 0) {
+          return {
+            text: "No models excluded.\n\nUsage:\n  /exclude add <model>  \u2014 block a model\n  /exclude remove <model> \u2014 unblock\n  /exclude clear \u2014 remove all"
+          };
+        }
+        const models = [...list].sort().map((m) => `  \u2022 ${m}`).join("\n");
+        return {
+          text: `Excluded models (${list.size}):
+${models}
+
+Use /exclude remove <model> to unblock.`
+        };
+      }
+      if (subcommand === "add") {
+        if (!modelArg) {
+          return {
+            text: "Usage: /exclude add <model>\nExample: /exclude add nvidia/gpt-oss-120b",
+            isError: true
+          };
+        }
+        const resolved = addExclusion(modelArg);
+        const list = loadExcludeList();
+        return {
+          text: `Excluded: ${resolved}
+
+Active exclusions (${list.size}):
+${[...list].sort().map((m) => `  \u2022 ${m}`).join("\n")}`
+        };
+      }
+      if (subcommand === "remove") {
+        if (!modelArg) {
+          return { text: "Usage: /exclude remove <model>", isError: true };
+        }
+        const removed = removeExclusion(modelArg);
+        if (!removed) {
+          return { text: `Model "${modelArg}" was not in the exclude list.` };
+        }
+        const list = loadExcludeList();
+        return {
+          text: `Unblocked: ${modelArg}
+
+Active exclusions (${list.size}):
+${list.size > 0 ? [...list].sort().map((m) => `  \u2022 ${m}`).join("\n") : "  (none)"}`
+        };
+      }
+      if (subcommand === "clear") {
+        clearExclusions();
+        return { text: "All model exclusions cleared." };
+      }
+      return {
+        text: `Unknown subcommand: ${subcommand}
+
+Usage:
+  /exclude \u2014 show list
+  /exclude add <model>
+  /exclude remove <model>
+  /exclude clear`,
+        isError: true
+      };
+    }
+  };
+}
+
 // src/index.ts
 init_solana_balance();
 
@@ -80727,118 +80834,6 @@ async function startProxyInBackground(api) {
     api.logger.info(`Wallet (${network}): ${displayAddress} | Balance: (checking...)`);
   });
 }
-function createStatsCommand() {
-  return {
-    name: "stats",
-    description: "Show ClawRouter usage statistics and cost savings",
-    acceptsArgs: true,
-    requireAuth: false,
-    handler: async (ctx) => {
-      const arg = ctx.args?.trim().toLowerCase() || "7";
-      if (arg === "clear" || arg === "reset") {
-        try {
-          const { deletedFiles } = await clearStats();
-          return {
-            text: `Stats cleared \u2014 ${deletedFiles} log file(s) deleted. Fresh start!`
-          };
-        } catch (err) {
-          return {
-            text: `Failed to clear stats: ${err instanceof Error ? err.message : String(err)}`,
-            isError: true
-          };
-        }
-      }
-      const days = parseInt(arg, 10) || 7;
-      try {
-        const stats = await getStats(Math.min(days, 30));
-        const ascii = formatStatsAscii(stats);
-        return {
-          text: ["```", ascii, "```"].join("\n")
-        };
-      } catch (err) {
-        return {
-          text: `Failed to load stats: ${err instanceof Error ? err.message : String(err)}`,
-          isError: true
-        };
-      }
-    }
-  };
-}
-function createExcludeCommand() {
-  return {
-    name: "exclude",
-    description: "Manage excluded models \u2014 /exclude add|remove|clear <model>",
-    acceptsArgs: true,
-    requireAuth: true,
-    handler: async (ctx) => {
-      const args = ctx.args?.trim() || "";
-      const parts = args.split(/\s+/);
-      const subcommand = parts[0]?.toLowerCase() || "";
-      const modelArg = parts.slice(1).join(" ").trim();
-      if (!subcommand) {
-        const list = loadExcludeList();
-        if (list.size === 0) {
-          return {
-            text: "No models excluded.\n\nUsage:\n  /exclude add <model>  \u2014 block a model\n  /exclude remove <model> \u2014 unblock\n  /exclude clear \u2014 remove all"
-          };
-        }
-        const models = [...list].sort().map((m) => `  \u2022 ${m}`).join("\n");
-        return {
-          text: `Excluded models (${list.size}):
-${models}
-
-Use /exclude remove <model> to unblock.`
-        };
-      }
-      if (subcommand === "add") {
-        if (!modelArg) {
-          return {
-            text: "Usage: /exclude add <model>\nExample: /exclude add nvidia/gpt-oss-120b",
-            isError: true
-          };
-        }
-        const resolved = addExclusion(modelArg);
-        const list = loadExcludeList();
-        return {
-          text: `Excluded: ${resolved}
-
-Active exclusions (${list.size}):
-${[...list].sort().map((m) => `  \u2022 ${m}`).join("\n")}`
-        };
-      }
-      if (subcommand === "remove") {
-        if (!modelArg) {
-          return { text: "Usage: /exclude remove <model>", isError: true };
-        }
-        const removed = removeExclusion(modelArg);
-        if (!removed) {
-          return { text: `Model "${modelArg}" was not in the exclude list.` };
-        }
-        const list = loadExcludeList();
-        return {
-          text: `Unblocked: ${modelArg}
-
-Active exclusions (${list.size}):
-${list.size > 0 ? [...list].sort().map((m) => `  \u2022 ${m}`).join("\n") : "  (none)"}`
-        };
-      }
-      if (subcommand === "clear") {
-        clearExclusions();
-        return { text: "All model exclusions cleared." };
-      }
-      return {
-        text: `Unknown subcommand: ${subcommand}
-
-Usage:
-  /exclude \u2014 show list
-  /exclude add <model>
-  /exclude remove <model>
-  /exclude clear`,
-        isError: true
-      };
-    }
-  };
-}
 var IMAGE_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "images");
 var AUDIO_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "audio");
 function buildImageGenerationProvider() {
@@ -81231,50 +81226,49 @@ var plugin = {
       return;
     }
     installSkillsToWorkspace(api.logger);
-    if (isCompletionMode()) {
-      api.registerProvider(blockrunProvider);
-      return;
-    }
     const proc = process;
     const alreadyRegistered = !!proc.__clawrouterRegistered;
     proc.__clawrouterRegistered = true;
-    if (!alreadyRegistered) {
-      api.registerProvider(blockrunProvider);
-      api.registerImageGenerationProvider(buildImageGenerationProvider());
-      api.registerMusicGenerationProvider(buildMusicGenerationProvider());
-      injectModelsConfig(api.logger);
-      injectAuthProfile(api.logger);
-      const runtimePort = getProxyPort();
-      if (!api.config.models) {
-        api.config.models = { providers: {} };
+    if (isCompletionMode()) {
+      if (!alreadyRegistered) api.registerProvider(blockrunProvider);
+      return;
+    }
+    if (alreadyRegistered) return;
+    api.registerProvider(blockrunProvider);
+    api.registerImageGenerationProvider(buildImageGenerationProvider());
+    api.registerMusicGenerationProvider(buildMusicGenerationProvider());
+    injectModelsConfig(api.logger);
+    injectAuthProfile(api.logger);
+    const runtimePort = getProxyPort();
+    if (!api.config.models) {
+      api.config.models = { providers: {} };
+    }
+    if (!api.config.models.providers) {
+      api.config.models.providers = {};
+    }
+    api.config.models.providers.blockrun = {
+      baseUrl: `http://127.0.0.1:${runtimePort}/v1`,
+      api: "openai-completions",
+      // apiKey is required by pi-coding-agent's ModelRegistry for providers with models.
+      apiKey: "x402-proxy-handles-auth",
+      models: OPENCLAW_MODELS
+    };
+    api.logger.info("BlockRun provider registered (55+ models via x402)");
+    try {
+      const proxyBaseUrl = `http://127.0.0.1:${runtimePort}`;
+      const partnerTools = buildPartnerTools(proxyBaseUrl);
+      for (const tool of partnerTools) {
+        api.registerTool(tool);
       }
-      if (!api.config.models.providers) {
-        api.config.models.providers = {};
-      }
-      api.config.models.providers.blockrun = {
-        baseUrl: `http://127.0.0.1:${runtimePort}/v1`,
-        api: "openai-completions",
-        // apiKey is required by pi-coding-agent's ModelRegistry for providers with models.
-        apiKey: "x402-proxy-handles-auth",
-        models: OPENCLAW_MODELS
-      };
-      api.logger.info("BlockRun provider registered (55+ models via x402)");
-      try {
-        const proxyBaseUrl = `http://127.0.0.1:${runtimePort}`;
-        const partnerTools = buildPartnerTools(proxyBaseUrl);
-        for (const tool of partnerTools) {
-          api.registerTool(tool);
-        }
-        if (partnerTools.length > 0) {
-          api.logger.info(
-            `Registered ${partnerTools.length} partner tool(s): ${partnerTools.map((t) => t.name).join(", ")}`
-          );
-        }
-      } catch (err) {
-        api.logger.warn(
-          `Failed to register partner tools: ${err instanceof Error ? err.message : String(err)}`
+      if (partnerTools.length > 0) {
+        api.logger.info(
+          `Registered ${partnerTools.length} partner tool(s): ${partnerTools.map((t) => t.name).join(", ")}`
         );
       }
+    } catch (err) {
+      api.logger.warn(
+        `Failed to register partner tools: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
     api.registerCommand({
       name: "partners",
@@ -81311,7 +81305,6 @@ var plugin = {
     api.registerCommand(createStatsCommand());
     api.registerCommand(createExcludeCommand());
     api.logger.info("Commands registered: /wallet, /blockrun, /stats, /exclude");
-    if (alreadyRegistered) return;
     api.registerService({
       id: "clawrouter-proxy",
       start: () => {
@@ -81354,17 +81347,103 @@ var plugin = {
       api.logger.info("Not in gateway mode \u2014 proxy will start when gateway runs");
       return;
     }
-    startProxyInBackground(api).then(async () => {
-      const port = getProxyPort();
-      const healthy = await waitForProxyHealth(port, 15e3);
-      if (!healthy) {
-        api.logger.warn(`Proxy health check timed out, commands may not work immediately`);
+    const proxyPort = getProxyPort();
+    const portProbe = import("net").then(
+      (net) => new Promise((resolve) => {
+        const sock = net.connect({ host: "127.0.0.1", port: proxyPort }, () => {
+          sock.destroy();
+          resolve(true);
+        });
+        sock.on("error", () => resolve(false));
+        sock.setTimeout(500, () => {
+          sock.destroy();
+          resolve(false);
+        });
+      })
+    );
+    portProbe.then((portInUse) => {
+      if (portInUse) {
+        api.logger.info(
+          `Port ${proxyPort} already in use \u2014 skipping proxy startup (another instance running)`
+        );
+        return;
       }
+      return startProxyInBackground(api).then(async () => {
+        const port = getProxyPort();
+        const healthy = await waitForProxyHealth(port, 15e3);
+        if (!healthy) {
+          api.logger.warn(`Proxy health check timed out, commands may not work immediately`);
+        }
+      });
     }).catch((err) => {
       api.logger.error(
         `Failed to start BlockRun proxy: ${err instanceof Error ? err.message : String(err)}`
       );
     });
+  },
+  /**
+   * Cleanup hook called when plugin is uninstalled via `openclaw plugins uninstall`.
+   * Removes blockrun provider config, plugin entries, model allowlist entries,
+   * and auth profiles from openclaw.json so no residual config causes errors.
+   */
+  deactivate(api) {
+    if (activeProxyHandle) {
+      activeProxyHandle.close().catch(() => {
+      });
+      activeProxyHandle = null;
+    }
+    try {
+      const configPath = join10(homedir7(), ".openclaw", "openclaw.json");
+      if (existsSync3(configPath)) {
+        const config = JSON.parse(readTextFileSync(configPath));
+        if (config.models?.providers?.blockrun) {
+          delete config.models.providers.blockrun;
+        }
+        for (const key of ["clawrouter", "ClawRouter", "@blockrun/clawrouter"]) {
+          if (config.plugins?.entries?.[key]) delete config.plugins.entries[key];
+          if (config.plugins?.installs?.[key]) delete config.plugins.installs[key];
+        }
+        if (Array.isArray(config.plugins?.allow)) {
+          config.plugins.allow = config.plugins.allow.filter(
+            (p) => p !== "clawrouter" && p !== "ClawRouter" && p !== "@blockrun/clawrouter"
+          );
+        }
+        if (config.agents?.defaults?.models) {
+          for (const key of Object.keys(config.agents.defaults.models)) {
+            if (key.startsWith("blockrun/")) delete config.agents.defaults.models[key];
+          }
+        }
+        if (config.agents?.defaults?.model?.primary?.startsWith("blockrun/")) {
+          delete config.agents.defaults.model.primary;
+        }
+        const tmpPath = `${configPath}.tmp.${process.pid}`;
+        writeFileSync3(tmpPath, JSON.stringify(config, null, 2));
+        renameSync(tmpPath, configPath);
+        api.logger.info("ClawRouter config cleaned up");
+      }
+    } catch (err) {
+      api.logger.warn(`Config cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    try {
+      const agentsDir = join10(homedir7(), ".openclaw", "agents");
+      if (existsSync3(agentsDir)) {
+        for (const entry of readdirSync(agentsDir, { withFileTypes: true })) {
+          if (!entry.isDirectory()) continue;
+          const authPath = join10(agentsDir, entry.name, "agent", "auth-profiles.json");
+          if (!existsSync3(authPath)) continue;
+          try {
+            const store = JSON.parse(readTextFileSync(authPath));
+            if (store.profiles?.["blockrun:default"]) {
+              delete store.profiles["blockrun:default"];
+              writeFileSync3(authPath, JSON.stringify(store, null, 2));
+            }
+          } catch {
+          }
+        }
+      }
+    } catch {
+    }
+    api.logger.info("ClawRouter deactivated \u2014 restart gateway to complete uninstall");
   }
 };
 var index_default2 = plugin;

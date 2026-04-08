@@ -189,7 +189,7 @@ async function readBodyWithTimeout(
  * Transform upstream payment errors into user-friendly messages.
  * Parses the raw x402 error and formats it nicely.
  */
-function transformPaymentError(errorBody: string): string {
+export function transformPaymentError(errorBody: string): string {
   try {
     // Try to parse the error JSON
     const parsed = JSON.parse(errorBody) as {
@@ -267,7 +267,8 @@ function transformPaymentError(errorBody: string): string {
       }
     }
 
-    // Handle blockrun-sol (Solana) format: code=PAYMENT_INVALID + debug=invalidReason string
+    // Handle code=PAYMENT_INVALID + debug format (used by blockrun-sol, can also
+    // appear from blockrun Base when CDP returns non-200 with structured JSON body)
     if (
       parsed.error === "Payment verification failed" &&
       parsed.code === "PAYMENT_INVALID" &&
@@ -277,14 +278,19 @@ function transformPaymentError(errorBody: string): string {
       const wallet = parsed.payer || "unknown";
       const shortWallet =
         wallet.length > 12 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
+      // Detect chain from payer address format (0x = EVM, else Solana)
+      const chain = wallet.startsWith("0x") ? "Base" : "Solana";
 
       if (debugLower.includes("insufficient")) {
         return JSON.stringify({
           error: {
-            message: "Insufficient Solana USDC balance.",
+            message: `Insufficient ${chain} USDC balance.`,
             type: "insufficient_funds",
             wallet,
-            help: `Fund wallet ${shortWallet} with USDC on Solana, or switch to Base: /wallet base`,
+            help:
+              chain === "Solana"
+                ? `Fund wallet ${shortWallet} with USDC on Solana, or switch to Base: /wallet base`
+                : `Fund wallet ${shortWallet} with USDC on Base, or use free model: /model free`,
           },
         });
       }
@@ -293,10 +299,10 @@ function transformPaymentError(errorBody: string): string {
         debugLower.includes("transaction_simulation_failed") ||
         debugLower.includes("simulation")
       ) {
-        console.error(`[ClawRouter] Solana transaction simulation failed: ${parsed.debug}`);
+        console.error(`[ClawRouter] ${chain} transaction simulation failed: ${parsed.debug}`);
         return JSON.stringify({
           error: {
-            message: "Solana payment simulation failed. Retrying with a different model.",
+            message: `${chain} payment simulation failed. Retrying with a different model.`,
             type: "transaction_simulation_failed",
             help: "This is usually temporary. If it persists, try: /model free",
           },
@@ -306,7 +312,7 @@ function transformPaymentError(errorBody: string): string {
       if (debugLower.includes("invalid signature") || debugLower.includes("invalid_signature")) {
         return JSON.stringify({
           error: {
-            message: "Solana payment signature invalid.",
+            message: `${chain} payment signature invalid.`,
             type: "invalid_payload",
             help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash",
           },
@@ -316,23 +322,26 @@ function transformPaymentError(errorBody: string): string {
       if (debugLower.includes("expired")) {
         return JSON.stringify({
           error: {
-            message: "Solana payment expired. Retrying.",
+            message: `${chain} payment expired. Retrying.`,
             type: "expired",
             help: "This is usually temporary.",
           },
         });
       }
 
-      // Unknown Solana verification error — surface the debug reason
+      // Unknown verification error — surface the debug reason
       console.error(
-        `[ClawRouter] Solana payment verification failed: ${parsed.debug} payer=${wallet}`,
+        `[ClawRouter] ${chain} payment verification failed: ${parsed.debug} payer=${wallet}`,
       );
       return JSON.stringify({
         error: {
-          message: `Solana payment verification failed: ${parsed.debug}`,
+          message: `${chain} payment verification failed: ${parsed.debug}`,
           type: "payment_invalid",
           wallet,
-          help: "Try again or switch to Base: /wallet base",
+          help:
+            chain === "Solana"
+              ? "Try again or switch to Base: /wallet base"
+              : "Try again. If this persists, try: /model free",
         },
       });
     }
