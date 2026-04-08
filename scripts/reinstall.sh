@@ -125,7 +125,7 @@ echo ""
 # 0.5 Back up existing install for rollback
 echo "→ Backing up existing install..."
 if [ -d "$PLUGIN_DIR" ]; then
-  PLUGIN_BACKUP="$HOME/.openclaw/extensions/clawrouter.backup.$(date +%s)"
+  PLUGIN_BACKUP="$HOME/.openclaw/blockrun/clawrouter.backup.$(date +%s)"
   mv "$PLUGIN_DIR" "$PLUGIN_BACKUP"
   echo "  ✓ Plugin files staged at: $PLUGIN_BACKUP"
 else
@@ -406,6 +406,13 @@ try {
 } catch (e) { fs.writeFileSync('$CHANNEL_CONFIG_BACKUP', '{}'); }
 "
 fi
+
+# Pre-install cleanup: remove any backup/stage dirs from extensions/ BEFORE
+# openclaw plugins install scans the directory. If they exist during install,
+# OpenClaw writes them into config as duplicate plugins.
+for stale in "$HOME/.openclaw/extensions/clawrouter.backup."* "$HOME/.openclaw/extensions/.openclaw-install-stage-"*; do
+  [ -d "$stale" ] && rm -rf "$stale"
+done
 
 echo "→ Installing ClawRouter..."
 # Run with timeout — openclaw plugins install may hang after printing
@@ -736,10 +743,11 @@ else
   echo "  ✓ No stale install stages found"
 fi
 
-# Clean up stale plugin backups — these cause "duplicate plugin" warnings on restart
+# Clean up stale plugin backups — old ones lived in extensions/ (caused duplicate
+# plugin detection), new ones live in blockrun/. Clean both locations.
 echo "→ Cleaning up stale plugin backups..."
 CLEANED=0
-for backup_dir in "$HOME/.openclaw/extensions/clawrouter.backup."*; do
+for backup_dir in "$HOME/.openclaw/extensions/clawrouter.backup."* "$HOME/.openclaw/blockrun/clawrouter.backup."*; do
   if [ -d "$backup_dir" ]; then
     rm -rf "$backup_dir"
     CLEANED=$((CLEANED + 1))
@@ -751,7 +759,7 @@ else
   echo "  ✓ No stale backups found"
 fi
 
-# Clean plugin registry — remove entries pointing to stale install-stage paths
+# Clean plugin registry — remove entries pointing to stale stage/backup paths
 echo "→ Cleaning plugin registry..."
 node -e "
 const fs = require('fs');
@@ -760,25 +768,26 @@ if (!fs.existsSync(configPath)) process.exit(0);
 try {
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   let changed = false;
-  // Remove plugins.entries pointing to install-stage directories
+  const isStale = (p) => p.includes('.openclaw-install-stage-') || p.includes('clawrouter.backup.');
+  // Remove plugins.entries pointing to stale directories
   if (config?.plugins?.entries) {
     for (const [key, val] of Object.entries(config.plugins.entries)) {
       const path = typeof val === 'string' ? val : val?.path || val?.main || '';
-      if (path.includes('.openclaw-install-stage-')) {
+      if (isStale(path)) {
         delete config.plugins.entries[key];
         changed = true;
-        console.log('  Removed plugins.entries.' + key + ' (stale stage)');
+        console.log('  Removed plugins.entries.' + key + ' (stale)');
       }
     }
   }
-  // Remove plugins.installs pointing to install-stage directories
+  // Remove plugins.installs pointing to stale directories
   if (config?.plugins?.installs) {
     for (const [key, val] of Object.entries(config.plugins.installs)) {
       const path = typeof val === 'string' ? val : val?.path || val?.main || '';
-      if (path.includes('.openclaw-install-stage-')) {
+      if (isStale(path)) {
         delete config.plugins.installs[key];
         changed = true;
-        console.log('  Removed plugins.installs.' + key + ' (stale stage)');
+        console.log('  Removed plugins.installs.' + key + ' (stale)');
       }
     }
   }
