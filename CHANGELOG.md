@@ -4,6 +4,12 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.152 — Apr 16, 2026
+
+- **Repository URL fixed** — `package.json` `repository.url` now points at `gitlab.com/blockrunai/ClawRouter`. The previous value (`github.com/BlockRunAI/ClawRouter`) has been dead since the GitHub org was banned 2026-04-15. Metadata-only bump; no code changes.
+
+---
+
 ## v0.12.151 — Apr 16, 2026
 
 - **Stop bundling blockrun-mcp** — ClawRouter no longer auto-injects `mcp.servers.blockrun` into `~/.openclaw/openclaw.json`. The `npx -y @blockrun/mcp@latest` spawns were leaking shell-wrapper + node grandchildren processes on the host (see reports of 70+ orphaned processes accumulating). Removal of the injection call is matched by a one-shot migration that strips any previously managed `mcp.servers.blockrun` entry the next time the gateway starts. User-defined `blockrun` MCP entries are preserved. **Restart your gateway after upgrading** to free any already-leaked processes. Users who still want the MCP bridge can opt in manually: `openclaw mcp add blockrun npx -y @blockrun/mcp@latest`.

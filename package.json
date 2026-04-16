@@ -1,6 +1,6 @@
 {
   "name": "@blockrun/clawrouter",
-  "version": "0.12.151",
+  "version": "0.12.152",
   "description": "Smart LLM router — save 85% on inference costs. 55+ models (11 free), one wallet, x402 micropayments.",
   "type": "module",
   "main": "dist/index.js",
@@ -72,7 +72,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BlockRunAI/ClawRouter.git"
+    "url": "git+https://gitlab.com/blockrunai/ClawRouter.git"
   },
   "dependencies": {
     "@scure/bip32": "^2.0.1",
