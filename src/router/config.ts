@@ -1150,14 +1150,20 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
     },
     COMPLEX: {
       primary: "anthropic/claude-opus-4.7", // Best quality for complex tasks
+      // Fallback chain de-Gemini'd 2026-04-22: when Anthropic 503s, Gemini is
+      // also prone to "high demand" 503s (correlated failure — everyone falls
+      // back to Google at the same time). Prefer xAI Grok → Moonshot → OpenAI
+      // flagship → DeepSeek → NVIDIA free instead.
       fallback: [
-        "openai/gpt-5.4", // Newest flagship
-        "openai/gpt-5.3-codex",
-        "anthropic/claude-opus-4.6",
+        "anthropic/claude-opus-4.6", // in-family hot swap first
         "anthropic/claude-sonnet-4.6",
-        "google/gemini-3.1-pro", // Newest Gemini
-        "google/gemini-3-pro-preview",
+        "xai/grok-4-0709", // 503-resistant flagship
+        "moonshot/kimi-k2.6", // Moonshot flagship, independent infra
         "moonshot/kimi-k2.5",
+        "openai/gpt-5.4", // Newest OpenAI flagship (slow but stable)
+        "openai/gpt-5.3-codex",
+        "deepseek/deepseek-chat", // Cheap, reliable
+        "free/qwen3-coder-480b", // NVIDIA free ultimate backstop
       ],
     },
     REASONING: {
@@ -1193,12 +1199,17 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
     },
     COMPLEX: {
       primary: "anthropic/claude-sonnet-4.6", // 2,110ms — best agentic quality
+      // Fallback chain de-Gemini'd 2026-04-22: Gemini's "high demand" 503s
+      // correlate with Anthropic outages (everyone falls back together).
+      // Prefer 503-resistant providers first.
       fallback: [
-        "anthropic/claude-opus-4.7", // Flagship Opus — top quality
+        "anthropic/claude-opus-4.7", // Flagship Opus — in-family hot swap
         "anthropic/claude-opus-4.6", // 2,139ms
-        "google/gemini-3.1-pro", // 1,609ms
-        "xai/grok-4-0709", // 1,348ms
-        "openai/gpt-5.4", // 6,213ms — slow but highest quality fallback
+        "xai/grok-4-0709", // 1,348ms — strong tool use, independent infra
+        "moonshot/kimi-k2.5", // strong tool use, independent infra
+        "openai/gpt-5.4", // 6,213ms — slow but reliable flagship
+        "deepseek/deepseek-chat", // 1,431ms — cheap, reliable
+        "free/qwen3-coder-480b", // NVIDIA free ultimate backstop
       ],
     },
     REASONING: {
