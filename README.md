@@ -2,6 +2,8 @@
 
 <h1>The LLM router built for autonomous agents</h1>
 
+<h3>Powered by <a href="https://www.okx.com/web3">OKX Agent Wallet</a> — the onchain identity layer for AI agents</h3>
+
 <p>Agents can't sign up for accounts. Agents can't enter credit cards.<br>
 Agents can only sign transactions.<br><br>
 <strong>XClawRouter is the only LLM router that lets agents operate independently.</strong></p>
