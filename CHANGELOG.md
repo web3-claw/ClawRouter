@@ -4,6 +4,12 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.163 — Apr 23, 2026
+
+- **README leads with the free tier.** Post-v0.12.160 the product story changed — 8 NVIDIA models free forever, no wallet required to start — but the README still opened "fund your wallet" as step 2 of Quick Start and buried the free tier in a single line at the bottom. Rewrites so the free tier is the hook, not a footnote: hero tagline adds "8 models free, no crypto required. No signup. No API key. No credit card." plus a 🆓 shields.io badge; the "Why ClawRouter exists" list opens with "Starts at $0"; the comparison-vs-others table adds a "Free tier" row showing ClawRouter's "8 models, no signup" against OpenRouter's rate limits and LiteLLM/Martian/Portkey's "no"; Quick Start gets a "No wallet? 8 models work free out of the box" callout and reframes step 2 as optional; routing-profiles table adds `/model free` at 100% savings; the Costs section lists the current 8 free model IDs by name (was a stale 11-model list referencing the retired Nemotron Ultra / Mistral Large / Devstral). This release is README-only — code is identical to v0.12.162 — version bump exists so the updated marketing reaches the npmjs.com package page and the clawhub marketplace listing.
+
+---
+
 ## v0.12.162 — Apr 23, 2026
 
 - **ByteDance Seedance video models wired into the client.** BlockRun server has exposed three Seedance models since late April — `bytedance/seedance-1.5-pro` ($0.03/sec), `bytedance/seedance-2.0-fast` ($0.15/sec, ~60–80s gen time), and `bytedance/seedance-2.0` Pro ($0.30/sec) — all 720p, text-to-video + image-to-video, 5s default and up to 10s. The `/v1/videos/generations` proxy passthrough in `src/proxy.ts` already forwarded any `model` value untouched, so **actual USDC charges were always correct** (server dictates the amount in its 402 response and `payment-preauth.ts` caches the server-sent `PaymentRequired`, not a local estimate — charges never depended on ClawRouter's local pricing table). Three client-side gaps were fixed anyway:
