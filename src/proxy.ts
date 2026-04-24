@@ -4026,7 +4026,11 @@ async function proxyRequest(
   }
 
   // --- Response cache check (long-term, 10min TTL) ---
-  const cacheKey = ResponseCache.generateKey(body);
+  // Prefix with the client's original stream intent. The body was already
+  // rewritten to stream:false for the upstream call (same reason as dedupKey
+  // below), so SSE and JSON responses would otherwise share a cache slot and
+  // the first caller's response shape would be served to the second.
+  const cacheKey = `${isStreaming ? "sse" : "json"}:${ResponseCache.generateKey(body)}`;
   const reqHeaders: Record<string, string> = {};
   for (const [key, value] of Object.entries(req.headers)) {
     if (typeof value === "string") reqHeaders[key] = value;
@@ -4042,7 +4046,12 @@ async function proxyRequest(
   }
 
   // --- Dedup check (short-term, 30s TTL for retries) ---
-  const dedupKey = RequestDeduplicator.hash(body);
+  // Prefix with the client's original stream intent. The upstream `stream` flag
+  // is rewritten to false before this point (BlockRun API is non-streaming), so
+  // a streaming and non-streaming request with otherwise-identical bodies would
+  // otherwise collide and serve each other's responses (JSON body to an SSE
+  // caller, or vice versa).
+  const dedupKey = `${isStreaming ? "sse" : "json"}:${RequestDeduplicator.hash(body)}`;
 
   // Check dedup cache (catches retries within 30s)
   const cached = deduplicator.getCached(dedupKey);

@@ -286,4 +286,53 @@ describe("tool forwarding", () => {
     );
     expect(finishReasons).toContain("tool_calls");
   });
+
+  it("isolates dedup cache between streaming and non-streaming requests with identical bodies", async () => {
+    upstreamResponse = {
+      id: "chatcmpl-dedup-isolation",
+      object: "chat.completion",
+      created: Math.floor(Date.now() / 1000),
+      model: "openai/gpt-4o",
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: "hello from dedup test" },
+          finish_reason: "stop",
+        },
+      ],
+      usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
+    };
+
+    const baseRequest = {
+      model: "openai/gpt-4o",
+      messages: [
+        { role: "user", content: "dedup-isolation probe — identical body, different stream flag" },
+      ],
+    };
+
+    // Non-streaming first — populates dedup cache
+    const nonStreamRes = await fetch(`${proxy.baseUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...baseRequest, stream: false }),
+    });
+    expect(nonStreamRes.status).toBe(200);
+    expect(nonStreamRes.headers.get("content-type")).toContain("application/json");
+    const nonStreamJson = (await nonStreamRes.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    expect(nonStreamJson.choices?.[0]?.message?.content).toBe("hello from dedup test");
+
+    // Streaming second — must not receive the cached JSON body
+    const streamRes = await fetch(`${proxy.baseUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...baseRequest, stream: true }),
+    });
+    expect(streamRes.status).toBe(200);
+    expect(streamRes.headers.get("content-type")).toContain("text/event-stream");
+    const streamText = await streamRes.text();
+    expect(streamText).toContain("data: ");
+    expect(streamText).toContain("[DONE]");
+  });
 });
