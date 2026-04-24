@@ -4,6 +4,12 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.166 — Apr 24, 2026
+
+- **Tool-call planning prose suppressed even when `finish_reason` is the only signal (thanks @0xCheetah1, #162).** Follow-up to v0.12.165's #161 fix. Live Telegram/OpenClaw testing caught one more shape the planning-prose leak could wriggle through: some upstreams (Moonshot Kimi K2.6 again) mark a turn with `finish_reason: "tool_calls"` without exposing `message.tool_calls` / `delta.tool_calls` at the same inspection point. The #161 gate (`toolCalls.length > 0`) saw no array and let the prose through. The gate is now `endsWithToolCalls || toolCalls.length > 0` — applied consistently across the non-streaming JSON path and the SSE emission path, plus the finish-reason override in the SSE terminal chunk. Two new regression tests in `src/proxy.tool-forwarding.test.ts` — one per response shape — lock the behavior in: a response with `finish_reason: "tool_calls"` and no tool_calls array has its `content` blanked and the `tool_calls` finish_reason preserved. User-visible impact: fewer "I should look up X before replying" preambles sneaking into agent chat surfaces for turns that are supposed to be pure tool invocations.
+
+---
+
 ## v0.12.165 — Apr 24, 2026
 
 - **Tool-call planning prose no longer leaks to chat surfaces (thanks @0xCheetah1, #161).** Some OpenAI-compatible providers — Moonshot's Kimi K2.6 was the visible offender through OpenClaw Telegram — return `{ content: "The user wants the current time. I should call get_current_time with Chicago.", tool_calls: [...] }`. Tool execution only needs `tool_calls`; the `content` field is internal planning that the upstream should have hidden behind a `<think>` tag but didn't. ClawRouter now suppresses `content` whenever `tool_calls.length > 0`, in both the non-streaming JSON response path and the SSE-conversion path that clients like OpenClaw hit with `stream: true`. Tool execution is unaffected; only the user-visible planning prose goes away. Covered by two regression tests in `src/proxy.tool-forwarding.test.ts` (one per response shape).

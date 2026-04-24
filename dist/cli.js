@@ -79949,9 +79949,10 @@ data: [DONE]
           };
           if (rsp.choices && Array.isArray(rsp.choices)) {
             for (const choice of rsp.choices) {
+              const endsWithToolCalls = choice.finish_reason === "tool_calls";
               const toolCalls = choice.message?.tool_calls ?? choice.delta?.tool_calls;
               const rawContent = choice.message?.content ?? choice.delta?.content ?? "";
-              const content = toolCalls && toolCalls.length > 0 ? "" : stripThinkingTokens(rawContent);
+              const content = endsWithToolCalls || toolCalls && toolCalls.length > 0 ? "" : stripThinkingTokens(rawContent);
               const role = choice.message?.role ?? choice.delta?.role ?? "assistant";
               const index2 = choice.index ?? 0;
               if (content) {
@@ -80040,7 +80041,7 @@ data: [DONE]
                     index: index2,
                     delta: {},
                     logprobs: null,
-                    finish_reason: toolCalls && toolCalls.length > 0 ? "tool_calls" : choice.finish_reason ?? "stop"
+                    finish_reason: endsWithToolCalls || toolCalls && toolCalls.length > 0 ? "tool_calls" : choice.finish_reason ?? "stop"
                   }
                 ]
               };
@@ -80152,7 +80153,7 @@ data: [DONE]
           for (const choice of parsed.choices ?? []) {
             const message = choice.message;
             if (!message || typeof message.content !== "string") continue;
-            if (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
+            if (choice.finish_reason === "tool_calls" || Array.isArray(message.tool_calls) && message.tool_calls.length > 0) {
               if (message.content !== "") {
                 message.content = "";
                 changed = true;
