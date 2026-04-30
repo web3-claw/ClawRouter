@@ -40,7 +40,7 @@ describe("/debug command", () => {
     expect(body.choices[0].finish_reason).toBe("stop");
 
     const content = body.choices[0].message.content;
-    expect(content).toContain("XClawRouter Debug");
+    expect(content).toContain("ClawRouter Debug");
     expect(content).toContain("Profile:");
     expect(content).toContain("Tier:");
     expect(content).toContain("Model:");
@@ -67,7 +67,7 @@ describe("/debug command", () => {
     };
 
     const content = body.choices[0].message.content;
-    expect(content).toContain("XClawRouter Debug");
+    expect(content).toContain("ClawRouter Debug");
     // A coding prompt should score on codePresence
     expect(content).toContain("codePresence:");
   });
@@ -90,7 +90,7 @@ describe("/debug command", () => {
     const text = await res.text();
     expect(text).toContain("data: ");
     expect(text).toContain("[DONE]");
-    expect(text).toContain("XClawRouter Debug");
+    expect(text).toContain("ClawRouter Debug");
     expect(text).toContain("clawrouter/debug");
   });
 

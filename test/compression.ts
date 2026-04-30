@@ -100,7 +100,7 @@ async function runTests() {
   // Generate an ephemeral test wallet key
   const testWalletKey = generatePrivateKey();
 
-  // Start XClawRouter proxy pointing to mock API
+  // Start ClawRouter proxy pointing to mock API
   const proxy = await startProxy({
     wallet: testWalletKey,
     apiBase: `http://127.0.0.1:${mockApi.port}`,
@@ -108,7 +108,7 @@ async function runTests() {
     skipBalanceCheck: true,
     autoCompressRequests: true, // Enable compression
     compressionThresholdKB: 50, // Lower threshold for testing
-    onReady: (port) => console.log(`XClawRouter proxy started on port ${port}`),
+    onReady: (port) => console.log(`ClawRouter proxy started on port ${port}`),
   });
 
   // Test 1: Small request - no compression needed

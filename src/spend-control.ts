@@ -111,7 +111,7 @@ export class FileSpendControlStorage implements SpendControlStorage {
         return { limits, history };
       }
     } catch (err) {
-      console.error(`[XClawRouter] Failed to load spending data, starting fresh: ${err}`);
+      console.error(`[ClawRouter] Failed to load spending data, starting fresh: ${err}`);
     }
     return null;
   }
@@ -125,7 +125,7 @@ export class FileSpendControlStorage implements SpendControlStorage {
         mode: 0o600,
       });
     } catch (err) {
-      console.error(`[XClawRouter] Failed to save spending data: ${err}`);
+      console.error(`[ClawRouter] Failed to save spending data: ${err}`);
     }
   }
 }

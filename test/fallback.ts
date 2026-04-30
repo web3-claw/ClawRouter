@@ -2,7 +2,7 @@
  * Test for model fallback logic.
  *
  * Tests that when a primary model fails with a provider error,
- * XClawRouter correctly falls back to the next model in the chain.
+ * ClawRouter correctly falls back to the next model in the chain.
  *
  * Usage:
  *   npx tsx test/fallback.ts
@@ -151,13 +151,13 @@ async function runTests() {
   // Generate an ephemeral test wallet key
   const testWalletKey = generatePrivateKey();
 
-  // Start XClawRouter proxy pointing to mock API
+  // Start ClawRouter proxy pointing to mock API
   const proxy = await startProxy({
     wallet: testWalletKey,
     apiBase: `http://127.0.0.1:${mockApi.port}`,
     port: 0,
     skipBalanceCheck: true, // Skip balance check for testing
-    onReady: (port) => console.log(`XClawRouter proxy started on port ${port}`),
+    onReady: (port) => console.log(`ClawRouter proxy started on port ${port}`),
     onRouted: (d) => console.log(`  [Routed] ${d.model} (${d.tier}) - ${d.reasoning}`),
   });
 
@@ -556,8 +556,8 @@ async function runTests() {
     assert(!res2.ok, `Second request blocked by cost cap: ${res2.status}`);
     assert(res2.status === 429, `Status is 429: ${res2.status}`);
     assert(
-      res2.headers.get("X-XClawRouter-Cost-Cap-Exceeded") === "1",
-      `X-XClawRouter-Cost-Cap-Exceeded header set: ${res2.headers.get("X-XClawRouter-Cost-Cap-Exceeded")}`,
+      res2.headers.get("X-ClawRouter-Cost-Cap-Exceeded") === "1",
+      `X-ClawRouter-Cost-Cap-Exceeded header set: ${res2.headers.get("X-ClawRouter-Cost-Cap-Exceeded")}`,
     );
     const capData = (await res2.json()) as { error?: { type?: string } };
     assert(
@@ -573,7 +573,7 @@ async function runTests() {
   }
 
   // Test 10b: maxCostPerRun graceful mode — mid-task downgrade via routing profile
-  // Uses blockrun/auto (routing profile) so XClawRouter chose the model and can downgrade.
+  // Uses blockrun/auto (routing profile) so ClawRouter chose the model and can downgrade.
   // cap=$0.0015: first request succeeds ($0.001 minimum cost), second is downgraded ($0.0005 left).
   {
     console.log(
@@ -708,8 +708,8 @@ async function runTests() {
     assert(!res2d.ok, `Second explicit request blocked: ${res2d.status}`);
     assert(res2d.status === 429, `Status is 429: ${res2d.status}`);
     assert(
-      res2d.headers.get("X-XClawRouter-Budget-Mode") === "blocked",
-      `X-XClawRouter-Budget-Mode is blocked: ${res2d.headers.get("X-XClawRouter-Budget-Mode")}`,
+      res2d.headers.get("X-ClawRouter-Budget-Mode") === "blocked",
+      `X-ClawRouter-Budget-Mode is blocked: ${res2d.headers.get("X-ClawRouter-Budget-Mode")}`,
     );
     const blockData2 = (await res2d.json()) as { error?: { type?: string; code?: string } };
     assert(
@@ -858,8 +858,8 @@ async function runTests() {
     assert(!res.ok, `Tools request blocked by budget: ${res.status}`);
     assert(res.status === 429, `Status is 429: ${res.status}`);
     assert(
-      res.headers.get("X-XClawRouter-Budget-Mode") === "blocked",
-      `X-XClawRouter-Budget-Mode is blocked: ${res.headers.get("X-XClawRouter-Budget-Mode")}`,
+      res.headers.get("X-ClawRouter-Budget-Mode") === "blocked",
+      `X-ClawRouter-Budget-Mode is blocked: ${res.headers.get("X-ClawRouter-Budget-Mode")}`,
     );
     const blockData = (await res.json()) as { error?: { type?: string; code?: string } };
     assert(

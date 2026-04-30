@@ -1,5 +1,5 @@
 /**
- * Typed Error Classes for XClawRouter
+ * Typed Error Classes for ClawRouter
  *
  * Provides structured errors for balance-related failures with
  * all necessary information for user-friendly error messages.

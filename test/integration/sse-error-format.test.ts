@@ -5,7 +5,7 @@
  * JSON body, the proxy wraps it in {"error": {...}} format instead of sending
  * raw JSON — which causes OpenAI SDKs to throw a generic "Unexpected error".
  *
- * Regression test for: https://github.com/BlockRunAI/XClawRouter/issues/139
+ * Regression test for: https://github.com/BlockRunAI/ClawRouter/issues/139
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";

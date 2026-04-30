@@ -1,5 +1,5 @@
 /**
- * Integration test setup — programmatically starts XClawRouter proxy.
+ * Integration test setup — programmatically starts ClawRouter proxy.
  *
  * Shared across all integration test files via beforeAll/afterAll.
  * Starts the proxy on a worker-scoped port, waits for /health to return 200,

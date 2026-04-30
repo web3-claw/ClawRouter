@@ -26,7 +26,7 @@ Before building the router, we needed ground truth. We benchmarked all 55+ model
 ### Methodology
 
 ```
-Setup:     XClawRouter v0.12.47 proxy on localhost
+Setup:     ClawRouter v0.12.47 proxy on localhost
            → BlockRun x402 gateway (Base EVM chain)
            → Provider APIs (OpenAI, Anthropic, Google, xAI, DeepSeek, Moonshot, MiniMax, Z.AI)
 
@@ -312,11 +312,11 @@ We originally designed a two-stage system where low-confidence rules-based class
 
 ## Appendix: Full Benchmark Data
 
-Raw data (55+ models, latency, throughput, IQ scores, pricing): [`benchmark-merged.json`](https://github.com/BlockRunAI/XClawRouter/blob/main/benchmark-merged.json)
+Raw data (55+ models, latency, throughput, IQ scores, pricing): [`benchmark-merged.json`](https://github.com/BlockRunAI/ClawRouter/blob/main/benchmark-merged.json)
 
-Routing configuration: [`src/router/config.ts`](https://github.com/BlockRunAI/XClawRouter/blob/main/src/router/config.ts)
+Routing configuration: [`src/router/config.ts`](https://github.com/BlockRunAI/ClawRouter/blob/main/src/router/config.ts)
 
-Scoring implementation: [`src/router/rules.ts`](https://github.com/BlockRunAI/XClawRouter/blob/main/src/router/rules.ts)
+Scoring implementation: [`src/router/rules.ts`](https://github.com/BlockRunAI/ClawRouter/blob/main/src/router/rules.ts)
 
 ---
 

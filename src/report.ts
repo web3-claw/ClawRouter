@@ -21,7 +21,7 @@ export async function generateReport(period: ReportPeriod, json: boolean = false
 function formatMarkdownReport(period: ReportPeriod, days: number, stats: AggregatedStats): string {
   const lines: string[] = [];
 
-  lines.push(`# XClawRouter ${capitalize(period)} Report`);
+  lines.push(`# ClawRouter ${capitalize(period)} Report`);
   lines.push(`**Period:** Last ${days} day${days > 1 ? "s" : ""}`);
   lines.push(`**Generated:** ${new Date().toISOString()}`);
   lines.push("");

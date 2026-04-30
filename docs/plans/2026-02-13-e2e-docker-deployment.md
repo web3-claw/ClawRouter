@@ -1,8 +1,8 @@
-# XClawRouter E2E Testing, Docker Validation & Deployment
+# ClawRouter E2E Testing, Docker Validation & Deployment
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Comprehensive E2E test coverage, Docker install/uninstall validation (10 cases), and automated deployment pipeline for XClawRouter.
+**Goal:** Comprehensive E2E test coverage, Docker install/uninstall validation (10 cases), and automated deployment pipeline for ClawRouter.
 
 **Architecture:** Three-phase approach: (1) Expand E2E tests to cover error scenarios, edge cases, and the recent fixes (504 timeout, settlement retry, large payload handling), (2) Build Docker-based installation testing covering npm global, OpenClaw plugin, upgrade/downgrade, and cleanup scenarios, (3) Automate deployment with pre-publish validation and version management.
 
@@ -326,7 +326,7 @@ BLOCKRUN_WALLET_KEY=0x... npx tsx test/test-e2e.ts
 Expected output:
 
 ```
-=== XClawRouter e2e tests ===
+=== ClawRouter e2e tests ===
 
 Starting proxy...
 Proxy ready on port 8405
@@ -375,7 +375,7 @@ large payload truncation."
 
 ## Task 2: Docker Install/Uninstall Tests (10 Cases)
 
-**Goal:** Validate XClawRouter installation, upgrade, uninstall across different methods and environments.
+**Goal:** Validate ClawRouter installation, upgrade, uninstall across different methods and environments.
 
 **Files:**
 
@@ -448,8 +448,8 @@ test_case() {
 
 # Test 1: Fresh npm global installation
 test_fresh_install() {
-  echo "Installing @blockrun/xclawrouter globally..."
-  npm install -g @blockrun/xclawrouter@latest
+  echo "Installing @blockrun/clawrouter globally..."
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Verifying clawrouter command exists..."
   which clawrouter || return 1
@@ -458,15 +458,15 @@ test_fresh_install() {
   clawrouter --version || return 1
 
   echo "Verifying package is in npm global list..."
-  npm list -g @blockrun/xclawrouter || return 1
+  npm list -g @blockrun/clawrouter || return 1
 
   return 0
 }
 
 # Test 2: Uninstall verification
 test_uninstall() {
-  echo "Uninstalling @blockrun/xclawrouter..."
-  npm uninstall -g @blockrun/xclawrouter
+  echo "Uninstalling @blockrun/clawrouter..."
+  npm uninstall -g @blockrun/clawrouter
 
   echo "Verifying clawrouter command is gone..."
   if which clawrouter 2>/dev/null; then
@@ -475,7 +475,7 @@ test_uninstall() {
   fi
 
   echo "Verifying package is not in npm global list..."
-  if npm list -g @blockrun/xclawrouter 2>/dev/null; then
+  if npm list -g @blockrun/clawrouter 2>/dev/null; then
     echo "ERROR: package still in npm list after uninstall"
     return 1
   fi
@@ -485,8 +485,8 @@ test_uninstall() {
 
 # Test 3: Reinstall after uninstall
 test_reinstall() {
-  echo "Reinstalling @blockrun/xclawrouter..."
-  npm install -g @blockrun/xclawrouter@latest
+  echo "Reinstalling @blockrun/clawrouter..."
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Verifying reinstall works..."
   clawrouter --version || return 1
@@ -502,8 +502,8 @@ test_openclaw_plugin_install() {
     return 0
   }
 
-  echo "Installing XClawRouter as OpenClaw plugin..."
-  openclaw plugins install @blockrun/xclawrouter || return 1
+  echo "Installing ClawRouter as OpenClaw plugin..."
+  openclaw plugins install @blockrun/clawrouter || return 1
 
   echo "Verifying plugin is listed..."
   openclaw plugins list | grep -q "clawrouter" || return 1
@@ -518,7 +518,7 @@ test_openclaw_plugin_uninstall() {
     return 0
   fi
 
-  echo "Uninstalling XClawRouter plugin..."
+  echo "Uninstalling ClawRouter plugin..."
   openclaw plugins uninstall clawrouter || return 1
 
   echo "Verifying plugin is removed..."
@@ -533,14 +533,14 @@ test_openclaw_plugin_uninstall() {
 # Test 6: Upgrade from previous version
 test_upgrade() {
   echo "Installing older version (0.8.25)..."
-  npm install -g @blockrun/xclawrouter@0.8.25
+  npm install -g @blockrun/clawrouter@0.8.25
 
   echo "Verifying old version..."
   local old_version=$(clawrouter --version)
   echo "Installed: $old_version"
 
   echo "Upgrading to latest..."
-  npm install -g @blockrun/xclawrouter@latest
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Verifying upgrade..."
   local new_version=$(clawrouter --version)
@@ -560,7 +560,7 @@ test_custom_wallet() {
   export BLOCKRUN_WALLET_KEY="0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
   echo "Installing with wallet key..."
-  npm install -g @blockrun/xclawrouter@latest
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Verifying installation..."
   clawrouter --version || return 1
@@ -571,11 +571,11 @@ test_custom_wallet() {
 
 # Test 8: Verify package files exist
 test_package_files() {
-  echo "Installing @blockrun/xclawrouter..."
-  npm install -g @blockrun/xclawrouter@latest
+  echo "Installing @blockrun/clawrouter..."
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Finding package installation directory..."
-  local pkg_dir=$(npm root -g)/@blockrun/xclawrouter
+  local pkg_dir=$(npm root -g)/@blockrun/clawrouter
 
   echo "Checking for required files..."
   [ -f "$pkg_dir/dist/index.js" ] || { echo "Missing dist/index.js"; return 1; }
@@ -589,14 +589,14 @@ test_package_files() {
 
 # Test 9: Version command accuracy
 test_version_command() {
-  echo "Installing @blockrun/xclawrouter..."
-  npm install -g @blockrun/xclawrouter@latest
+  echo "Installing @blockrun/clawrouter..."
+  npm install -g @blockrun/clawrouter@latest
 
   echo "Running version command..."
   local cli_version=$(clawrouter --version)
 
   echo "Reading package.json version..."
-  local pkg_dir=$(npm root -g)/@blockrun/xclawrouter
+  local pkg_dir=$(npm root -g)/@blockrun/clawrouter
   local pkg_version=$(node -p "require('$pkg_dir/package.json').version")
 
   echo "CLI version: $cli_version"
@@ -612,18 +612,18 @@ test_version_command() {
 
 # Test 10: Full cleanup verification
 test_full_cleanup() {
-  echo "Installing @blockrun/xclawrouter..."
-  npm install -g @blockrun/xclawrouter@latest
+  echo "Installing @blockrun/clawrouter..."
+  npm install -g @blockrun/clawrouter@latest
 
-  echo "Finding all XClawRouter files..."
-  local pkg_dir=$(npm root -g)/@blockrun/xclawrouter
+  echo "Finding all ClawRouter files..."
+  local pkg_dir=$(npm root -g)/@blockrun/clawrouter
   local bin_link=$(which clawrouter)
 
   echo "Package dir: $pkg_dir"
   echo "Binary link: $bin_link"
 
   echo "Uninstalling..."
-  npm uninstall -g @blockrun/xclawrouter
+  npm uninstall -g @blockrun/clawrouter
 
   echo "Verifying complete cleanup..."
   if [ -d "$pkg_dir" ]; then
@@ -642,7 +642,7 @@ test_full_cleanup() {
 
 # Run all tests
 echo "╔════════════════════════════════════════════════════════╗"
-echo "║   XClawRouter Docker Installation Test Suite          ║"
+echo "║   ClawRouter Docker Installation Test Suite          ║"
 echo "╚════════════════════════════════════════════════════════╝"
 
 test_case "1. Fresh npm global installation" test_fresh_install
@@ -710,13 +710,13 @@ Expected output:
 🧪 Running installation test suite (10 test cases)...
 
 ╔════════════════════════════════════════════════════════╗
-║   XClawRouter Docker Installation Test Suite          ║
+║   ClawRouter Docker Installation Test Suite          ║
 ╚════════════════════════════════════════════════════════╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Test: 1. Fresh npm global installation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Installing @blockrun/xclawrouter globally...
+Installing @blockrun/clawrouter globally...
 Verifying clawrouter command exists...
 Checking version...
 0.8.30
@@ -778,7 +778,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}  XClawRouter Deployment Pipeline${NC}"
+echo -e "${GREEN}  ClawRouter Deployment Pipeline${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 # Step 1: Check git status (must be clean)
@@ -884,7 +884,7 @@ echo ""
 echo -e "${YELLOW}9. Updating version in source files...${NC}"
 cat > src/version.ts <<EOF
 /**
- * XClawRouter version
+ * ClawRouter version
  * Auto-generated during deployment
  */
 export const VERSION = "$NEW_VERSION";
@@ -914,7 +914,7 @@ echo "✓ Tag v$NEW_VERSION created"
 echo ""
 echo -e "${YELLOW}13. Ready to publish${NC}"
 echo ""
-echo "Package: @blockrun/xclawrouter"
+echo "Package: @blockrun/clawrouter"
 echo "Version: $NEW_VERSION"
 echo "Registry: https://registry.npmjs.org"
 echo ""
@@ -950,7 +950,7 @@ if command -v gh &> /dev/null; then
   echo "✓ GitHub release created"
 else
   echo -e "${YELLOW}WARNING: gh CLI not found. Skipping GitHub release creation.${NC}"
-  echo "Create release manually at: https://github.com/BlockRunAI/XClawRouter/releases/new"
+  echo "Create release manually at: https://github.com/BlockRunAI/ClawRouter/releases/new"
 fi
 
 echo ""
@@ -958,9 +958,9 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${GREEN}  Deployment Complete! 🎉${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Package: @blockrun/xclawrouter@$NEW_VERSION"
-echo "npm: https://www.npmjs.com/package/@blockrun/xclawrouter"
-echo "GitHub: https://github.com/BlockRunAI/XClawRouter/releases/tag/v$NEW_VERSION"
+echo "Package: @blockrun/clawrouter@$NEW_VERSION"
+echo "npm: https://www.npmjs.com/package/@blockrun/clawrouter"
+echo "GitHub: https://github.com/BlockRunAI/ClawRouter/releases/tag/v$NEW_VERSION"
 echo ""
 ```
 
@@ -1019,11 +1019,11 @@ BLOCKRUN_WALLET_KEY=0x... npx tsx test/test-e2e.ts
 **Create `docs/deployment.md`:**
 
 ````markdown
-# XClawRouter Deployment Guide
+# ClawRouter Deployment Guide
 
 ## Prerequisites
 
-1. **npm account with publish access** to `@blockrun/xclawrouter`
+1. **npm account with publish access** to `@blockrun/clawrouter`
 2. **GitHub CLI (`gh`)** installed (optional, for automated release creation)
 3. **Funded wallet** for E2E tests (optional, but recommended)
 
@@ -1095,10 +1095,10 @@ gh release create v0.8.31 --title "v0.8.31" --generate-notes
 
 ## Post-Deployment Verification
 
-1. Check npm package: https://www.npmjs.com/package/@blockrun/xclawrouter
-2. Verify installation: `npm install -g @blockrun/xclawrouter@latest`
+1. Check npm package: https://www.npmjs.com/package/@blockrun/clawrouter
+2. Verify installation: `npm install -g @blockrun/clawrouter@latest`
 3. Test version: `clawrouter --version`
-4. Check GitHub release: https://github.com/BlockRunAI/XClawRouter/releases
+4. Check GitHub release: https://github.com/BlockRunAI/ClawRouter/releases
 
 ## Rollback
 
@@ -1114,7 +1114,7 @@ git revert HEAD
 git push origin main
 
 # Unpublish from npm (within 72 hours)
-npm unpublish @blockrun/xclawrouter@0.8.31
+npm unpublish @blockrun/clawrouter@0.8.31
 ```
 
 ## Troubleshooting
@@ -1171,7 +1171,7 @@ Expected output:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  XClawRouter Deployment Pipeline
+  ClawRouter Deployment Pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. Checking git status...
@@ -1220,7 +1220,7 @@ Enter choice (1-4): 1
 
 13. Ready to publish
 
-Package: @blockrun/xclawrouter
+Package: @blockrun/clawrouter
 Version: 0.8.31
 Registry: https://registry.npmjs.org
 

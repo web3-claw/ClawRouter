@@ -1,4 +1,4 @@
-# XClawRouter: Client-Side Smart Routing Design
+# ClawRouter: Client-Side Smart Routing Design
 
 > **Status: Implemented (v2)** — Weighted scoring engine shipped in [`src/router/`](../../src/router/). This document is the design record.
 
@@ -14,7 +14,7 @@ Every existing smart router (OpenRouter, LiteLLM, etc.) runs server-side. The ro
 
 BlockRun's structural advantage: **x402 per-model transparent pricing**. Each model has an independent price visible in the 402 response. This means the routing decision can live in the open-source plugin where it's inspectable, customizable, and auditable.
 
-|               | Server-side (OpenRouter) | Client-side (XClawRouter)       |
+|               | Server-side (OpenRouter) | Client-side (ClawRouter)        |
 | ------------- | ------------------------ | ------------------------------- |
 | Routing logic | Proprietary black box    | Open-source in plugin           |
 | Pricing       | Bundled, opaque          | Per-model, transparent via x402 |
@@ -38,7 +38,7 @@ OpenClaw Agent
      |
      v
 ┌─────────────────────────────────────────────────┐
-│              XClawRouter (src/router/)             │
+│              ClawRouter (src/router/)             │
 │                                                   │
 │  ┌─────────────────────────────────────────────┐ │
 │  │  Step 1: Weighted Scoring Engine (< 1ms)    │ │

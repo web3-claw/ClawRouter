@@ -1,5 +1,5 @@
 /**
- * /stats command — show XClawRouter usage statistics and cost savings.
+ * /stats command — show ClawRouter usage statistics and cost savings.
  * Extracted from index.ts for modularity.
  */
 import type { OpenClawPluginCommandDefinition, PluginCommandContext } from "../types.js";
@@ -8,7 +8,7 @@ import { getStats, formatStatsAscii, clearStats } from "../stats.js";
 export function createStatsCommand(): OpenClawPluginCommandDefinition {
   return {
     name: "stats",
-    description: "Show XClawRouter usage statistics and cost savings",
+    description: "Show ClawRouter usage statistics and cost savings",
     acceptsArgs: true,
     requireAuth: false,
     handler: async (ctx: PluginCommandContext) => {

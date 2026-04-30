@@ -1,5 +1,5 @@
 /**
- * Session Journal - Memory layer for XClawRouter
+ * Session Journal - Memory layer for ClawRouter
  *
  * Maintains a compact record of key actions per session, enabling agents
  * to recall earlier work even when OpenClaw's sessions_history is truncated.

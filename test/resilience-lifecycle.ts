@@ -236,7 +236,7 @@ async function testCloseTimeout(): Promise<void> {
 
 async function main() {
   console.log("\n╔════════════════════════════════════════════════════════════════╗");
-  console.log("║       XClawRouter Resilience OpenClaw Lifecycle Tests          ║");
+  console.log("║       ClawRouter Resilience OpenClaw Lifecycle Tests          ║");
   console.log("╚════════════════════════════════════════════════════════════════╝");
 
   await testSigusr1Restart();

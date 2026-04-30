@@ -2,7 +2,7 @@
  * OpenClaw security scanner integration tests.
  *
  * Runs OpenClaw's skill-scanner (the same one that fires during plugin install)
- * against XClawRouter's built dist/ to catch regressions like process.env
+ * against ClawRouter's built dist/ to catch regressions like process.env
  * triggering env-harvesting warnings.
  *
  * The scanner is imported directly from the installed openclaw package.
@@ -51,7 +51,7 @@ function resolveOpenclawDist(): string {
   }
 }
 
-/** Resolve XClawRouter dist dir — relative to this file, fall back to Docker path. */
+/** Resolve ClawRouter dist dir — relative to this file, fall back to Docker path. */
 function resolveClawrouterDist(): string {
   const local = resolve(__dirname, "../../dist");
   try {

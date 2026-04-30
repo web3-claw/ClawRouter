@@ -1,5 +1,5 @@
 /**
- * Balance Monitor for XClawRouter
+ * Balance Monitor for ClawRouter
  *
  * Monitors USDC balance on Base network with intelligent caching.
  * Provides pre-request balance checks to prevent failed payments.

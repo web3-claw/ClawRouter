@@ -217,11 +217,11 @@ async function runBlockrunExaSearch(args: Record<string, unknown>): Promise<unkn
 export const blockrunExaWebSearchProvider: WebSearchProviderPlugin = {
   id: BLOCKRUN_EXA_PROVIDER_ID,
   label: "BlockRun Exa Search",
-  hint: "Neural web search paid through your XClawRouter wallet",
+  hint: "Neural web search paid through your ClawRouter wallet",
   onboardingScopes: ["text-inference"],
   requiresCredential: false,
   envVars: [],
-  placeholder: "(uses XClawRouter wallet)",
+  placeholder: "(uses ClawRouter wallet)",
   signupUrl: "https://blockrun.ai",
   docsUrl: BLOCKRUN_EXA_DOCS_URL,
   autoDetectOrder: 5,
@@ -232,7 +232,7 @@ export const blockrunExaWebSearchProvider: WebSearchProviderPlugin = {
   applySelectionConfig: ensureBlockrunExaSelection,
   createTool: () => ({
     description:
-      "Search the web through BlockRun's Exa backend. Uses your XClawRouter wallet for x402 micropayments, so no Exa API key is required.",
+      "Search the web through BlockRun's Exa backend. Uses your ClawRouter wallet for x402 micropayments, so no Exa API key is required.",
     parameters: {
       type: "object",
       additionalProperties: false,

@@ -1,5 +1,5 @@
 /**
- * End-to-end test for XClawRouter proxy.
+ * End-to-end test for ClawRouter proxy.
  *
  * Starts the local x402 proxy, sends a real request through it to BlockRun,
  * and verifies the full flow: routing → x402 payment → LLM response.
@@ -89,7 +89,7 @@ function extractFirstMessageContent(payload: { text: string; json?: unknown }): 
 }
 
 async function main() {
-  console.log("\n=== XClawRouter e2e tests ===\n");
+  console.log("\n=== ClawRouter e2e tests ===\n");
   if (RUN_PAID_TESTS) {
     console.log(`Mode: FULL (paid + non-paid checks), wallet=${WALLET_ADDRESS}`);
   } else {

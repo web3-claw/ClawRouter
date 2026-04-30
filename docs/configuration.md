@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete reference for XClawRouter configuration options.
+Complete reference for ClawRouter configuration options.
 
 ## Table of Contents
 
@@ -53,7 +53,7 @@ openclaw gateway restart
 
 **Behavior:**
 
-- If a proxy is already running on the configured port, XClawRouter will **reuse it** instead of failing with `EADDRINUSE`
+- If a proxy is already running on the configured port, ClawRouter will **reuse it** instead of failing with `EADDRINUSE`
 - The proxy returns the wallet address of the existing instance, not the configured wallet
 - A warning is logged if the existing proxy uses a different wallet
 
@@ -74,7 +74,7 @@ Public RPC may rate-limit on heavy usage. Use a dedicated RPC for production.
 
 ## Wallet Configuration
 
-XClawRouter supports **two payment chains**: Base (EVM) and Solana. Both are USDC only — no SOL or ETH accepted for payments.
+ClawRouter supports **two payment chains**: Base (EVM) and Solana. Both are USDC only — no SOL or ETH accepted for payments.
 
 ### Check Active Wallet
 
@@ -144,7 +144,7 @@ cat ~/.openclaw/blockrun/wallet.key
 
 ### Wallet Backup & Recovery
 
-XClawRouter generates a **BIP-39 mnemonic** on first install — stored at `~/.openclaw/blockrun/wallet.key`. This single mnemonic derives both your EVM (Base) and Solana addresses. **Back up this file before terminating any VPS or machine!**
+ClawRouter generates a **BIP-39 mnemonic** on first install — stored at `~/.openclaw/blockrun/wallet.key`. This single mnemonic derives both your EVM (Base) and Solana addresses. **Back up this file before terminating any VPS or machine!**
 
 #### Using the `/wallet` Command
 
@@ -172,17 +172,17 @@ cat ~/.openclaw/blockrun/wallet.key
 
 ```bash
 # Option 1: Recover from mnemonic
-npx @blockrun/xclawrouter wallet recover "word1 word2 ... word12"
+npx @blockrun/clawrouter wallet recover "word1 word2 ... word12"
 
-# Option 2: Set environment variable (before installing XClawRouter)
+# Option 2: Set environment variable (before installing ClawRouter)
 export BLOCKRUN_WALLET_KEY=0x...your_private_key...
-openclaw plugins install @blockrun/xclawrouter
+openclaw plugins install @blockrun/clawrouter
 
 # Option 3: Create the key file directly
 mkdir -p ~/.openclaw/blockrun
 echo "your twelve word mnemonic here" > ~/.openclaw/blockrun/wallet.key
 chmod 600 ~/.openclaw/blockrun/wallet.key
-openclaw plugins install @blockrun/xclawrouter
+openclaw plugins install @blockrun/clawrouter
 ```
 
 **Important:** If a saved wallet file exists, it takes priority over the environment variable. To use a different wallet, delete the existing file first.
@@ -203,7 +203,7 @@ If you lose your wallet key, **there is no way to recover it**. The wallet is se
 
 ### Proxy Reuse (v0.4.1+)
 
-XClawRouter automatically detects and reuses an existing proxy on startup:
+ClawRouter automatically detects and reuses an existing proxy on startup:
 
 ```
 Session 1: startProxy() → starts server on :8402
@@ -219,10 +219,10 @@ Session 2: startProxy() → detects existing, reuses handle
 
 ### Programmatic Usage
 
-Use XClawRouter without OpenClaw:
+Use ClawRouter without OpenClaw:
 
 ```typescript
-import { startProxy } from "@blockrun/xclawrouter";
+import { startProxy } from "@blockrun/clawrouter";
 
 const proxy = await startProxy({
   walletKey: process.env.BLOCKRUN_WALLET_KEY!,
@@ -246,7 +246,7 @@ await proxy.close();
 Or use the router directly (no proxy, no payments):
 
 ```typescript
-import { route, DEFAULT_ROUTING_CONFIG, BLOCKRUN_MODELS } from "@blockrun/xclawrouter";
+import { route, DEFAULT_ROUTING_CONFIG, BLOCKRUN_MODELS } from "@blockrun/clawrouter";
 
 // Build pricing map
 const modelPricing = new Map();
@@ -275,7 +275,7 @@ console.log(decision);
 All options for `startProxy()`:
 
 ```typescript
-import { startProxy } from "@blockrun/xclawrouter";
+import { startProxy } from "@blockrun/clawrouter";
 
 const proxy = await startProxy({
   walletKey: "0x...",
@@ -312,7 +312,7 @@ const proxy = await startProxy({
 
 ```yaml
 plugins:
-  - id: "@blockrun/xclawrouter"
+  - id: "@blockrun/clawrouter"
     config:
       # Maximum spend per session/run in USD.
       # Default: disabled (no limit)
@@ -320,11 +320,11 @@ plugins:
 
       # How to enforce the budget cap. Default: graceful
       #
-      # graceful (default): when budget runs low, XClawRouter automatically downgrades
+      # graceful (default): when budget runs low, ClawRouter automatically downgrades
       #   to cheaper models (premium → auto → eco → free). Tasks keep running.
       #   Only returns an error if no model can serve the request at all.
       #
-      # strict: immediately returns 429 (X-XClawRouter-Cost-Cap-Exceeded: 1) once
+      # strict: immediately returns 429 (X-ClawRouter-Cost-Cap-Exceeded: 1) once
       #   the session spend reaches the cap. Use when you need a hard budget ceiling.
       maxCostPerRunMode: graceful # or: strict
 
@@ -379,7 +379,7 @@ plugins:
 
 ### Fallback Chain
 
-When the primary model fails (rate limits, billing errors, provider outages), XClawRouter tries the next model in the fallback chain:
+When the primary model fails (rate limits, billing errors, provider outages), ClawRouter tries the next model in the fallback chain:
 
 ```
 Request → gemini-2.5-flash (rate limited)
@@ -480,7 +480,7 @@ routing:
 For testing routing without spending USDC:
 
 ```typescript
-import { route, DEFAULT_ROUTING_CONFIG, BLOCKRUN_MODELS } from "@blockrun/xclawrouter";
+import { route, DEFAULT_ROUTING_CONFIG, BLOCKRUN_MODELS } from "@blockrun/clawrouter";
 
 // Build pricing map
 const modelPricing = new Map();

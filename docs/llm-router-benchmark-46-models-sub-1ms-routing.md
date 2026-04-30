@@ -121,13 +121,13 @@ The fix: we now weight **quality and user retention** alongside speed in our rou
 ## Methodology
 
 - **Date:** March 16, 2026
-- **Setup:** BlockRun XClawRouter v0.12.47 proxy on localhost, connected to BlockRun's x402 payment gateway on Base (EVM)
+- **Setup:** BlockRun ClawRouter v0.12.47 proxy on localhost, connected to BlockRun's x402 payment gateway on Base (EVM)
 - **Prompts:** 3 Python coding tasks (IPv4 validation, LCS algorithm, LRU cache), 2 requests per model
 - **Config:** 256 max tokens, non-streaming, temperature 0.7
 - **Latency:** End-to-end wall clock time including x402 payment verification (~50-100ms overhead)
 - **Intelligence scores:** [Artificial Analysis Intelligence Index v4.0](https://artificialanalysis.ai/leaderboards/models) (March 2026)
 
-Raw benchmark data: [benchmark-results.json](https://github.com/BlockRunAI/XClawRouter/blob/main/benchmark-results.json)
+Raw benchmark data: [benchmark-results.json](https://github.com/BlockRunAI/ClawRouter/blob/main/benchmark-results.json)
 
 ---
 

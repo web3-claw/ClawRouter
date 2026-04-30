@@ -1,9 +1,9 @@
 ---
 name: release
-description: Use this skill for EVERY XClawRouter release. Enforces the full checklist — version sync, CHANGELOG, blockrun server constant, build, tests, npm publish, git tag, GitHub release. No step can be skipped.
+description: Use this skill for EVERY ClawRouter release. Enforces the full checklist — version sync, CHANGELOG, blockrun server constant, build, tests, npm publish, git tag, GitHub release. No step can be skipped.
 ---
 
-# XClawRouter Release Checklist
+# ClawRouter Release Checklist
 
 **This skill is mandatory for every release. Execute every step in order. Do not skip.**
 
@@ -127,7 +127,7 @@ gh release create v{VERSION} \
   --notes "$(sed -n '/^## v{VERSION}/,/^## v[0-9]/p' CHANGELOG.md | head -n -1)"
 ```
 
-Verify the release on GitHub: https://github.com/BlockRunAI/XClawRouter/releases
+Verify the release on GitHub: https://github.com/BlockRunAI/ClawRouter/releases
 
 The release notes **must** match the CHANGELOG entry exactly.
 
@@ -139,9 +139,9 @@ The release notes **must** match the CHANGELOG entry exactly.
 npm publish --access public
 ```
 
-Verify: https://npmjs.com/package/@blockrun/xclawrouter
+Verify: https://npmjs.com/package/@blockrun/clawrouter
 
-Expected output: `+ @blockrun/xclawrouter@{VERSION}`
+Expected output: `+ @blockrun/clawrouter@{VERSION}`
 
 ---
 
@@ -160,7 +160,7 @@ head -10 CHANGELOG.md
 grep CURRENT_CLAWROUTER_VERSION /Users/vickyfu/Documents/blockrun-web/blockrun/src/app/api/v1/chat/completions/route.ts
 
 # 4. npm package is live
-npm view @blockrun/xclawrouter version
+npm view @blockrun/clawrouter version
 
 # 5. GitHub tag exists
 git tag | grep v{VERSION}

@@ -222,7 +222,7 @@ export function formatStatsAscii(stats: AggregatedStats): string {
 
   // Header
   lines.push("╔════════════════════════════════════════════════════════════╗");
-  lines.push(`║          XClawRouter by BlockRun v${VERSION}`.padEnd(61) + "║");
+  lines.push(`║          ClawRouter by BlockRun v${VERSION}`.padEnd(61) + "║");
   lines.push("║                Usage Statistics                            ║");
   lines.push("╠════════════════════════════════════════════════════════════╣");
 
@@ -315,7 +315,7 @@ export async function formatRecentLogs(days: number = 1): Promise<string> {
   const lines: string[] = [];
   lines.push("╔════════════════════════════════════════════════════════════════════════╗");
   lines.push(
-    `║  XClawRouter Request Log — last ${days === 1 ? "24h" : `${days} days`}`.padEnd(72) + "║",
+    `║  ClawRouter Request Log — last ${days === 1 ? "24h" : `${days} days`}`.padEnd(72) + "║",
   );
   lines.push("╠══════════════════╦══════════════════════════╦═════════╦══════╦════════╣");
   lines.push("║  Time            ║  Model                   ║  Cost   ║  ms  ║ Status ║");

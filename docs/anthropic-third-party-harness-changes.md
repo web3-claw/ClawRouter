@@ -27,14 +27,14 @@ Here's the thing most people don't realize: **~70% of agent requests don't need 
 
 Status checks, JSON extraction, simple Q&A, code formatting, translation — these tasks get routed to Claude Opus at $75/M output tokens when a free model or Gemini Flash at $0.40/M would produce identical results.
 
-This is exactly the problem [XClawRouter](https://github.com/BlockRunAI/XClawRouter) solves.
+This is exactly the problem [ClawRouter](https://github.com/BlockRunAI/ClawRouter) solves.
 
-## XClawRouter: Smart Routing for Agents
+## ClawRouter: Smart Routing for Agents
 
-XClawRouter is an open-source local proxy that sits between your agent and 55+ LLM models across 9 providers. It analyzes every request across 15 dimensions and routes it to the cheapest model that can handle it — in under 1ms, entirely locally.
+ClawRouter is an open-source local proxy that sits between your agent and 55+ LLM models across 9 providers. It analyzes every request across 15 dimensions and routes it to the cheapest model that can handle it — in under 1ms, entirely locally.
 
 ```
-Your Agent → XClawRouter (localhost:8402) → Best model for the job
+Your Agent → ClawRouter (localhost:8402) → Best model for the job
 
 SIMPLE  ("what is X?")          → Free model         $0.00
 MEDIUM  ("review this code")    → Kimi-K2.5           $0.002
@@ -62,12 +62,12 @@ A typical user running 10K mixed requests/month:
 
 - Direct Claude Sonnet: ~$105/month
 - Direct Claude Opus: ~$175/month
-- **XClawRouter: ~$20/month**
+- **ClawRouter: ~$20/month**
 
 ### How It Works
 
 ```bash
-npx @blockrun/xclawrouter    # Install and start (generates wallet automatically)
+npx @blockrun/clawrouter    # Install and start (generates wallet automatically)
 ```
 
 Then point your agent at `http://localhost:8402/v1/` with any OpenAI-compatible client. That's it.
@@ -76,7 +76,7 @@ Then point your agent at `http://localhost:8402/v1/` with any OpenAI-compatible 
 - **No subscriptions** — pay per request in USDC (Base or Solana)
 - **No vendor lock-in** — 55+ models, switch anytime
 - **You control your wallet** — non-custodial, funds never held by a third party
-- **Budget caps** — set a max spend per session, XClawRouter gracefully downgrades when budget runs low
+- **Budget caps** — set a max spend per session, ClawRouter gracefully downgrades when budget runs low
 - **Token compression** — 7-layer pipeline reduces token costs by 7–40% before they hit any provider
 - **Response caching** — identical requests within 10 minutes cost $0
 - **11 free models** — for tasks that don't need a paid model at all
@@ -96,14 +96,14 @@ Anthropic's change isn't surprising — they need to manage capacity, and third-
 
 But it means the economics of running agents just changed. If you're paying API rates for every request, the cost adds up fast. Smart routing — sending each request to the cheapest model that can handle it — is no longer a nice-to-have. It's the difference between a $20/month AI workflow and a $200/month one.
 
-XClawRouter is open source, runs locally, and takes 30 seconds to set up:
+ClawRouter is open source, runs locally, and takes 30 seconds to set up:
 
 ```bash
-npx @blockrun/xclawrouter
+npx @blockrun/clawrouter
 ```
 
 Your agents keep working. Your costs stay under control. Claude is still there when you actually need it.
 
 ---
 
-_ClawRouter is built by [BlockRun](https://blockrun.ai). Source code: [github.com/BlockRunAI/XClawRouter](https://github.com/BlockRunAI/XClawRouter)_
+_ClawRouter is built by [BlockRun](https://blockrun.ai). Source code: [github.com/BlockRunAI/ClawRouter](https://github.com/BlockRunAI/ClawRouter)_

@@ -75,9 +75,6 @@ import type { SolanaBalanceMonitor } from "./solana-balance.js";
 /** Union type for chain-agnostic balance monitoring */
 type AnyBalanceMonitor = BalanceMonitor | SolanaBalanceMonitor;
 import { resolvePaymentChain } from "./auth.js";
-import type { WalletResolution } from "./auth.js";
-import { OnchainOsAdapter } from "./onchainos-adapter.js";
-import { createOnchainosPayFetch } from "./okx-x402-fetch.js";
 import { compressContext, shouldCompress, type NormalizedMessage } from "./compression/index.js";
 // Error classes available for programmatic use but not used in proxy
 // (universal free fallback means we don't throw balance errors anymore)
@@ -138,7 +135,7 @@ function pickFreeModel(excludeList?: Set<string>): string | undefined {
 const FREE_MODEL = "free/gpt-oss-120b";
 /**
  * Map free/xxx model IDs to nvidia/xxx for upstream BlockRun API.
- * The "free/" prefix is a XClawRouter convention for the /model picker;
+ * The "free/" prefix is a ClawRouter convention for the /model picker;
  * BlockRun server expects "nvidia/" prefix.
  */
 function toUpstreamModelId(modelId: string): string {
@@ -252,7 +249,7 @@ export function transformPaymentError(errorBody: string): string {
             error: {
               message: "Payment signature invalid. This may be a temporary issue.",
               type: "invalid_payload",
-              help: "Try again. If this persists, reinstall XClawRouter: curl -fsSL https://blockrun.ai/xclawrouter-update | bash",
+              help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash",
             },
           });
         }
@@ -260,7 +257,7 @@ export function transformPaymentError(errorBody: string): string {
         // Handle transaction simulation failures (Solana on-chain validation)
         if (innerJson.invalidReason === "transaction_simulation_failed") {
           console.error(
-            `[XClawRouter] Solana transaction simulation failed: ${innerJson.invalidMessage || "unknown"}`,
+            `[ClawRouter] Solana transaction simulation failed: ${innerJson.invalidMessage || "unknown"}`,
           );
           return JSON.stringify({
             error: {
@@ -305,7 +302,7 @@ export function transformPaymentError(errorBody: string): string {
         debugLower.includes("transaction_simulation_failed") ||
         debugLower.includes("simulation")
       ) {
-        console.error(`[XClawRouter] ${chain} transaction simulation failed: ${parsed.debug}`);
+        console.error(`[ClawRouter] ${chain} transaction simulation failed: ${parsed.debug}`);
         return JSON.stringify({
           error: {
             message: `${chain} payment simulation failed. Retrying with a different model.`,
@@ -320,7 +317,7 @@ export function transformPaymentError(errorBody: string): string {
           error: {
             message: `${chain} payment signature invalid.`,
             type: "invalid_payload",
-            help: "Try again. If this persists, reinstall XClawRouter: curl -fsSL https://blockrun.ai/xclawrouter-update | bash",
+            help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash",
           },
         });
       }
@@ -337,7 +334,7 @@ export function transformPaymentError(errorBody: string): string {
 
       // Unknown verification error — surface the debug reason
       console.error(
-        `[XClawRouter] ${chain} payment verification failed: ${parsed.debug} payer=${wallet}`,
+        `[ClawRouter] ${chain} payment verification failed: ${parsed.debug} payer=${wallet}`,
       );
       return JSON.stringify({
         error: {
@@ -472,7 +469,7 @@ function isRateLimited(modelId: string): boolean {
  */
 function markRateLimited(modelId: string): void {
   rateLimitedModels.set(modelId, Date.now());
-  console.log(`[XClawRouter] Model ${modelId} rate-limited, will deprioritize for 60s`);
+  console.log(`[ClawRouter] Model ${modelId} rate-limited, will deprioritize for 60s`);
 }
 
 /**
@@ -481,7 +478,7 @@ function markRateLimited(modelId: string): void {
  */
 function markOverloaded(modelId: string): void {
   overloadedModels.set(modelId, Date.now());
-  console.log(`[XClawRouter] Model ${modelId} overloaded, will deprioritize for 15s`);
+  console.log(`[ClawRouter] Model ${modelId} overloaded, will deprioritize for 15s`);
 }
 
 /** Check if a model is in its overload cooldown period. */
@@ -534,7 +531,7 @@ function canWrite(res: ServerResponse): boolean {
 function safeWrite(res: ServerResponse, data: string | Buffer): boolean {
   if (!canWrite(res)) {
     const bytes = typeof data === "string" ? Buffer.byteLength(data) : data.length;
-    console.warn(`[XClawRouter] safeWrite: socket not writable, dropping ${bytes} bytes`);
+    console.warn(`[ClawRouter] safeWrite: socket not writable, dropping ${bytes} bytes`);
     return false;
   }
   return res.write(data);
@@ -1089,7 +1086,7 @@ function truncateMessages<T extends { role: string }>(messages: T[]): Truncation
   const result = [...systemMsgs, ...truncatedConversation];
 
   console.log(
-    `[XClawRouter] Truncated messages: ${messages.length} → ${result.length} (kept ${systemMsgs.length} system + ${truncatedConversation.length} recent)`,
+    `[ClawRouter] Truncated messages: ${messages.length} → ${result.length} (kept ${systemMsgs.length} system + ${truncatedConversation.length} recent)`,
   );
 
   return {
@@ -1157,17 +1154,7 @@ export type InsufficientFundsInfo = {
  * Solana keys. Using the full object prevents callers from accidentally
  * forgetting to forward Solana key bytes.
  */
-/**
- * Wallet config accepts:
- *   - string: legacy plain EVM private key
- *   - { key, ... }: legacy resolution with optional Solana keys
- *   - { source: "okx", address, onchainos }: OKX onchainos wallet — no
- *     local key, signing delegated to the onchainos CLI.
- */
-export type WalletConfig =
-  | string
-  | { key: string; solanaPrivateKeyBytes?: Uint8Array }
-  | WalletResolution;
+export type WalletConfig = string | { key: string; solanaPrivateKeyBytes?: Uint8Array };
 
 export type PaymentChain = "base" | "solana";
 
@@ -1329,7 +1316,7 @@ function mergeRoutingConfig(overrides?: Partial<RoutingConfig>): RoutingConfig {
 }
 
 /**
- * Build the `usage.cost` breakdown that XClawRouter injects into responses.
+ * Build the `usage.cost` breakdown that ClawRouter injects into responses.
  * This uses ACTUAL token counts from the upstream usage field (not estimates)
  * and falls back to gracefully returning undefined when token counts or
  * routing info aren't available.
@@ -1557,7 +1544,7 @@ async function proxyPaidApiRequest(
   if (!headers["content-type"]) headers["content-type"] = "application/json";
   headers["user-agent"] = USER_AGENT;
 
-  console.log(`[XClawRouter] ${requestLabel} request: ${req.method} ${req.url}`);
+  console.log(`[ClawRouter] ${requestLabel} request: ${req.method} ${req.url}`);
 
   const upstream = await payFetch(upstreamUrl, {
     method: req.method ?? "POST",
@@ -1585,7 +1572,7 @@ async function proxyPaidApiRequest(
   res.end();
 
   const latencyMs = Date.now() - startTime;
-  console.log(`[XClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
+  console.log(`[ClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
 
   // Log paid tool usage with actual x402 payment amount.
   const requestCost = getActualPaymentUsd();
@@ -1676,31 +1663,13 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
   // Apply upstream proxy (SOCKS5/HTTP) before any outgoing requests
   const upstreamProxy = await applyUpstreamProxy(options.upstreamProxy);
   if (upstreamProxy) {
-    console.log(`[XClawRouter] Upstream proxy: ${upstreamProxy}`);
+    console.log(`[ClawRouter] Upstream proxy: ${upstreamProxy}`);
   }
 
-  // Normalize wallet config. Three shapes:
-  //   1. Plain string private key (legacy CLI/test path)
-  //   2. Full resolution object with `key` (legacy local-key path)
-  //   3. OKX resolution with `source: "okx"` and an `onchainos` adapter — no
-  //      local key, signing happens via the onchainos CLI.
-  const walletObj = typeof options.wallet === "string" ? undefined : options.wallet;
-  const isOkxWallet =
-    walletObj !== undefined &&
-    "source" in walletObj &&
-    walletObj.source === "okx" &&
-    walletObj.onchainos !== undefined;
-  const walletKey = typeof options.wallet === "string" ? options.wallet : walletObj?.key;
-  const solanaPrivateKeyBytes = walletObj?.solanaPrivateKeyBytes;
-  const okxAdapter: OnchainOsAdapter | undefined = isOkxWallet ? walletObj?.onchainos : undefined;
-  const okxAddress: `0x${string}` | undefined = isOkxWallet
-    ? (walletObj!.address as `0x${string}`)
-    : undefined;
-  if (!walletKey && !okxAdapter) {
-    throw new Error(
-      "Wallet config has no signing backend: provide a private key or an OKX onchainos wallet.",
-    );
-  }
+  // Normalize wallet config: string = EVM-only, object = full resolution
+  const walletKey = typeof options.wallet === "string" ? options.wallet : options.wallet.key;
+  const solanaPrivateKeyBytes =
+    typeof options.wallet === "string" ? undefined : options.wallet.solanaPrivateKeyBytes;
 
   // Payment chain: options > env var > persisted file > default "base".
   // No dynamic switching — user selects chain via /wallet solana or /wallet base.
@@ -1710,14 +1679,14 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     (paymentChain === "solana" && solanaPrivateKeyBytes ? BLOCKRUN_SOLANA_API : BLOCKRUN_API);
   if (paymentChain === "solana" && !solanaPrivateKeyBytes) {
     console.warn(
-      `[XClawRouter] ⚠ Payment chain is Solana but no mnemonic found — falling back to Base (EVM).`,
+      `[ClawRouter] ⚠ Payment chain is Solana but no mnemonic found — falling back to Base (EVM).`,
     );
     console.warn(
-      `[XClawRouter]   To fix: run "npx @blockrun/xclawrouter wallet recover" if your mnemonic exists,`,
+      `[ClawRouter]   To fix: run "npx @blockrun/clawrouter wallet recover" if your mnemonic exists,`,
     );
-    console.warn(`[XClawRouter]   or run "npx @blockrun/xclawrouter chain base" to switch to EVM.`);
+    console.warn(`[ClawRouter]   or run "npx @blockrun/clawrouter chain base" to switch to EVM.`);
   } else if (paymentChain === "solana") {
-    console.log(`[XClawRouter] Payment chain: Solana (${BLOCKRUN_SOLANA_API})`);
+    console.log(`[ClawRouter] Payment chain: Solana (${BLOCKRUN_SOLANA_API})`);
   }
 
   // Determine port: options.port > env var > default
@@ -1727,14 +1696,13 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
   const existingProxy = await checkExistingProxy(listenPort);
   if (existingProxy) {
     // Proxy already running — reuse it instead of failing with EADDRINUSE
-    const expectedAddress: `0x${string}` =
-      okxAddress ?? privateKeyToAccount(walletKey as `0x${string}`).address;
+    const account = privateKeyToAccount(walletKey as `0x${string}`);
     const baseUrl = `http://127.0.0.1:${listenPort}`;
 
     // Verify the existing proxy is using the same wallet (or warn if different)
-    if (existingProxy.wallet !== expectedAddress) {
+    if (existingProxy.wallet !== account.address) {
       console.warn(
-        `[XClawRouter] Existing proxy on port ${listenPort} uses wallet ${existingProxy.wallet}, but current config uses ${expectedAddress}. Reusing existing proxy.`,
+        `[ClawRouter] Existing proxy on port ${listenPort} uses wallet ${existingProxy.wallet}, but current config uses ${account.address}. Reusing existing proxy.`,
       );
     }
 
@@ -1749,7 +1717,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     } else if (paymentChain !== "base") {
       // Old proxy doesn't report chain — assume Base. Reject if Solana was requested.
       console.warn(
-        `[XClawRouter] Existing proxy on port ${listenPort} does not report paymentChain (pre-v0.11 instance). Assuming Base.`,
+        `[ClawRouter] Existing proxy on port ${listenPort} does not report paymentChain (pre-v0.11 instance). Assuming Base.`,
       );
       throw new Error(
         `Existing proxy on port ${listenPort} is a pre-v0.11 instance (assumed Base) but ${paymentChain} was requested. ` +
@@ -1771,7 +1739,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
       const { SolanaBalanceMonitor } = await import("./solana-balance.js");
       balanceMonitor = new SolanaBalanceMonitor(reuseSolanaAddress);
     } else {
-      balanceMonitor = new BalanceMonitor(expectedAddress);
+      balanceMonitor = new BalanceMonitor(account.address);
     }
 
     options.onReady?.(listenPort);
@@ -1788,40 +1756,25 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     };
   }
 
-  // Create x402 payment client. Two signing backends:
-  //   - OKX onchainos (when wallet source is "okx") — payments signed via the
-  //     `onchainos payment x402-pay` CLI, no private keys in this process.
-  //   - Local viem account (default) — derived from BIP-39 / env private key.
-  const useOnchainos = !!okxAdapter;
+  // Create x402 payment client with EVM scheme (always available)
+  const account = privateKeyToAccount(walletKey as `0x${string}`);
   const evmPublicClient = createPublicClient({ chain: base, transport: http() });
+  const evmSigner = toClientEvmSigner(account, evmPublicClient);
   const x402 = new x402Client();
+  registerExactEvmScheme(x402, { signer: evmSigner });
 
-  let account: { address: `0x${string}` };
-  if (useOnchainos) {
-    account = { address: okxAddress! };
-    console.log(`[XClawRouter] OKX onchainos wallet — EVM ${okxAddress}`);
-  } else {
-    const acct = privateKeyToAccount(walletKey as `0x${string}`);
-    account = { address: acct.address };
-    const evmSigner = toClientEvmSigner(acct, evmPublicClient);
-    registerExactEvmScheme(x402, { signer: evmSigner });
-  }
-
-  // Register Solana scheme if key is available. OKX onchainos focuses on Base
-  // (EVM); Solana support stays on the legacy local-mnemonic path.
+  // Register Solana scheme if key is available
+  // Uses registerExactSvmScheme helper which registers:
+  //   - solana:* wildcard (catches any CAIP-2 Solana network)
+  //   - V1 compat names: "solana", "solana-devnet", "solana-testnet"
   let solanaAddress: string | undefined;
-  if (!useOnchainos && solanaPrivateKeyBytes) {
+  if (solanaPrivateKeyBytes) {
     const { registerExactSvmScheme } = await import("@x402/svm/exact/client");
     const { createKeyPairSignerFromPrivateKeyBytes } = await import("@solana/kit");
     const solanaSigner = await createKeyPairSignerFromPrivateKeyBytes(solanaPrivateKeyBytes);
     solanaAddress = solanaSigner.address;
     registerExactSvmScheme(x402, { signer: solanaSigner });
-    console.log(`[XClawRouter] Solana wallet: ${solanaAddress}`);
-  } else if (useOnchainos && paymentChain === "solana") {
-    console.warn(
-      `[XClawRouter] ⚠ Solana signing via onchainos is not yet implemented. ` +
-        `Run "/chain base" to switch chains, or wait for an onchainos release that supports Solana.`,
-    );
+    console.log(`[ClawRouter] Solana wallet: ${solanaAddress}`);
   }
 
   // Log which chain is used for each payment and capture actual payment amount
@@ -1838,17 +1791,12 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     // Write to request-scoped store (if available)
     const store = paymentStore.getStore();
     if (store) store.amountUsd = amountUsd;
-    console.log(`[XClawRouter] Payment signed on ${chain} (${network}) — $${amountUsd.toFixed(6)}`);
+    console.log(`[ClawRouter] Payment signed on ${chain} (${network}) — $${amountUsd.toFixed(6)}`);
   });
 
-  // OKX mode: bypass @x402/fetch — onchainos exposes only the high-level
-  // `payment x402-pay` command, not raw typed-data signing, so we hand-roll
-  // 402-handling in createOnchainosPayFetch.
-  const payFetch = useOnchainos
-    ? createOnchainosPayFetch(fetch, okxAdapter!)
-    : createPayFetchWithPreAuth(fetch, x402, undefined, {
-        skipPreAuth: paymentChain === "solana",
-      });
+  const payFetch = createPayFetchWithPreAuth(fetch, x402, undefined, {
+    skipPreAuth: paymentChain === "solana",
+  });
 
   // Create balance monitor for pre-request checks (lazy import to avoid loading @solana/kit on Base chain)
   let balanceMonitor: AnyBalanceMonitor;
@@ -1889,19 +1837,19 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     paymentStore.run({ amountUsd: 0 }, async () => {
       // Add stream error handlers to prevent server crashes
       req.on("error", (err) => {
-        console.error(`[XClawRouter] Request stream error: ${err.message}`);
+        console.error(`[ClawRouter] Request stream error: ${err.message}`);
         // Don't throw - just log and let request handler deal with it
       });
 
       res.on("error", (err) => {
-        console.error(`[XClawRouter] Response stream error: ${err.message}`);
+        console.error(`[ClawRouter] Response stream error: ${err.message}`);
         // Don't try to write to failed socket - just log
       });
 
       // Finished wrapper for guaranteed cleanup on response completion/error
       finished(res, (err) => {
         if (err && err.code !== "ERR_STREAM_DESTROYED") {
-          console.error(`[XClawRouter] Response finished with error: ${err.message}`);
+          console.error(`[ClawRouter] Response finished with error: ${err.message}`);
         }
         // Note: heartbeatInterval cleanup happens in res.on("close") handler
         // Note: completed and dedup cleanup happens in the res.on("close") handler below
@@ -1910,7 +1858,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
       // Request finished wrapper for complete stream lifecycle tracking
       finished(req, (err) => {
         if (err && err.code !== "ERR_STREAM_DESTROYED") {
-          console.error(`[XClawRouter] Request finished with error: ${err.message}`);
+          console.error(`[ClawRouter] Request finished with error: ${err.message}`);
         }
       });
 
@@ -2174,7 +2122,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                 await writeFile(join(IMAGE_DIR, filename), Buffer.from(b64!, "base64"));
                 img.url = `http://localhost:${port}/images/${filename}`;
-                console.log(`[XClawRouter] Image saved → ${img.url}`);
+                console.log(`[ClawRouter] Image saved → ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
                 try {
                   const imgResp = await fetch(img.url);
@@ -2190,11 +2138,11 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                     const buf = Buffer.from(await imgResp.arrayBuffer());
                     await writeFile(join(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port}/images/${filename}`;
-                    console.log(`[XClawRouter] Image downloaded & saved → ${img.url}`);
+                    console.log(`[ClawRouter] Image downloaded & saved → ${img.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
+                    `[ClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
                   );
                 }
               }
@@ -2215,7 +2163,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Image generation error: ${msg}`);
+          console.error(`[ClawRouter] Image generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Image generation failed", details: msg }));
@@ -2256,12 +2204,12 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
               const buf = Buffer.from(await imgResp.arrayBuffer());
               parsed[field] = `data:${contentType};base64,${buf.toString("base64")}`;
               console.log(
-                `[XClawRouter] img2img: downloaded ${field} URL → data URI (${buf.length} bytes)`,
+                `[ClawRouter] img2img: downloaded ${field} URL → data URI (${buf.length} bytes)`,
               );
             } else {
               // Local file path → data URI
               parsed[field] = readImageFileAsDataUri(val);
-              console.log(`[XClawRouter] img2img: read ${field} file → data URI`);
+              console.log(`[ClawRouter] img2img: read ${field} file → data URI`);
             }
           }
           // Default model if not specified
@@ -2309,7 +2257,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                 await writeFile(join(IMAGE_DIR, filename), Buffer.from(b64!, "base64"));
                 img.url = `http://localhost:${port}/images/${filename}`;
-                console.log(`[XClawRouter] Image saved → ${img.url}`);
+                console.log(`[ClawRouter] Image saved → ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
                 try {
                   const imgResp = await fetch(img.url);
@@ -2325,11 +2273,11 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                     const buf = Buffer.from(await imgResp.arrayBuffer());
                     await writeFile(join(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port}/images/${filename}`;
-                    console.log(`[XClawRouter] Image downloaded & saved → ${img.url}`);
+                    console.log(`[ClawRouter] Image downloaded & saved → ${img.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
+                    `[ClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
                   );
                 }
               }
@@ -2350,7 +2298,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Image editing error: ${msg}`);
+          console.error(`[ClawRouter] Image editing error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Image editing failed", details: msg }));
@@ -2413,11 +2361,11 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                     const buf = Buffer.from(await audioResp.arrayBuffer());
                     await writeFile(join(AUDIO_DIR, filename), buf);
                     track.url = `http://localhost:${port}/audio/${filename}`;
-                    console.log(`[XClawRouter] Audio saved → ${track.url}`);
+                    console.log(`[ClawRouter] Audio saved → ${track.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download audio, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
+                    `[ClawRouter] Failed to download audio, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
                   );
                 }
               }
@@ -2437,7 +2385,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Audio generation error: ${msg}`);
+          console.error(`[ClawRouter] Audio generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Audio generation failed", details: msg }));
@@ -2509,7 +2457,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
               ? submitResult.poll_url
               : `${apiOrigin}${submitResult.poll_url}`;
             console.log(
-              `[XClawRouter] Video job submitted (id=${submitResult.id}), polling upstream — typical 60–180s...`,
+              `[ClawRouter] Video job submitted (id=${submitResult.id}), polling upstream — typical 60–180s...`,
             );
 
             // Upstream typically 60-180s. Poll every 5s, bail after ~5min total.
@@ -2594,11 +2542,11 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
                     const buf = Buffer.from(await videoResp.arrayBuffer());
                     await writeFile(join(VIDEO_DIR, filename), buf);
                     clip.url = `http://localhost:${port}/videos/${filename}`;
-                    console.log(`[XClawRouter] Video saved → ${clip.url}`);
+                    console.log(`[ClawRouter] Video saved → ${clip.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download video, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
+                    `[ClawRouter] Failed to download video, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`,
                   );
                 }
               }
@@ -2619,7 +2567,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           res.end(JSON.stringify(finalResult));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Video generation error: ${msg}`);
+          console.error(`[ClawRouter] Video generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Video generation failed", details: msg }));
@@ -2711,7 +2659,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           const existingProxy2 = await checkExistingProxy(listenPort);
           if (existingProxy2) {
             // Proxy is actually running - this is fine, reuse it
-            console.log(`[XClawRouter] Existing proxy detected on port ${listenPort}, reusing`);
+            console.log(`[ClawRouter] Existing proxy detected on port ${listenPort}, reusing`);
             rejectAttempt({
               code: "REUSE_EXISTING",
               wallet: existingProxy2.wallet,
@@ -2723,7 +2671,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           // Port is in TIME_WAIT (no proxy responding) - retry after delay
           if (attempt < PORT_RETRY_ATTEMPTS) {
             console.log(
-              `[XClawRouter] Port ${listenPort} in TIME_WAIT, retrying in ${PORT_RETRY_DELAY_MS}ms (attempt ${attempt}/${PORT_RETRY_ATTEMPTS})`,
+              `[ClawRouter] Port ${listenPort} in TIME_WAIT, retrying in ${PORT_RETRY_DELAY_MS}ms (attempt ${attempt}/${PORT_RETRY_ATTEMPTS})`,
             );
             rejectAttempt({ code: "RETRY", attempt });
             return;
@@ -2731,7 +2679,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
 
           // Max retries exceeded
           console.error(
-            `[XClawRouter] Port ${listenPort} still in use after ${PORT_RETRY_ATTEMPTS} attempts`,
+            `[ClawRouter] Port ${listenPort} still in use after ${PORT_RETRY_ATTEMPTS} attempts`,
           );
           rejectAttempt(err);
           return;
@@ -2815,14 +2763,14 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
   // Add runtime error handler AFTER successful listen
   // This handles errors that occur during server operation (not just startup)
   server.on("error", (err) => {
-    console.error(`[XClawRouter] Server runtime error: ${err.message}`);
+    console.error(`[ClawRouter] Server runtime error: ${err.message}`);
     options.onError?.(err);
     // Don't crash - log and continue
   });
 
   // Handle client connection errors (bad requests, socket errors)
   server.on("clientError", (err, socket) => {
-    console.error(`[XClawRouter] Client error: ${err.message}`);
+    console.error(`[ClawRouter] Client error: ${err.message}`);
     // Send 400 Bad Request if socket is still writable
     if (socket.writable && !socket.destroyed) {
       socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
@@ -2837,7 +2785,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     socket.setTimeout(300_000);
 
     socket.on("timeout", () => {
-      console.error(`[XClawRouter] Socket timeout, destroying connection`);
+      console.error(`[ClawRouter] Socket timeout, destroying connection`);
       socket.destroy();
     });
 
@@ -2846,7 +2794,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     });
 
     socket.on("error", (err) => {
-      console.error(`[XClawRouter] Socket error: ${err.message}`);
+      console.error(`[ClawRouter] Socket error: ${err.message}`);
     });
 
     socket.on("close", () => {
@@ -2863,7 +2811,7 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     close: () =>
       new Promise<void>((res, rej) => {
         const timeout = setTimeout(() => {
-          rej(new Error("[XClawRouter] Close timeout after 4s"));
+          rej(new Error("[ClawRouter] Close timeout after 4s"));
         }, 4000);
 
         sessionStore.close();
@@ -3171,7 +3119,7 @@ async function proxyRequest(
             parsed.messages = messages;
             bodyModified = true;
             console.log(
-              `[XClawRouter] Injected session journal (${journalText.length} chars) for session ${sessionId.slice(0, 8)}...`,
+              `[ClawRouter] Injected session journal (${journalText.length} chars) for session ${sessionId.slice(0, 8)}...`,
             );
           }
         }
@@ -3230,7 +3178,7 @@ async function proxyRequest(
           DEFAULT_ROUTING_CONFIG.scoring.tierBoundaries;
 
         const debugText = [
-          "XClawRouter Debug",
+          "ClawRouter Debug",
           "",
           `Profile: ${debugProfile} | Tier: ${debugRouting.tier} | Model: ${debugRouting.model}`,
           `Confidence: ${debugRouting.confidence.toFixed(2)} | Cost: $${debugRouting.costEstimate.toFixed(4)} | Savings: ${(debugRouting.savings * 100).toFixed(0)}%`,
@@ -3297,7 +3245,7 @@ async function proxyRequest(
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify(syntheticResponse));
         }
-        console.log(`[XClawRouter] /debug command → ${debugRouting.tier} | ${debugRouting.model}`);
+        console.log(`[ClawRouter] /debug command → ${debugRouting.tier} | ${debugRouting.model}`);
         return;
       }
 
@@ -3395,13 +3343,13 @@ async function proxyRequest(
               }),
             );
           }
-          console.log(`[XClawRouter] /imagegen command → showing usage help`);
+          console.log(`[ClawRouter] /imagegen command → showing usage help`);
           return;
         }
 
         // Call upstream image generation API
         console.log(
-          `[XClawRouter] /imagegen command → ${imageModel} (${imageSize}): ${imagePrompt.slice(0, 80)}...`,
+          `[ClawRouter] /imagegen command → ${imageModel} (${imageSize}): ${imagePrompt.slice(0, 80)}...`,
         );
         try {
           const imageUpstreamUrl = `${apiBase}/v1/images/generations`;
@@ -3431,7 +3379,7 @@ async function proxyRequest(
                 : ((imageResult.error as { message?: string })?.message ??
                   `HTTP ${imageResponse.status}`);
             responseText = `Image generation failed: ${errMsg}`;
-            console.log(`[XClawRouter] /imagegen error: ${errMsg}`);
+            console.log(`[ClawRouter] /imagegen error: ${errMsg}`);
           } else {
             const images = imageResult.data ?? [];
             if (images.length === 0) {
@@ -3446,7 +3394,7 @@ async function proxyRequest(
                       lines.push(hostedUrl);
                     } catch (uploadErr) {
                       console.error(
-                        `[XClawRouter] /imagegen: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`,
+                        `[ClawRouter] /imagegen: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`,
                       );
                       lines.push(
                         "Image generated but upload failed. Try again or use --model dall-e-3.",
@@ -3461,7 +3409,7 @@ async function proxyRequest(
               lines.push("", `Model: ${imageModel} | Size: ${imageSize}`);
               responseText = lines.join("\n");
             }
-            console.log(`[XClawRouter] /imagegen success: ${images.length} image(s) generated`);
+            console.log(`[ClawRouter] /imagegen success: ${images.length} image(s) generated`);
             // Log /imagegen usage with actual x402 payment
             const imagegenActualCost =
               paymentStore.getStore()?.amountUsd ?? estimateImageCost(imageModel, imageSize, 1);
@@ -3514,7 +3462,7 @@ async function proxyRequest(
           }
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] /imagegen error: ${errMsg}`);
+          console.error(`[ClawRouter] /imagegen error: ${errMsg}`);
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(
@@ -3639,7 +3587,7 @@ async function proxyRequest(
         }
 
         console.log(
-          `[XClawRouter] /img2img → ${img2imgModel} (${img2imgSize}): ${img2imgPrompt.slice(0, 80)}`,
+          `[ClawRouter] /img2img → ${img2imgModel} (${img2imgSize}): ${img2imgPrompt.slice(0, 80)}`,
         );
 
         try {
@@ -3672,7 +3620,7 @@ async function proxyRequest(
                 : ((img2imgResult.error as { message?: string })?.message ??
                   `HTTP ${img2imgResponse.status}`);
             responseText = `Image editing failed: ${errMsg}`;
-            console.log(`[XClawRouter] /img2img error: ${errMsg}`);
+            console.log(`[ClawRouter] /img2img error: ${errMsg}`);
           } else {
             const images = img2imgResult.data ?? [];
             if (images.length === 0) {
@@ -3687,7 +3635,7 @@ async function proxyRequest(
                       lines.push(hostedUrl);
                     } catch (uploadErr) {
                       console.error(
-                        `[XClawRouter] /img2img: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`,
+                        `[ClawRouter] /img2img: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`,
                       );
                       lines.push("Image edited but upload failed. Try again.");
                     }
@@ -3700,7 +3648,7 @@ async function proxyRequest(
               lines.push("", `Model: ${img2imgModel} | Size: ${img2imgSize}`);
               responseText = lines.join("\n");
             }
-            console.log(`[XClawRouter] /img2img success: ${images.length} image(s)`);
+            console.log(`[ClawRouter] /img2img success: ${images.length} image(s)`);
             // Log /img2img usage with actual x402 payment
             const img2imgActualCost2 =
               paymentStore.getStore()?.amountUsd ?? estimateImageCost(img2imgModel, img2imgSize, 1);
@@ -3718,7 +3666,7 @@ async function proxyRequest(
           sendImg2ImgText(responseText);
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] /img2img error: ${errMsg}`);
+          console.error(`[ClawRouter] /img2img error: ${errMsg}`);
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(
@@ -3732,7 +3680,7 @@ async function proxyRequest(
       }
 
       // Force stream: false — BlockRun API doesn't support streaming yet
-      // XClawRouter handles SSE heartbeat simulation for upstream compatibility
+      // ClawRouter handles SSE heartbeat simulation for upstream compatibility
       if (parsed.stream === true) {
         parsed.stream = false;
         bodyModified = true;
@@ -3759,7 +3707,7 @@ async function proxyRequest(
 
       // Debug: log received model name
       console.log(
-        `[XClawRouter] Received model: "${parsed.model}" -> normalized: "${normalizedModel}"${wasAlias ? ` -> alias: "${resolvedModel}"` : ""}${routingProfile ? `, profile: ${routingProfile}` : ""}`,
+        `[ClawRouter] Received model: "${parsed.model}" -> normalized: "${normalizedModel}"${wasAlias ? ` -> alias: "${resolvedModel}"` : ""}${routingProfile ? `, profile: ${routingProfile}` : ""}`,
       );
 
       // For explicit model requests, always canonicalize the model ID before upstream calls.
@@ -3785,7 +3733,7 @@ async function proxyRequest(
           // Use a generic tier — the explicit pin bypasses tier comparison anyway.
           sessionStore.setSession(explicitPinSessionId, resolvedModel, "MEDIUM", true);
           console.log(
-            `[XClawRouter] Session ${explicitPinSessionId.slice(0, 8)}... user-explicit pin set: ${resolvedModel}`,
+            `[ClawRouter] Session ${explicitPinSessionId.slice(0, 8)}... user-explicit pin set: ${resolvedModel}`,
           );
         }
       }
@@ -3824,7 +3772,7 @@ async function proxyRequest(
           hasTools = Array.isArray(tools) && tools.length > 0;
 
           if (hasTools && tools) {
-            console.log(`[XClawRouter] Tools detected (${tools.length}), forcing agentic tiers`);
+            console.log(`[ClawRouter] Tools detected (${tools.length}), forcing agentic tiers`);
           }
 
           // Vision detection: scan messages for image_url content parts
@@ -3835,9 +3783,7 @@ async function proxyRequest(
             return false;
           });
           if (hasVision) {
-            console.log(
-              `[XClawRouter] Vision content detected, filtering to vision-capable models`,
-            );
+            console.log(`[ClawRouter] Vision content detected, filtering to vision-capable models`);
           }
 
           // Always route based on current request content
@@ -3853,7 +3799,7 @@ async function proxyRequest(
           // tool schemas (gemini-flash-lite, deepseek) or lack tool support entirely.
           if (hasTools && routingDecision.tier === "SIMPLE") {
             console.log(
-              `[XClawRouter] SIMPLE+tools: keeping agentic model ${routingDecision.model} (tools need reliable function-call support)`,
+              `[ClawRouter] SIMPLE+tools: keeping agentic model ${routingDecision.model} (tools need reliable function-call support)`,
             );
           }
 
@@ -3872,7 +3818,7 @@ async function proxyRequest(
             if (existingSession.userExplicit) {
               stickyExplicitModel = existingSession.model;
               console.log(
-                `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... user-explicit pin: ${existingSession.model} (overriding auto-routed ${routingDecision.tier} → ${routingDecision.model})`,
+                `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... user-explicit pin: ${existingSession.model} (overriding auto-routed ${routingDecision.tier} → ${routingDecision.model})`,
               );
               parsed.model = existingSession.model;
               modelId = existingSession.model;
@@ -3901,7 +3847,7 @@ async function proxyRequest(
               if (newRank > existingRank) {
                 // Current request needs higher capability — upgrade the session
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... upgrading: ${existingSession.tier} → ${routingDecision.tier} (${routingDecision.model})`,
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... upgrading: ${existingSession.tier} → ${routingDecision.tier} (${routingDecision.model})`,
                 );
                 parsed.model = routingDecision.model;
                 modelId = routingDecision.model;
@@ -3918,7 +3864,7 @@ async function proxyRequest(
                 // e.g. "你好" or "thanks" after a complex task should not inherit the
                 // expensive session model or recount all context tokens on a paid model.
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... SIMPLE follow-up, using cheap model: ${routingDecision.model} (bypassing pinned ${existingSession.tier})`,
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... SIMPLE follow-up, using cheap model: ${routingDecision.model} (bypassing pinned ${existingSession.tier})`,
                 );
                 parsed.model = routingDecision.model;
                 modelId = routingDecision.model;
@@ -3928,7 +3874,7 @@ async function proxyRequest(
               } else {
                 // Keep existing higher-tier model (prevent downgrade mid-task)
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... keeping pinned model: ${existingSession.model} (${existingSession.tier} >= ${routingDecision.tier})`,
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... keeping pinned model: ${existingSession.model} (${existingSession.tier} >= ${routingDecision.tier})`,
                 );
                 parsed.model = existingSession.model;
                 modelId = existingSession.model;
@@ -3969,7 +3915,7 @@ async function proxyRequest(
                 );
                 if (escalation) {
                   console.log(
-                    `[XClawRouter] ⚡ 3-strike escalation: ${existingSession.model} → ${escalation.model} (${existingSession.tier} → ${escalation.tier})`,
+                    `[ClawRouter] ⚡ 3-strike escalation: ${existingSession.model} → ${escalation.model} (${existingSession.tier} → ${escalation.tier})`,
                   );
                   parsed.model = escalation.model;
                   modelId = escalation.model;
@@ -3993,7 +3939,7 @@ async function proxyRequest(
                 routingDecision.tier,
               );
               console.log(
-                `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... pinned to model: ${routingDecision.model}`,
+                `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... pinned to model: ${routingDecision.model}`,
               );
             }
           }
@@ -4020,8 +3966,8 @@ async function proxyRequest(
     } catch (err) {
       // Log routing errors so they're not silently swallowed
       const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[XClawRouter] Routing error: ${errorMsg}`);
-      console.error(`[XClawRouter] Need help? Run: npx @blockrun/xclawrouter doctor`);
+      console.error(`[ClawRouter] Routing error: ${errorMsg}`);
+      console.error(`[ClawRouter] Need help? Run: npx @blockrun/clawrouter doctor`);
       options.onError?.(new Error(`Routing failed: ${errorMsg}`));
     }
   }
@@ -4035,7 +3981,7 @@ async function proxyRequest(
   if (autoCompress && requestSizeKB > compressionThreshold) {
     try {
       console.log(
-        `[XClawRouter] Request size ${requestSizeKB}KB exceeds threshold ${compressionThreshold}KB, applying compression...`,
+        `[ClawRouter] Request size ${requestSizeKB}KB exceeds threshold ${compressionThreshold}KB, applying compression...`,
       );
 
       // Parse messages for compression
@@ -4069,7 +4015,7 @@ async function proxyRequest(
         const savings = (((requestSizeKB - compressedSizeKB) / requestSizeKB) * 100).toFixed(1);
 
         console.log(
-          `[XClawRouter] Compressed ${requestSizeKB}KB → ${compressedSizeKB}KB (${savings}% reduction)`,
+          `[ClawRouter] Compressed ${requestSizeKB}KB → ${compressedSizeKB}KB (${savings}% reduction)`,
         );
 
         // Update request body with compressed messages
@@ -4079,7 +4025,7 @@ async function proxyRequest(
     } catch (err) {
       // Compression failed - continue with original request
       console.warn(
-        `[XClawRouter] Compression failed: ${err instanceof Error ? err.message : String(err)}`,
+        `[ClawRouter] Compression failed: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
@@ -4097,7 +4043,7 @@ async function proxyRequest(
   if (responseCache.shouldCache(body, reqHeaders)) {
     const cachedResponse = responseCache.get(cacheKey);
     if (cachedResponse) {
-      console.log(`[XClawRouter] Cache HIT for ${cachedResponse.model} (saved API call)`);
+      console.log(`[ClawRouter] Cache HIT for ${cachedResponse.model} (saved API call)`);
       res.writeHead(cachedResponse.status, cachedResponse.headers);
       res.end(cachedResponse.body);
       return;
@@ -4157,7 +4103,7 @@ async function proxyRequest(
         sufficiency = await balanceMonitor.checkSufficient(bufferedCostMicros);
       } catch (balanceErr) {
         console.warn(
-          `[XClawRouter] Balance check failed (${balanceErr instanceof Error ? balanceErr.message : String(balanceErr)}) — proceeding optimistically`,
+          `[ClawRouter] Balance check failed (${balanceErr instanceof Error ? balanceErr.message : String(balanceErr)}) — proceeding optimistically`,
         );
       }
 
@@ -4166,7 +4112,7 @@ async function proxyRequest(
         const freeFallback = pickFreeModel(loadExcludeList()) ?? FREE_MODEL;
         const originalModel = modelId;
         console.log(
-          `[XClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${freeFallback} (requested: ${originalModel})`,
+          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${freeFallback} (requested: ${originalModel})`,
         );
         modelId = freeFallback;
         isFreeModel = true; // keep in sync — budget logic gates on !isFreeModel
@@ -4226,16 +4172,16 @@ async function proxyRequest(
     const projectedCostUsd = runCostUsd + thisReqEstUsd;
     if (projectedCostUsd > options.maxCostPerRunUsd) {
       console.log(
-        `[XClawRouter] Cost cap exceeded for session ${effectiveSessionId.slice(0, 8)}...: projected $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) > $${options.maxCostPerRunUsd} limit`,
+        `[ClawRouter] Cost cap exceeded for session ${effectiveSessionId.slice(0, 8)}...: projected $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) > $${options.maxCostPerRunUsd} limit`,
       );
       res.writeHead(429, {
         "Content-Type": "application/json",
-        "X-XClawRouter-Cost-Cap-Exceeded": "1",
+        "X-ClawRouter-Cost-Cap-Exceeded": "1",
       });
       res.end(
         JSON.stringify({
           error: {
-            message: `XClawRouter cost cap exceeded: projected spend $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) would exceed limit $${options.maxCostPerRunUsd}`,
+            message: `ClawRouter cost cap exceeded: projected spend $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) would exceed limit $${options.maxCostPerRunUsd}`,
             type: "cost_cap_exceeded",
             code: "cost_cap_exceeded",
           },
@@ -4275,17 +4221,17 @@ async function proxyRequest(
       });
       if (!canAffordAnyNonFreeModel) {
         console.log(
-          `[XClawRouter] Budget insufficient for agentic/complex session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining — blocking (silent downgrade would corrupt tool/complex responses)`,
+          `[ClawRouter] Budget insufficient for agentic/complex session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining — blocking (silent downgrade would corrupt tool/complex responses)`,
         );
         res.writeHead(429, {
           "Content-Type": "application/json",
-          "X-XClawRouter-Cost-Cap-Exceeded": "1",
-          "X-XClawRouter-Budget-Mode": "blocked",
+          "X-ClawRouter-Cost-Cap-Exceeded": "1",
+          "X-ClawRouter-Budget-Mode": "blocked",
         });
         res.end(
           JSON.stringify({
             error: {
-              message: `XClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue.`,
+              message: `ClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue.`,
               type: "cost_cap_exceeded",
               code: "budget_exhausted",
             },
@@ -4301,17 +4247,17 @@ async function proxyRequest(
       const canAfford = !est || Number(est) / 1_000_000 <= remainingUsd;
       if (!canAfford) {
         console.log(
-          `[XClawRouter] Budget insufficient for explicit model ${modelId} in session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining — blocking (user explicitly chose ${modelId})`,
+          `[ClawRouter] Budget insufficient for explicit model ${modelId} in session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining — blocking (user explicitly chose ${modelId})`,
         );
         res.writeHead(429, {
           "Content-Type": "application/json",
-          "X-XClawRouter-Cost-Cap-Exceeded": "1",
-          "X-XClawRouter-Budget-Mode": "blocked",
+          "X-ClawRouter-Cost-Cap-Exceeded": "1",
+          "X-ClawRouter-Budget-Mode": "blocked",
         });
         res.end(
           JSON.stringify({
             error: {
-              message: `XClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue using ${modelId}.`,
+              message: `ClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue using ${modelId}.`,
               type: "cost_cap_exceeded",
               code: "budget_exhausted",
             },
@@ -4401,10 +4347,10 @@ async function proxyRequest(
 
   // Abort in-flight upstream requests when the client disconnects.
   // OpenClaw 2026.4.7+ aborts gateway requests on client disconnect;
-  // without this, XClawRouter would leave orphan upstream fetches running.
+  // without this, ClawRouter would leave orphan upstream fetches running.
   const onClientClose = () => {
     if (!globalController.signal.aborted) {
-      console.log(`[XClawRouter] Client disconnected — aborting upstream request`);
+      console.log(`[ClawRouter] Client disconnected — aborting upstream request`);
       globalController.abort();
     }
   };
@@ -4425,7 +4371,7 @@ async function proxyRequest(
       const freeFallback = pickFreeModel(excludeList) ?? FREE_MODEL;
       modelsToTry = [freeFallback];
       console.log(
-        `[XClawRouter] Wallet empty — skipping routing chain, using free model: ${freeFallback}`,
+        `[ClawRouter] Wallet empty — skipping routing chain, using free model: ${freeFallback}`,
       );
     } else if (routingDecision) {
       const prependStickyExplicitModel = (chain: string[]): string[] => {
@@ -4456,7 +4402,7 @@ async function proxyRequest(
       const contextExcluded = fullChain.filter((m) => !contextFiltered.includes(m));
       if (contextExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Context filter (~${estimatedTotalTokens} tokens): excluded ${contextExcluded.join(", ")}`,
+          `[ClawRouter] Context filter (~${estimatedTotalTokens} tokens): excluded ${contextExcluded.join(", ")}`,
         );
       }
 
@@ -4467,7 +4413,7 @@ async function proxyRequest(
       const excludeExcluded = contextFiltered.filter((m) => !excludeFiltered.includes(m));
       if (excludeExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`,
+          `[ClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`,
         );
       }
 
@@ -4480,7 +4426,7 @@ async function proxyRequest(
       const toolExcluded = excludeFiltered.filter((m) => !toolFiltered.includes(m));
       if (toolExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Tool-calling filter: excluded ${toolExcluded.join(", ")} (no structured function call support)`,
+          `[ClawRouter] Tool-calling filter: excluded ${toolExcluded.join(", ")} (no structured function call support)`,
         );
       }
 
@@ -4497,7 +4443,7 @@ async function proxyRequest(
         if (compliant.length > 0 && compliant.length < toolFiltered.length) {
           const dropped = toolFiltered.filter((m) => TOOL_NONCOMPLIANT_MODELS.includes(m));
           console.log(
-            `[XClawRouter] Tool-compliance filter: excluded ${dropped.join(", ")} (unreliable tool schema handling)`,
+            `[ClawRouter] Tool-compliance filter: excluded ${dropped.join(", ")} (unreliable tool schema handling)`,
           );
           toolFiltered = prependStickyExplicitModel(compliant);
         }
@@ -4510,7 +4456,7 @@ async function proxyRequest(
       const visionExcluded = toolFiltered.filter((m) => !visionFiltered.includes(m));
       if (visionExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Vision filter: excluded ${visionExcluded.join(", ")} (no vision support)`,
+          `[ClawRouter] Vision filter: excluded ${visionExcluded.join(", ")} (no vision support)`,
         );
       }
 
@@ -4575,11 +4521,11 @@ async function proxyRequest(
       if (isComplexOrAgenticFilter && filteredToFreeOnly) {
         const budgetSummary = `$${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd})`;
         console.log(
-          `[XClawRouter] Budget filter left only free model for complex/agentic session — blocking (${budgetSummary})`,
+          `[ClawRouter] Budget filter left only free model for complex/agentic session — blocking (${budgetSummary})`,
         );
         const errPayload = JSON.stringify({
           error: {
-            message: `XClawRouter budget exhausted: remaining budget (${budgetSummary}) cannot support a complex/tool request. Increase maxCostPerRun to continue.`,
+            message: `ClawRouter budget exhausted: remaining budget (${budgetSummary}) cannot support a complex/tool request. Increase maxCostPerRun to continue.`,
             type: "cost_cap_exceeded",
             code: "budget_exhausted",
           },
@@ -4592,8 +4538,8 @@ async function proxyRequest(
         } else {
           res.writeHead(429, {
             "Content-Type": "application/json",
-            "X-XClawRouter-Cost-Cap-Exceeded": "1",
-            "X-XClawRouter-Budget-Mode": "blocked",
+            "X-ClawRouter-Cost-Cap-Exceeded": "1",
+            "X-ClawRouter-Budget-Mode": "blocked",
           });
           res.end(errPayload);
         }
@@ -4607,7 +4553,7 @@ async function proxyRequest(
             ? `$${remainingUsd.toFixed(4)} remaining`
             : `budget exhausted ($${runCostUsd.toFixed(4)}/$${options.maxCostPerRunUsd})`;
         console.log(
-          `[XClawRouter] Budget downgrade (${budgetSummary}): excluded ${excluded.join(", ")}`,
+          `[ClawRouter] Budget downgrade (${budgetSummary}): excluded ${excluded.join(", ")}`,
         );
 
         // A: Set visible warning notice — prepended to response so user sees the downgrade
@@ -4639,7 +4585,7 @@ async function proxyRequest(
         throw new Error(`Request timed out after ${timeoutMs}ms`);
       }
 
-      console.log(`[XClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
+      console.log(`[ClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
 
       // Per-model abort controller — each model attempt gets its own 60s window.
       // When it fires, the fallback loop moves to the next model rather than failing.
@@ -4668,7 +4614,7 @@ async function proxyRequest(
       // If the per-model timeout fired (but not global), treat as fallback-worthy error
       if (!result.success && modelController.signal.aborted && !isLastAttempt) {
         console.log(
-          `[XClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`,
+          `[ClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`,
         );
         recordProviderError(tryModel, "server_error");
         continue;
@@ -4682,7 +4628,7 @@ async function proxyRequest(
 
         if (isDegenerateCompletion(bodyBuf) && !isLastAttempt) {
           console.warn(
-            `[XClawRouter] ⚠️  Degenerate output from ${tryModel} (finish_reason=length + repetition loop) — retrying with next fallback`,
+            `[ClawRouter] ⚠️  Degenerate output from ${tryModel} (finish_reason=length + repetition loop) — retrying with next fallback`,
           );
           recordProviderError(tryModel, "server_error");
           failedAttempts.push({
@@ -4700,7 +4646,7 @@ async function proxyRequest(
           headers: result.response.headers,
         });
         actualModelUsed = tryModel;
-        console.log(`[XClawRouter] Success with model: ${tryModel}`);
+        console.log(`[ClawRouter] Success with model: ${tryModel}`);
         // Accumulate estimated cost to session for maxCostPerRun tracking
         if (options.maxCostPerRunUsd && effectiveSessionId && !FREE_MODELS.has(tryModel)) {
           const costEst = estimateAmount(tryModel, body.length, maxTokens);
@@ -4741,7 +4687,7 @@ async function proxyRequest(
         const freeInChain = modelsToTry.findIndex((m, idx) => idx > i && FREE_MODELS.has(m));
         if (freeInChain > i + 1) {
           console.log(
-            `[XClawRouter] Payment error — skipping to free model: ${modelsToTry[freeInChain]}`,
+            `[ClawRouter] Payment error — skipping to free model: ${modelsToTry[freeInChain]}`,
           );
           i = freeInChain - 1; // loop will increment to freeInChain
           continue;
@@ -4751,7 +4697,7 @@ async function proxyRequest(
           const freeFallback = pickFreeModel(excludeList);
           if (freeFallback) {
             modelsToTry.push(freeFallback);
-            console.log(`[XClawRouter] Payment error — appending free model: ${freeFallback}`);
+            console.log(`[ClawRouter] Payment error — appending free model: ${freeFallback}`);
             continue;
           }
         }
@@ -4771,7 +4717,7 @@ async function proxyRequest(
         !globalController.signal.aborted
       ) {
         console.log(
-          `[XClawRouter] Explicit pin ${tryModel} got ${result.errorCategory} (HTTP ${result.errorStatus ?? "?"}), retrying once in 500ms`,
+          `[ClawRouter] Explicit pin ${tryModel} got ${result.errorCategory} (HTTP ${result.errorStatus ?? "?"}), retrying once in 500ms`,
         );
         await new Promise<void>((resolve) => setTimeout(resolve, 500));
         if (!globalController.signal.aborted) {
@@ -4793,7 +4739,7 @@ async function proxyRequest(
           if (retryResult.success && retryResult.response) {
             upstream = retryResult.response;
             actualModelUsed = tryModel;
-            console.log(`[XClawRouter] Explicit-pin retry succeeded for: ${tryModel}`);
+            console.log(`[ClawRouter] Explicit-pin retry succeeded for: ${tryModel}`);
             if (options.maxCostPerRunUsd && effectiveSessionId && !FREE_MODELS.has(tryModel)) {
               const costEst = estimateAmount(tryModel, body.length, maxTokens);
               if (costEst) {
@@ -4823,7 +4769,7 @@ async function proxyRequest(
           isExplicitModelError && /unknown.*model|invalid.*model/i.test(result.errorBody || "");
         if (isUnknownExplicitModel) {
           console.log(
-            `[XClawRouter] Explicit model error from ${tryModel}, not falling back: ${result.errorBody?.slice(0, 100)}`,
+            `[ClawRouter] Explicit model error from ${tryModel}, not falling back: ${result.errorBody?.slice(0, 100)}`,
           );
           break;
         }
@@ -4840,7 +4786,7 @@ async function proxyRequest(
           // Retry once after 200ms before treating this as a model-level failure.
           if (!isLastAttempt && !globalController.signal.aborted) {
             console.log(
-              `[XClawRouter] Rate-limited on ${tryModel}, retrying in 200ms before failover`,
+              `[ClawRouter] Rate-limited on ${tryModel}, retrying in 200ms before failover`,
             );
             await new Promise<void>((resolve) => setTimeout(resolve, 200));
             if (!globalController.signal.aborted) {
@@ -4868,7 +4814,7 @@ async function proxyRequest(
               if (retryResult.success && retryResult.response) {
                 upstream = retryResult.response;
                 actualModelUsed = tryModel;
-                console.log(`[XClawRouter] Rate-limit retry succeeded for: ${tryModel}`);
+                console.log(`[ClawRouter] Rate-limit retry succeeded for: ${tryModel}`);
                 if (options.maxCostPerRunUsd && effectiveSessionId && tryModel !== FREE_MODEL) {
                   const costEst = estimateAmount(tryModel, body.length, maxTokens);
                   if (costEst) {
@@ -4887,10 +4833,10 @@ async function proxyRequest(
             if (parsed.update_available) {
               console.log("");
               console.log(
-                `\x1b[33m⬆️  XClawRouter ${parsed.update_available} available (you have ${VERSION})\x1b[0m`,
+                `\x1b[33m⬆️  ClawRouter ${parsed.update_available} available (you have ${VERSION})\x1b[0m`,
               );
               console.log(
-                `   Run: \x1b[36mcurl -fsSL ${parsed.update_url || "https://blockrun.ai/xclawrouter-update"} | bash\x1b[0m`,
+                `   Run: \x1b[36mcurl -fsSL ${parsed.update_url || "https://blockrun.ai/ClawRouter-update"} | bash\x1b[0m`,
               );
               console.log("");
             }
@@ -4901,12 +4847,12 @@ async function proxyRequest(
           markOverloaded(tryModel);
         } else if (errorCat === "auth_failure" || errorCat === "quota_exceeded") {
           console.log(
-            `[XClawRouter] 🔑 ${errorCat === "auth_failure" ? "Auth failure" : "Quota exceeded"} for ${tryModel} — check provider config`,
+            `[ClawRouter] 🔑 ${errorCat === "auth_failure" ? "Auth failure" : "Quota exceeded"} for ${tryModel} — check provider config`,
           );
         }
 
         console.log(
-          `[XClawRouter] Provider error from ${tryModel}, trying fallback: ${result.errorBody?.slice(0, 100)}`,
+          `[ClawRouter] Provider error from ${tryModel}, trying fallback: ${result.errorBody?.slice(0, 100)}`,
         );
         continue;
       }
@@ -4914,7 +4860,7 @@ async function proxyRequest(
       // Not a provider error or last attempt — stop trying
       if (!result.isProviderError) {
         console.log(
-          `[XClawRouter] Non-provider error from ${tryModel}, not retrying: ${result.errorBody?.slice(0, 100)}`,
+          `[ClawRouter] Non-provider error from ${tryModel}, not retrying: ${result.errorBody?.slice(0, 100)}`,
         );
       }
       break;
@@ -4966,12 +4912,12 @@ async function proxyRequest(
         const pinnedSession = sessionStore.getSession(effectiveSessionId);
         if (pinnedSession?.userExplicit) {
           console.log(
-            `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... fallback used ${actualModelUsed}, preserving user-explicit pin: ${pinnedSession.model}`,
+            `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... fallback used ${actualModelUsed}, preserving user-explicit pin: ${pinnedSession.model}`,
           );
         } else {
           sessionStore.setSession(effectiveSessionId, actualModelUsed, routingDecision.tier);
           console.log(
-            `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... updated pin to fallback: ${actualModelUsed}`,
+            `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... updated pin to fallback: ${actualModelUsed}`,
           );
         }
       }
@@ -4988,7 +4934,7 @@ async function proxyRequest(
         failedAttempts.length > 0
           ? `All ${failedAttempts.length} models failed. Tried: ${attemptSummary}`
           : "All models in fallback chain failed";
-      console.log(`[XClawRouter] ${structuredMessage}`);
+      console.log(`[ClawRouter] ${structuredMessage}`);
       const rawErrBody = lastError?.body || structuredMessage;
       const errStatus = lastError?.status || 502;
 
@@ -5285,7 +5231,7 @@ async function proxyRequest(
       }
 
       // Send a final usage chunk (OpenAI `stream_options.include_usage` format)
-      // carrying both the standard token counts AND the XClawRouter cost breakdown.
+      // carrying both the standard token counts AND the ClawRouter cost breakdown.
       // OpenClaw's session-cost-usage module reads `usage.cost.{total,input,output}`
       // from every assistant message, so emitting the cost here feeds both the
       // per-session footer (/usage full) and the /stats-style reports.
@@ -5537,7 +5483,7 @@ async function proxyRequest(
           model: actualModelUsed,
         });
         console.log(
-          `[XClawRouter] Cached response for ${actualModelUsed} (${responseBody.length} bytes)`,
+          `[ClawRouter] Cached response for ${actualModelUsed} (${responseBody.length} bytes)`,
         );
       }
 
@@ -5570,7 +5516,7 @@ async function proxyRequest(
       const sameCount = tailChars.filter((c) => c === firstChar).length;
       if (isPunct && sameCount >= 60) {
         console.warn(
-          `[XClawRouter] ⚠️  Degenerate output detected — model=${actualModelUsed || "unknown"} len=${accumulatedContent.length} head=${JSON.stringify(accumulatedContent.slice(0, 40))} tail_repeats_${JSON.stringify(firstChar)}=${sameCount}/80`,
+          `[ClawRouter] ⚠️  Degenerate output detected — model=${actualModelUsed || "unknown"} len=${accumulatedContent.length} head=${JSON.stringify(accumulatedContent.slice(0, 40))} tail_repeats_${JSON.stringify(firstChar)}=${sameCount}/80`,
         );
       }
     }
@@ -5581,7 +5527,7 @@ async function proxyRequest(
       if (events.length > 0) {
         sessionJournal.record(sessionId, events, actualModelUsed);
         console.log(
-          `[XClawRouter] Recorded ${events.length} events to session journal for session ${sessionId.slice(0, 8)}...`,
+          `[ClawRouter] Recorded ${events.length} events to session journal for session ${sessionId.slice(0, 8)}...`,
         );
       }
     }

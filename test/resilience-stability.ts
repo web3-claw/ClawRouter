@@ -255,7 +255,7 @@ async function testMemoryLeaks(ctx: TestContext): Promise<void> {
 
 async function main() {
   console.log("\n╔════════════════════════════════════════════════════════════════╗");
-  console.log("║       XClawRouter Resilience Long-Running Stability Tests       ║");
+  console.log("║       ClawRouter Resilience Long-Running Stability Tests       ║");
   console.log("╚════════════════════════════════════════════════════════════════╝");
 
   const durationMinutes = parseInt(process.env.DURATION_MINUTES || "5", 10);

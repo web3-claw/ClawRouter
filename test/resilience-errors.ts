@@ -318,7 +318,7 @@ async function testMemoryPressure(ctx: TestContext): Promise<void> {
 
 async function main() {
   console.log("\n╔════════════════════════════════════════════════════════════════╗");
-  console.log("║         XClawRouter Resilience Error Simulation Tests          ║");
+  console.log("║         ClawRouter Resilience Error Simulation Tests          ║");
   console.log("╚════════════════════════════════════════════════════════════════╝");
 
   const ctx = await setupTestEnvironment();

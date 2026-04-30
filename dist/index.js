@@ -44530,7 +44530,7 @@ var require_mock_interceptor = __commonJS({
 var require_mock_client = __commonJS({
   "node_modules/undici/lib/mock/mock-client.js"(exports, module) {
     "use strict";
-    var { promisify: promisify2 } = __require("util");
+    var { promisify } = __require("util");
     var Client = require_client();
     var { buildMockDispatch } = require_mock_utils();
     var {
@@ -44578,7 +44578,7 @@ var require_mock_client = __commonJS({
         this[kDispatches] = [];
       }
       async [kClose]() {
-        await promisify2(this[kOriginalClose])();
+        await promisify(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -44791,7 +44791,7 @@ var require_mock_call_history = __commonJS({
 var require_mock_pool = __commonJS({
   "node_modules/undici/lib/mock/mock-pool.js"(exports, module) {
     "use strict";
-    var { promisify: promisify2 } = __require("util");
+    var { promisify } = __require("util");
     var Pool = require_pool();
     var { buildMockDispatch } = require_mock_utils();
     var {
@@ -44839,7 +44839,7 @@ var require_mock_pool = __commonJS({
         this[kDispatches] = [];
       }
       async [kClose]() {
-        await promisify2(this[kOriginalClose])();
+        await promisify(this[kOriginalClose])();
         this[kConnected] = 0;
         this[kMockAgent][Symbols.kClients].delete(this[kOrigin]);
       }
@@ -49782,7 +49782,7 @@ var require_headers = __commonJS({
         }
       }
     };
-    var Headers2 = class _Headers {
+    var Headers = class _Headers {
       #guard;
       /**
        * @type {HeadersList}
@@ -49923,13 +49923,13 @@ var require_headers = __commonJS({
         target.#headersList = list;
       }
     };
-    var { getHeadersGuard, setHeadersGuard, getHeadersList, setHeadersList } = Headers2;
-    Reflect.deleteProperty(Headers2, "getHeadersGuard");
-    Reflect.deleteProperty(Headers2, "setHeadersGuard");
-    Reflect.deleteProperty(Headers2, "getHeadersList");
-    Reflect.deleteProperty(Headers2, "setHeadersList");
-    iteratorMixin("Headers", Headers2, headersListSortAndCombine, 0, 1);
-    Object.defineProperties(Headers2.prototype, {
+    var { getHeadersGuard, setHeadersGuard, getHeadersList, setHeadersList } = Headers;
+    Reflect.deleteProperty(Headers, "getHeadersGuard");
+    Reflect.deleteProperty(Headers, "setHeadersGuard");
+    Reflect.deleteProperty(Headers, "getHeadersList");
+    Reflect.deleteProperty(Headers, "setHeadersList");
+    iteratorMixin("Headers", Headers, headersListSortAndCombine, 0, 1);
+    Object.defineProperties(Headers.prototype, {
       append: kEnumerableProperty,
       delete: kEnumerableProperty,
       get: kEnumerableProperty,
@@ -49947,7 +49947,7 @@ var require_headers = __commonJS({
     webidl.converters.HeadersInit = function(V, prefix, argument) {
       if (webidl.util.Type(V) === webidl.util.Types.OBJECT) {
         const iterator = Reflect.get(V, Symbol.iterator);
-        if (!util2.types.isProxy(V) && iterator === Headers2.prototype.entries) {
+        if (!util2.types.isProxy(V) && iterator === Headers.prototype.entries) {
           try {
             return getHeadersList(V).entriesList;
           } catch {
@@ -49968,7 +49968,7 @@ var require_headers = __commonJS({
       fill,
       // for test.
       compareHeaderName,
-      Headers: Headers2,
+      Headers,
       HeadersList,
       getHeadersGuard,
       setHeadersGuard,
@@ -49982,7 +49982,7 @@ var require_headers = __commonJS({
 var require_response = __commonJS({
   "node_modules/undici/lib/web/fetch/response.js"(exports, module) {
     "use strict";
-    var { Headers: Headers2, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = require_headers();
+    var { Headers, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = require_headers();
     var { extractBody, cloneBody, mixinBody, streamRegistry, bodyUnusable } = require_body();
     var util2 = require_util();
     var nodeUtil = __require("util");
@@ -50058,7 +50058,7 @@ var require_response = __commonJS({
         }
         init = webidl.converters.ResponseInit(init);
         this.#state = makeResponse({});
-        this.#headers = new Headers2(kConstruct);
+        this.#headers = new Headers(kConstruct);
         setHeadersGuard(this.#headers, "response");
         setHeadersList(this.#headers, this.#state.headersList);
         let bodyWithType = null;
@@ -50333,7 +50333,7 @@ var require_response = __commonJS({
     function fromInnerResponse(innerResponse, guard) {
       const response = new Response2(kConstruct);
       setResponseState(response, innerResponse);
-      const headers = new Headers2(kConstruct);
+      const headers = new Headers(kConstruct);
       setResponseHeaders(response, headers);
       setHeadersList(headers, innerResponse.headersList);
       setHeadersGuard(headers, guard);
@@ -50405,7 +50405,7 @@ var require_request2 = __commonJS({
   "node_modules/undici/lib/web/fetch/request.js"(exports, module) {
     "use strict";
     var { extractBody, mixinBody, cloneBody, bodyUnusable } = require_body();
-    var { Headers: Headers2, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = require_headers();
+    var { Headers, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = require_headers();
     var util2 = require_util();
     var nodeUtil = __require("util");
     var {
@@ -50674,7 +50674,7 @@ var require_request2 = __commonJS({
             requestFinalizer.register(ac, { signal, abort }, abort);
           }
         }
-        this.#headers = new Headers2(kConstruct);
+        this.#headers = new Headers(kConstruct);
         setHeadersList(this.#headers, request.headersList);
         setHeadersGuard(this.#headers, "request");
         if (mode === "no-cors") {
@@ -51015,7 +51015,7 @@ var require_request2 = __commonJS({
       setRequestState(request, innerRequest);
       setRequestDispatcher(request, dispatcher);
       setRequestSignal(request, signal);
-      const headers = new Headers2(kConstruct);
+      const headers = new Headers(kConstruct);
       setRequestHeaders(request, headers);
       setHeadersList(headers, innerRequest.headersList);
       setHeadersGuard(headers, guard);
@@ -53441,8 +53441,8 @@ var require_cookies = __commonJS({
     var { parseSetCookie } = require_parse();
     var { stringify: stringify4 } = require_util4();
     var { webidl } = require_webidl();
-    var { Headers: Headers2 } = require_headers();
-    var brandChecks = webidl.brandCheckMultiple([Headers2, globalThis.Headers].filter(Boolean));
+    var { Headers } = require_headers();
+    var brandChecks = webidl.brandCheckMultiple([Headers, globalThis.Headers].filter(Boolean));
     function getCookies(headers) {
       webidl.argumentLengthCheck(arguments, 1, "getCookies");
       brandChecks(headers);
@@ -54183,7 +54183,7 @@ var require_connection = __commonJS({
     var { parseExtensions, isClosed, isClosing, isEstablished, isConnecting, validateCloseCodeAndReason } = require_util5();
     var { makeRequest } = require_request2();
     var { fetching } = require_fetch();
-    var { Headers: Headers2, getHeadersList } = require_headers();
+    var { Headers, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
     var assert8 = __require("assert");
@@ -54205,7 +54205,7 @@ var require_connection = __commonJS({
         useURLCredentials: true
       });
       if (options.headers) {
-        const headersList = getHeadersList(new Headers2(options.headers));
+        const headersList = getHeadersList(new Headers(options.headers));
         request.headersList = headersList;
       }
       const keyValue = crypto4.randomBytes(16).toString("base64");
@@ -58759,10 +58759,10 @@ function isReasoningModel(modelId) {
 import { AsyncLocalStorage } from "async_hooks";
 import { createServer } from "http";
 import { finished } from "stream";
-import { homedir as homedir6 } from "os";
+import { homedir as homedir5 } from "os";
 import { join as join8 } from "path";
 import { mkdir as mkdir3, writeFile as writeFile2, readFile, stat as fsStat } from "fs/promises";
-import { readFileSync as readFileSync2, existsSync as existsSync2 } from "fs";
+import { readFileSync as readFileSync2, existsSync } from "fs";
 
 // node_modules/viem/_esm/utils/getAction.js
 function getAction(client, actionFn, name) {
@@ -74556,7 +74556,7 @@ async function getStats(days = 7) {
 function formatStatsAscii(stats) {
   const lines = [];
   lines.push("\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557");
-  lines.push(`\u2551          XClawRouter by BlockRun v${VERSION}`.padEnd(61) + "\u2551");
+  lines.push(`\u2551          ClawRouter by BlockRun v${VERSION}`.padEnd(61) + "\u2551");
   lines.push("\u2551                Usage Statistics                            \u2551");
   lines.push("\u2560\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2563");
   lines.push(`\u2551  Period: ${stats.period.padEnd(49)}\u2551`);
@@ -75127,200 +75127,24 @@ import { writeFile, mkdir as mkdir2 } from "fs/promises";
 init_accounts();
 init_wallet();
 import { join as join6 } from "path";
-import { homedir as homedir4 } from "os";
-
-// src/onchainos-adapter.ts
-import { execFile, execFileSync } from "child_process";
-import { existsSync } from "fs";
 import { homedir as homedir3 } from "os";
-import { promisify } from "util";
-var execFileAsync = promisify(execFile);
-var DEFAULT_BIN = "onchainos";
-var DEFAULT_TIMEOUT_MS = 3e4;
-var PAYMENT_TIMEOUT_MS = 3e4;
-var FALLBACK_CANDIDATES = [
-  `${homedir3()}/.local/bin/onchainos`,
-  "/opt/homebrew/bin/onchainos",
-  "/usr/local/bin/onchainos"
-];
-var OnchainOsCliError = class extends Error {
-  constructor(message, stderr, exitCode) {
-    super(message);
-    this.stderr = stderr;
-    this.exitCode = exitCode;
-    this.name = "OnchainOsCliError";
-  }
-};
-function resolveOnchainosBin(override) {
-  if (override) return override;
-  const env = process.env.XCLAWROUTER_ONCHAINOS_BIN ?? process.env.ONCHAINOS_BIN;
-  if (env) return env;
-  const fallback = FALLBACK_CANDIDATES.find((candidate) => existsSync(candidate));
-  return fallback ?? DEFAULT_BIN;
-}
-async function runCli(bin, args, opts) {
-  try {
-    const { stdout } = await execFileAsync(bin, args, {
-      timeout: opts.timeoutMs,
-      maxBuffer: 8 * 1024 * 1024
-    });
-    return stdout;
-  } catch (err) {
-    throw wrapCliError(err, bin, args);
-  }
-}
-function wrapCliError(err, bin, args) {
-  const e7 = err;
-  if (e7.code === "ENOENT") {
-    return new OnchainOsCliError(
-      `onchainos CLI not found at "${bin}". Install OKX's agentic wallet CLI (https://web3.okx.com/onchainos) and ensure it is on PATH, or set XCLAWROUTER_ONCHAINOS_BIN to the binary location.`
-    );
-  }
-  return new OnchainOsCliError(
-    `onchainos ${args.join(" ")} failed: ${e7.message}`,
-    e7.stderr,
-    typeof e7.code === "number" ? e7.code : null
-  );
-}
-function parseJson(stdout, label) {
-  const trimmed = stdout.trim();
-  if (!trimmed) {
-    throw new OnchainOsCliError(`onchainos ${label}: empty output`);
-  }
-  try {
-    return JSON.parse(trimmed);
-  } catch (err) {
-    throw new OnchainOsCliError(
-      `onchainos ${label}: invalid JSON output \u2014 ${err.message}
-${trimmed.slice(0, 500)}`
-    );
-  }
-}
-function unwrapData(parsed) {
-  if (parsed && typeof parsed === "object" && "data" in parsed) {
-    const inner = parsed.data;
-    if (inner !== void 0 && inner !== null) return inner;
-  }
-  return parsed;
-}
-var OnchainOsAdapter = class {
-  bin;
-  timeoutMs;
-  constructor(opts = {}) {
-    this.bin = resolveOnchainosBin(opts.bin);
-    this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  }
-  /** Quick, synchronous probe — does the binary exist and respond to --version? */
-  isInstalled() {
-    try {
-      execFileSync(this.bin, ["--version"], {
-        encoding: "utf-8",
-        stdio: "pipe",
-        timeout: 5e3
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  async status() {
-    const stdout = await runCli(this.bin, ["wallet", "status"], {
-      timeoutMs: this.timeoutMs
-    });
-    const raw = unwrapData(parseJson(stdout, "wallet status"));
-    const loggedIn = Boolean(raw.loggedIn ?? raw.connected);
-    const evmAddress = raw.evmAddress ?? raw.evm;
-    const solanaAddress = raw.solanaAddress ?? raw.solana;
-    return {
-      loggedIn,
-      email: raw.email,
-      evmAddress: evmAddress?.startsWith("0x") ? evmAddress : void 0,
-      solanaAddress
-    };
-  }
-  async login(email) {
-    if (!email.includes("@")) {
-      throw new Error(`Invalid email address: ${email}`);
-    }
-    await runCli(this.bin, ["wallet", "login", email], { timeoutMs: 5 * 6e4 });
-  }
-  async logout() {
-    await runCli(this.bin, ["wallet", "logout"], { timeoutMs: this.timeoutMs });
-  }
-  /**
-   * Sign an x402 payment via onchainos. Pass through the full `accepts` array
-   * from the 402 response — onchainos picks the chain/scheme it can satisfy.
-   */
-  async signX402Payment(accepts) {
-    const acceptsJson = JSON.stringify(accepts);
-    const stdout = await runCli(this.bin, ["payment", "x402-pay", "--accepts", acceptsJson], {
-      timeoutMs: PAYMENT_TIMEOUT_MS
-    });
-    const parsed = parseJson(stdout, "payment x402-pay");
-    const result = unwrapData(parsed);
-    if (!result.signature || typeof result.signature !== "string") {
-      throw new OnchainOsCliError(
-        `onchainos payment x402-pay returned no signature: ${JSON.stringify(parsed).slice(0, 500)}`
-      );
-    }
-    if (!result.authorization || typeof result.authorization !== "object") {
-      throw new OnchainOsCliError(
-        `onchainos payment x402-pay returned no authorization: ${JSON.stringify(parsed).slice(0, 500)}`
-      );
-    }
-    return {
-      signature: result.signature,
-      authorization: result.authorization,
-      sessionCert: typeof result.sessionCert === "string" ? result.sessionCert : void 0
-    };
-  }
-};
-
-// src/auth.ts
-async function detectOnchainosWallet() {
-  const adapter = new OnchainOsAdapter();
-  if (!adapter.isInstalled()) return void 0;
-  try {
-    const status = await adapter.status();
-    if (!status.loggedIn || !status.evmAddress) return void 0;
-    return { address: status.evmAddress, email: status.email, adapter };
-  } catch {
-    return void 0;
-  }
-}
-var WALLET_DIR = join6(homedir4(), ".openclaw", "blockrun");
+var WALLET_DIR = join6(homedir3(), ".openclaw", "blockrun");
 var WALLET_FILE = join6(WALLET_DIR, "wallet.key");
 var MNEMONIC_FILE = join6(WALLET_DIR, "mnemonic");
 var CHAIN_FILE = join6(WALLET_DIR, "payment-chain");
-async function savePaymentChain(chain3) {
-  await mkdir2(WALLET_DIR, { recursive: true });
-  await writeFile(CHAIN_FILE, chain3 + "\n", { mode: 384 });
-}
-async function loadPaymentChain() {
-  try {
-    const content = (await readTextFile(CHAIN_FILE)).trim();
-    if (content === "solana") return "solana";
-    return "base";
-  } catch {
-    return "base";
-  }
-}
-async function resolvePaymentChain() {
-  const env = process.env.XCLAWROUTER_PAYMENT_CHAIN ?? process.env.CLAWROUTER_PAYMENT_CHAIN;
-  if (env === "solana") return "solana";
-  if (env === "base") return "base";
-  return loadPaymentChain();
-}
 async function loadSavedWallet() {
   try {
     const key = (await readTextFile(WALLET_FILE)).trim();
     if (key.startsWith("0x") && key.length === 66) {
-      console.log(`[XClawRouter] \u2713 Loaded existing wallet from ${WALLET_FILE}`);
+      console.log(`[ClawRouter] \u2713 Loaded existing wallet from ${WALLET_FILE}`);
       return key;
     }
-    console.error(`[XClawRouter] \u2717 CRITICAL: Wallet file exists but has invalid format!`);
-    console.error(`[XClawRouter]   File: ${WALLET_FILE}`);
-    console.error(`[XClawRouter]   Expected: 0x followed by 64 hex characters (66 chars total)`);
+    console.error(`[ClawRouter] \u2717 CRITICAL: Wallet file exists but has invalid format!`);
+    console.error(`[ClawRouter]   File: ${WALLET_FILE}`);
+    console.error(`[ClawRouter]   Expected: 0x followed by 64 hex characters (66 chars total)`);
+    console.error(
+      `[ClawRouter]   To fix: restore your backup key or set BLOCKRUN_WALLET_KEY env var`
+    );
     throw new Error(
       `Wallet file at ${WALLET_FILE} is corrupted or has wrong format. Refusing to auto-generate new wallet to protect existing funds. Restore your backup key or set BLOCKRUN_WALLET_KEY environment variable.`
     );
@@ -75329,8 +75153,11 @@ async function loadSavedWallet() {
       if (err instanceof Error && err.message.includes("Refusing to auto-generate")) {
         throw err;
       }
+      console.error(
+        `[ClawRouter] \u2717 Failed to read wallet file: ${err instanceof Error ? err.message : String(err)}`
+      );
       throw new Error(
-        `Cannot read wallet file at ${WALLET_FILE}: ${err instanceof Error ? err.message : String(err)}.`,
+        `Cannot read wallet file at ${WALLET_FILE}: ${err instanceof Error ? err.message : String(err)}. Refusing to auto-generate new wallet to protect existing funds. Fix file permissions or set BLOCKRUN_WALLET_KEY environment variable.`,
         { cause: err }
       );
     }
@@ -75340,12 +75167,14 @@ async function loadSavedWallet() {
 async function loadMnemonic() {
   try {
     const mnemonic = (await readTextFile(MNEMONIC_FILE)).trim();
-    if (mnemonic && isValidMnemonic(mnemonic)) return mnemonic;
-    console.warn(`[XClawRouter] \u26A0 Mnemonic file exists but has invalid format \u2014 ignoring`);
+    if (mnemonic && isValidMnemonic(mnemonic)) {
+      return mnemonic;
+    }
+    console.warn(`[ClawRouter] \u26A0 Mnemonic file exists but has invalid format \u2014 ignoring`);
     return void 0;
   } catch (err) {
     if (err.code !== "ENOENT") {
-      console.warn(`[XClawRouter] \u26A0 Cannot read mnemonic file \u2014 ignoring`);
+      console.warn(`[ClawRouter] \u26A0 Cannot read mnemonic file \u2014 ignoring`);
     }
   }
   return void 0;
@@ -75359,7 +75188,13 @@ async function generateAndSaveWallet() {
   if (existingMnemonic) {
     throw new Error(
       `Mnemonic file exists at ${MNEMONIC_FILE} but wallet.key is missing.
-Refusing to generate a new wallet to protect existing funds.`
+Refusing to generate a new wallet to protect existing funds.
+
+Restore your EVM private key using one of:
+  Windows:   set BLOCKRUN_WALLET_KEY=0x<your_key>
+  Mac/Linux: export BLOCKRUN_WALLET_KEY=0x<your_key>
+
+Then run: npx @blockrun/clawrouter`
     );
   }
   const mnemonic = generateWalletMnemonic();
@@ -75367,10 +75202,42 @@ Refusing to generate a new wallet to protect existing funds.`
   await mkdir2(WALLET_DIR, { recursive: true });
   await writeFile(WALLET_FILE, derived.evmPrivateKey + "\n", { mode: 384 });
   await writeFile(MNEMONIC_FILE, mnemonic + "\n", { mode: 384 });
-  const verification = (await readTextFile(WALLET_FILE)).trim();
-  if (verification !== derived.evmPrivateKey) {
-    throw new Error("Wallet file verification failed - content mismatch");
+  try {
+    const verification = (await readTextFile(WALLET_FILE)).trim();
+    if (verification !== derived.evmPrivateKey) {
+      throw new Error("Wallet file verification failed - content mismatch");
+    }
+    console.log(`[ClawRouter] Wallet saved and verified at ${WALLET_FILE}`);
+  } catch (err) {
+    throw new Error(
+      `Failed to verify wallet file after creation: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
   }
+  let solanaAddress;
+  try {
+    solanaAddress = await getSolanaAddress(derived.solanaPrivateKeyBytes);
+  } catch {
+  }
+  console.log(`[ClawRouter]`);
+  console.log(`[ClawRouter] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
+  console.log(`[ClawRouter]   NEW WALLET GENERATED \u2014 BACK UP YOUR KEY NOW`);
+  console.log(`[ClawRouter] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
+  console.log(`[ClawRouter]   EVM Address    : ${derived.evmAddress}`);
+  if (solanaAddress) {
+    console.log(`[ClawRouter]   Solana Address : ${solanaAddress}`);
+  }
+  console.log(`[ClawRouter]   Key file       : ${WALLET_FILE}`);
+  console.log(`[ClawRouter]   Mnemonic       : ${MNEMONIC_FILE}`);
+  console.log(`[ClawRouter]`);
+  console.log(`[ClawRouter]   Both EVM (Base) and Solana wallets are ready.`);
+  console.log(`[ClawRouter]   To back up, run in OpenClaw:`);
+  console.log(`[ClawRouter]     /wallet export`);
+  console.log(`[ClawRouter]`);
+  console.log(`[ClawRouter]   To restore on another machine:`);
+  console.log(`[ClawRouter]     export BLOCKRUN_WALLET_KEY=<your_key>`);
+  console.log(`[ClawRouter] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
+  console.log(`[ClawRouter]`);
   return {
     key: derived.evmPrivateKey,
     address: derived.evmAddress,
@@ -75379,15 +75246,6 @@ Refusing to generate a new wallet to protect existing funds.`
   };
 }
 async function resolveOrGenerateWalletKey() {
-  const onchainos = await detectOnchainosWallet();
-  if (onchainos) {
-    return {
-      address: onchainos.address,
-      source: "okx",
-      onchainos: onchainos.adapter,
-      email: onchainos.email
-    };
-  }
   const saved = await loadSavedWallet();
   if (saved) {
     const account = privateKeyToAccount(saved);
@@ -75404,7 +75262,7 @@ async function resolveOrGenerateWalletKey() {
     }
     return { key: saved, address: account.address, source: "saved" };
   }
-  const envKey = process.env.BLOCKRUN_WALLET_KEY;
+  const envKey = process["env"].BLOCKRUN_WALLET_KEY;
   if (typeof envKey === "string" && envKey.startsWith("0x") && envKey.length === 66) {
     const account = privateKeyToAccount(envKey);
     const mnemonic = await loadMnemonic();
@@ -75431,101 +75289,40 @@ async function resolveOrGenerateWalletKey() {
 }
 async function setupSolana() {
   const existing = await loadMnemonic();
-  if (existing) throw new Error("Solana wallet already set up at " + MNEMONIC_FILE);
+  if (existing) {
+    throw new Error("Solana wallet already set up. Mnemonic file exists at " + MNEMONIC_FILE);
+  }
   const savedKey = await loadSavedWallet();
   if (!savedKey) {
     throw new Error(
-      "No EVM wallet found. Run XClawRouter first to generate a wallet before setting up Solana."
+      "No EVM wallet found. Run ClawRouter first to generate a wallet before setting up Solana."
     );
   }
   const mnemonic = generateWalletMnemonic();
   const solanaKeyBytes = deriveSolanaKeyBytes(mnemonic);
   await saveMnemonic(mnemonic);
+  console.log(`[ClawRouter] Solana wallet set up successfully.`);
+  console.log(`[ClawRouter] Mnemonic saved to ${MNEMONIC_FILE}`);
+  console.log(`[ClawRouter] Existing EVM wallet unchanged.`);
   return { mnemonic, solanaPrivateKeyBytes: solanaKeyBytes };
 }
-
-// src/okx-x402-fetch.ts
-function createOnchainosPayFetch(baseFetch, onchainos) {
-  return async (input, init) => {
-    const original = new Request(input, init);
-    const bodyBuf = await original.clone().arrayBuffer();
-    const headersSnapshot = new Headers(original.headers);
-    const firstResponse = await baseFetch(original);
-    if (firstResponse.status !== 402) return firstResponse;
-    const paymentRequiredHeader = firstResponse.headers.get("PAYMENT-REQUIRED");
-    let requirement;
-    let isV2 = false;
-    let accepts;
-    if (paymentRequiredHeader) {
-      isV2 = true;
-      requirement = JSON.parse(
-        Buffer.from(paymentRequiredHeader, "base64").toString()
-      );
-      accepts = requirement.accepted ? [requirement.accepted] : requirement.accepts ?? [];
-    } else {
-      const text = await firstResponse.text();
-      try {
-        requirement = JSON.parse(text);
-      } catch {
-        return new Response(text, {
-          status: 402,
-          headers: firstResponse.headers
-        });
-      }
-      accepts = requirement.accepts ?? [];
-    }
-    if (accepts.length === 0) {
-      throw new Error(
-        `x402 402 response had no payment options to satisfy (onchainos cannot sign without an 'accepts' array)`
-      );
-    }
-    const payment = await onchainos.signX402Payment(accepts);
-    const accepted = accepts[0] ?? {};
-    const payload = {
-      signature: payment.signature,
-      authorization: payment.authorization
-    };
-    let headerName;
-    let headerValue;
-    if (isV2) {
-      const acceptedWithCert = { ...accepted };
-      if (accepted.scheme === "aggr_deferred" && payment.sessionCert) {
-        acceptedWithCert.extra = {
-          ...accepted.extra ?? {},
-          sessionCert: payment.sessionCert
-        };
-      }
-      headerName = "PAYMENT-SIGNATURE";
-      headerValue = Buffer.from(
-        JSON.stringify({
-          x402Version: requirement.x402Version ?? 2,
-          resource: requirement.resource ?? { url: original.url },
-          accepted: acceptedWithCert,
-          payload
-        })
-      ).toString("base64");
-    } else {
-      headerName = "X-PAYMENT";
-      headerValue = Buffer.from(
-        JSON.stringify({
-          x402Version: 1,
-          scheme: accepted.scheme,
-          network: accepted.network,
-          payload
-        })
-      ).toString("base64");
-    }
-    const replayHeaders = new Headers(headersSnapshot);
-    replayHeaders.set(headerName, headerValue);
-    const replayInit = {
-      method: original.method,
-      headers: replayHeaders,
-      body: original.method === "GET" || original.method === "HEAD" ? void 0 : bodyBuf,
-      redirect: original.redirect,
-      credentials: original.credentials
-    };
-    return baseFetch(original.url, replayInit);
-  };
+async function savePaymentChain(chain3) {
+  await mkdir2(WALLET_DIR, { recursive: true });
+  await writeFile(CHAIN_FILE, chain3 + "\n", { mode: 384 });
+}
+async function loadPaymentChain() {
+  try {
+    const content = (await readTextFile(CHAIN_FILE)).trim();
+    if (content === "solana") return "solana";
+    return "base";
+  } catch {
+    return "base";
+  }
+}
+async function resolvePaymentChain() {
+  if (process["env"].CLAWROUTER_PAYMENT_CHAIN === "solana") return "solana";
+  if (process["env"].CLAWROUTER_PAYMENT_CHAIN === "base") return "base";
+  return loadPaymentChain();
 }
 
 // src/compression/types.ts
@@ -76538,8 +76335,8 @@ async function checkForUpdates() {
 // src/exclude-models.ts
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join as join7, dirname as dirname2 } from "path";
-import { homedir as homedir5 } from "os";
-var DEFAULT_FILE_PATH = join7(homedir5(), ".openclaw", "blockrun", "exclude-models.json");
+import { homedir as homedir4 } from "os";
+var DEFAULT_FILE_PATH = join7(homedir4(), ".openclaw", "blockrun", "exclude-models.json");
 function loadExcludeList(filePath = DEFAULT_FILE_PATH) {
   try {
     const raw = readFileSync(filePath, "utf-8");
@@ -76767,9 +76564,7 @@ async function applyUpstreamProxy(proxyUrl) {
   try {
     parsed = new URL(url);
   } catch {
-    console.warn(
-      `[XClawRouter] Invalid BLOCKRUN_UPSTREAM_PROXY URL: ${url} \u2014 skipping proxy setup`
-    );
+    console.warn(`[ClawRouter] Invalid BLOCKRUN_UPSTREAM_PROXY URL: ${url} \u2014 skipping proxy setup`);
     return void 0;
   }
   const scheme = parsed.protocol;
@@ -76782,13 +76577,13 @@ async function applyUpstreamProxy(proxyUrl) {
       setGlobalDispatcher(new ProxyAgent(url));
     } else {
       console.warn(
-        `[XClawRouter] Unsupported proxy scheme "${scheme}" in BLOCKRUN_UPSTREAM_PROXY \u2014 use http:// or socks5://`
+        `[ClawRouter] Unsupported proxy scheme "${scheme}" in BLOCKRUN_UPSTREAM_PROXY \u2014 use http:// or socks5://`
       );
       return void 0;
     }
   } catch (err) {
     console.warn(
-      `[XClawRouter] Failed to configure upstream proxy "${url}": ${err instanceof Error ? err.message : err}`
+      `[ClawRouter] Failed to configure upstream proxy "${url}": ${err instanceof Error ? err.message : err}`
     );
     return void 0;
   }
@@ -76911,9 +76706,9 @@ function extractTextualToolCalls(content) {
 var paymentStore = new AsyncLocalStorage();
 var BLOCKRUN_API = "https://blockrun.ai/api";
 var BLOCKRUN_SOLANA_API = "https://sol.blockrun.ai/api";
-var IMAGE_DIR = join8(homedir6(), ".openclaw", "blockrun", "images");
-var AUDIO_DIR = join8(homedir6(), ".openclaw", "blockrun", "audio");
-var VIDEO_DIR = join8(homedir6(), ".openclaw", "blockrun", "videos");
+var IMAGE_DIR = join8(homedir5(), ".openclaw", "blockrun", "images");
+var AUDIO_DIR = join8(homedir5(), ".openclaw", "blockrun", "audio");
+var VIDEO_DIR = join8(homedir5(), ".openclaw", "blockrun", "videos");
 var AUTO_MODEL = "blockrun/auto";
 var ROUTING_PROFILES = /* @__PURE__ */ new Set([
   "blockrun/eco",
@@ -77024,13 +76819,13 @@ function transformPaymentError(errorBody) {
             error: {
               message: "Payment signature invalid. This may be a temporary issue.",
               type: "invalid_payload",
-              help: "Try again. If this persists, reinstall XClawRouter: curl -fsSL https://blockrun.ai/xclawrouter-update | bash"
+              help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash"
             }
           });
         }
         if (innerJson.invalidReason === "transaction_simulation_failed") {
           console.error(
-            `[XClawRouter] Solana transaction simulation failed: ${innerJson.invalidMessage || "unknown"}`
+            `[ClawRouter] Solana transaction simulation failed: ${innerJson.invalidMessage || "unknown"}`
           );
           return JSON.stringify({
             error: {
@@ -77058,7 +76853,7 @@ function transformPaymentError(errorBody) {
         });
       }
       if (debugLower.includes("transaction_simulation_failed") || debugLower.includes("simulation")) {
-        console.error(`[XClawRouter] ${chain3} transaction simulation failed: ${parsed.debug}`);
+        console.error(`[ClawRouter] ${chain3} transaction simulation failed: ${parsed.debug}`);
         return JSON.stringify({
           error: {
             message: `${chain3} payment simulation failed. Retrying with a different model.`,
@@ -77072,7 +76867,7 @@ function transformPaymentError(errorBody) {
           error: {
             message: `${chain3} payment signature invalid.`,
             type: "invalid_payload",
-            help: "Try again. If this persists, reinstall XClawRouter: curl -fsSL https://blockrun.ai/xclawrouter-update | bash"
+            help: "Try again. If this persists, reinstall ClawRouter: curl -fsSL https://blockrun.ai/ClawRouter-update | bash"
           }
         });
       }
@@ -77086,7 +76881,7 @@ function transformPaymentError(errorBody) {
         });
       }
       console.error(
-        `[XClawRouter] ${chain3} payment verification failed: ${parsed.debug} payer=${wallet}`
+        `[ClawRouter] ${chain3} payment verification failed: ${parsed.debug} payer=${wallet}`
       );
       return JSON.stringify({
         error: {
@@ -77158,11 +76953,11 @@ function isRateLimited(modelId) {
 }
 function markRateLimited(modelId) {
   rateLimitedModels.set(modelId, Date.now());
-  console.log(`[XClawRouter] Model ${modelId} rate-limited, will deprioritize for 60s`);
+  console.log(`[ClawRouter] Model ${modelId} rate-limited, will deprioritize for 60s`);
 }
 function markOverloaded(modelId) {
   overloadedModels.set(modelId, Date.now());
-  console.log(`[XClawRouter] Model ${modelId} overloaded, will deprioritize for 15s`);
+  console.log(`[ClawRouter] Model ${modelId} overloaded, will deprioritize for 15s`);
 }
 function isOverloaded(modelId) {
   const hitTime = overloadedModels.get(modelId);
@@ -77191,7 +76986,7 @@ function canWrite(res) {
 function safeWrite(res, data) {
   if (!canWrite(res)) {
     const bytes = typeof data === "string" ? Buffer.byteLength(data) : data.length;
-    console.warn(`[XClawRouter] safeWrite: socket not writable, dropping ${bytes} bytes`);
+    console.warn(`[ClawRouter] safeWrite: socket not writable, dropping ${bytes} bytes`);
     return false;
   }
   return res.write(data);
@@ -77500,7 +77295,7 @@ function truncateMessages(messages) {
   const truncatedConversation = conversationMsgs.slice(-maxConversation);
   const result = [...systemMsgs, ...truncatedConversation];
   console.log(
-    `[XClawRouter] Truncated messages: ${messages.length} \u2192 ${result.length} (kept ${systemMsgs.length} system + ${truncatedConversation.length} recent)`
+    `[ClawRouter] Truncated messages: ${messages.length} \u2192 ${result.length} (kept ${systemMsgs.length} system + ${truncatedConversation.length} recent)`
   );
   return {
     messages: result,
@@ -77679,7 +77474,7 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   }
   if (!headers["content-type"]) headers["content-type"] = "application/json";
   headers["user-agent"] = USER_AGENT;
-  console.log(`[XClawRouter] ${requestLabel} request: ${req.method} ${req.url}`);
+  console.log(`[ClawRouter] ${requestLabel} request: ${req.method} ${req.url}`);
   const upstream = await payFetch(upstreamUrl, {
     method: req.method ?? "POST",
     headers,
@@ -77699,7 +77494,7 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   }
   res.end();
   const latencyMs = Date.now() - startTime;
-  console.log(`[XClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
+  console.log(`[ClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
   const requestCost = getActualPaymentUsd();
   logUsage({
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -77715,8 +77510,8 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   });
 }
 function readImageFileAsDataUri(filePath) {
-  const resolved = filePath.startsWith("~/") ? join8(homedir6(), filePath.slice(2)) : filePath;
-  if (!existsSync2(resolved)) {
+  const resolved = filePath.startsWith("~/") ? join8(homedir5(), filePath.slice(2)) : filePath;
+  if (!existsSync(resolved)) {
     throw new Error(`Image file not found: ${resolved}`);
   }
   const ext = resolved.split(".").pop()?.toLowerCase() ?? "png";
@@ -77761,40 +77556,31 @@ async function uploadDataUriToHost(dataUri) {
 async function startProxy(options) {
   const upstreamProxy = await applyUpstreamProxy(options.upstreamProxy);
   if (upstreamProxy) {
-    console.log(`[XClawRouter] Upstream proxy: ${upstreamProxy}`);
+    console.log(`[ClawRouter] Upstream proxy: ${upstreamProxy}`);
   }
-  const walletObj = typeof options.wallet === "string" ? void 0 : options.wallet;
-  const isOkxWallet = walletObj !== void 0 && "source" in walletObj && walletObj.source === "okx" && walletObj.onchainos !== void 0;
-  const walletKey = typeof options.wallet === "string" ? options.wallet : walletObj?.key;
-  const solanaPrivateKeyBytes = walletObj?.solanaPrivateKeyBytes;
-  const okxAdapter = isOkxWallet ? walletObj?.onchainos : void 0;
-  const okxAddress = isOkxWallet ? walletObj.address : void 0;
-  if (!walletKey && !okxAdapter) {
-    throw new Error(
-      "Wallet config has no signing backend: provide a private key or an OKX onchainos wallet."
-    );
-  }
+  const walletKey = typeof options.wallet === "string" ? options.wallet : options.wallet.key;
+  const solanaPrivateKeyBytes = typeof options.wallet === "string" ? void 0 : options.wallet.solanaPrivateKeyBytes;
   const paymentChain = options.paymentChain ?? await resolvePaymentChain();
   const apiBase = options.apiBase ?? (paymentChain === "solana" && solanaPrivateKeyBytes ? BLOCKRUN_SOLANA_API : BLOCKRUN_API);
   if (paymentChain === "solana" && !solanaPrivateKeyBytes) {
     console.warn(
-      `[XClawRouter] \u26A0 Payment chain is Solana but no mnemonic found \u2014 falling back to Base (EVM).`
+      `[ClawRouter] \u26A0 Payment chain is Solana but no mnemonic found \u2014 falling back to Base (EVM).`
     );
     console.warn(
-      `[XClawRouter]   To fix: run "npx @blockrun/xclawrouter wallet recover" if your mnemonic exists,`
+      `[ClawRouter]   To fix: run "npx @blockrun/clawrouter wallet recover" if your mnemonic exists,`
     );
-    console.warn(`[XClawRouter]   or run "npx @blockrun/xclawrouter chain base" to switch to EVM.`);
+    console.warn(`[ClawRouter]   or run "npx @blockrun/clawrouter chain base" to switch to EVM.`);
   } else if (paymentChain === "solana") {
-    console.log(`[XClawRouter] Payment chain: Solana (${BLOCKRUN_SOLANA_API})`);
+    console.log(`[ClawRouter] Payment chain: Solana (${BLOCKRUN_SOLANA_API})`);
   }
   const listenPort = options.port ?? getProxyPort();
   const existingProxy = await checkExistingProxy(listenPort);
   if (existingProxy) {
-    const expectedAddress = okxAddress ?? privateKeyToAccount(walletKey).address;
+    const account2 = privateKeyToAccount(walletKey);
     const baseUrl2 = `http://127.0.0.1:${listenPort}`;
-    if (existingProxy.wallet !== expectedAddress) {
+    if (existingProxy.wallet !== account2.address) {
       console.warn(
-        `[XClawRouter] Existing proxy on port ${listenPort} uses wallet ${existingProxy.wallet}, but current config uses ${expectedAddress}. Reusing existing proxy.`
+        `[ClawRouter] Existing proxy on port ${listenPort} uses wallet ${existingProxy.wallet}, but current config uses ${account2.address}. Reusing existing proxy.`
       );
     }
     if (existingProxy.paymentChain) {
@@ -77805,7 +77591,7 @@ async function startProxy(options) {
       }
     } else if (paymentChain !== "base") {
       console.warn(
-        `[XClawRouter] Existing proxy on port ${listenPort} does not report paymentChain (pre-v0.11 instance). Assuming Base.`
+        `[ClawRouter] Existing proxy on port ${listenPort} does not report paymentChain (pre-v0.11 instance). Assuming Base.`
       );
       throw new Error(
         `Existing proxy on port ${listenPort} is a pre-v0.11 instance (assumed Base) but ${paymentChain} was requested. Stop the existing proxy first or use a different port.`
@@ -77822,7 +77608,7 @@ async function startProxy(options) {
       const { SolanaBalanceMonitor: SolanaBalanceMonitor2 } = await Promise.resolve().then(() => (init_solana_balance(), solana_balance_exports));
       balanceMonitor2 = new SolanaBalanceMonitor2(reuseSolanaAddress);
     } else {
-      balanceMonitor2 = new BalanceMonitor(expectedAddress);
+      balanceMonitor2 = new BalanceMonitor(account2.address);
     }
     options.onReady?.(listenPort);
     return {
@@ -77835,31 +77621,19 @@ async function startProxy(options) {
       }
     };
   }
-  const useOnchainos = !!okxAdapter;
+  const account = privateKeyToAccount(walletKey);
   const evmPublicClient = createPublicClient({ chain: base, transport: http() });
+  const evmSigner = toClientEvmSigner(account, evmPublicClient);
   const x402 = new x402Client();
-  let account;
-  if (useOnchainos) {
-    account = { address: okxAddress };
-    console.log(`[XClawRouter] OKX onchainos wallet \u2014 EVM ${okxAddress}`);
-  } else {
-    const acct = privateKeyToAccount(walletKey);
-    account = { address: acct.address };
-    const evmSigner = toClientEvmSigner(acct, evmPublicClient);
-    registerExactEvmScheme(x402, { signer: evmSigner });
-  }
+  registerExactEvmScheme(x402, { signer: evmSigner });
   let solanaAddress;
-  if (!useOnchainos && solanaPrivateKeyBytes) {
+  if (solanaPrivateKeyBytes) {
     const { registerExactSvmScheme: registerExactSvmScheme2 } = await Promise.resolve().then(() => (init_client(), client_exports));
     const { createKeyPairSignerFromPrivateKeyBytes: createKeyPairSignerFromPrivateKeyBytes2 } = await Promise.resolve().then(() => (init_index_node37(), index_node_exports));
     const solanaSigner = await createKeyPairSignerFromPrivateKeyBytes2(solanaPrivateKeyBytes);
     solanaAddress = solanaSigner.address;
     registerExactSvmScheme2(x402, { signer: solanaSigner });
-    console.log(`[XClawRouter] Solana wallet: ${solanaAddress}`);
-  } else if (useOnchainos && paymentChain === "solana") {
-    console.warn(
-      `[XClawRouter] \u26A0 Solana signing via onchainos is not yet implemented. Run "/chain base" to switch chains, or wait for an onchainos release that supports Solana.`
-    );
+    console.log(`[ClawRouter] Solana wallet: ${solanaAddress}`);
   }
   x402.onAfterPaymentCreation(async (context) => {
     const network = context.selectedRequirements.network;
@@ -77868,9 +77642,9 @@ async function startProxy(options) {
     const amountUsd = amountMicros / 1e6;
     const store = paymentStore.getStore();
     if (store) store.amountUsd = amountUsd;
-    console.log(`[XClawRouter] Payment signed on ${chain3} (${network}) \u2014 $${amountUsd.toFixed(6)}`);
+    console.log(`[ClawRouter] Payment signed on ${chain3} (${network}) \u2014 $${amountUsd.toFixed(6)}`);
   });
-  const payFetch = useOnchainos ? createOnchainosPayFetch(fetch, okxAdapter) : createPayFetchWithPreAuth(fetch, x402, void 0, {
+  const payFetch = createPayFetchWithPreAuth(fetch, x402, void 0, {
     skipPreAuth: paymentChain === "solana"
   });
   let balanceMonitor;
@@ -77896,19 +77670,19 @@ async function startProxy(options) {
   const server = createServer((req, res) => {
     paymentStore.run({ amountUsd: 0 }, async () => {
       req.on("error", (err) => {
-        console.error(`[XClawRouter] Request stream error: ${err.message}`);
+        console.error(`[ClawRouter] Request stream error: ${err.message}`);
       });
       res.on("error", (err) => {
-        console.error(`[XClawRouter] Response stream error: ${err.message}`);
+        console.error(`[ClawRouter] Response stream error: ${err.message}`);
       });
       finished(res, (err) => {
         if (err && err.code !== "ERR_STREAM_DESTROYED") {
-          console.error(`[XClawRouter] Response finished with error: ${err.message}`);
+          console.error(`[ClawRouter] Response finished with error: ${err.message}`);
         }
       });
       finished(req, (err) => {
         if (err && err.code !== "ERR_STREAM_DESTROYED") {
-          console.error(`[XClawRouter] Request finished with error: ${err.message}`);
+          console.error(`[ClawRouter] Request finished with error: ${err.message}`);
         }
       });
       if (req.url === "/health" || req.url?.startsWith("/health?")) {
@@ -78135,7 +77909,7 @@ async function startProxy(options) {
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                 await writeFile2(join8(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
                 img.url = `http://localhost:${port2}/images/${filename}`;
-                console.log(`[XClawRouter] Image saved \u2192 ${img.url}`);
+                console.log(`[ClawRouter] Image saved \u2192 ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
                 try {
                   const imgResp = await fetch(img.url);
@@ -78146,11 +77920,11 @@ async function startProxy(options) {
                     const buf = Buffer.from(await imgResp.arrayBuffer());
                     await writeFile2(join8(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port2}/images/${filename}`;
-                    console.log(`[XClawRouter] Image downloaded & saved \u2192 ${img.url}`);
+                    console.log(`[ClawRouter] Image downloaded & saved \u2192 ${img.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
+                    `[ClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
                   );
                 }
               }
@@ -78171,7 +77945,7 @@ async function startProxy(options) {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Image generation error: ${msg}`);
+          console.error(`[ClawRouter] Image generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Image generation failed", details: msg }));
@@ -78203,11 +77977,11 @@ async function startProxy(options) {
               const buf = Buffer.from(await imgResp.arrayBuffer());
               parsed[field] = `data:${contentType};base64,${buf.toString("base64")}`;
               console.log(
-                `[XClawRouter] img2img: downloaded ${field} URL \u2192 data URI (${buf.length} bytes)`
+                `[ClawRouter] img2img: downloaded ${field} URL \u2192 data URI (${buf.length} bytes)`
               );
             } else {
               parsed[field] = readImageFileAsDataUri(val);
-              console.log(`[XClawRouter] img2img: read ${field} file \u2192 data URI`);
+              console.log(`[ClawRouter] img2img: read ${field} file \u2192 data URI`);
             }
           }
           if (!parsed.model) parsed.model = "openai/gpt-image-1";
@@ -78251,7 +78025,7 @@ async function startProxy(options) {
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                 await writeFile2(join8(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
                 img.url = `http://localhost:${port2}/images/${filename}`;
-                console.log(`[XClawRouter] Image saved \u2192 ${img.url}`);
+                console.log(`[ClawRouter] Image saved \u2192 ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
                 try {
                   const imgResp = await fetch(img.url);
@@ -78262,11 +78036,11 @@ async function startProxy(options) {
                     const buf = Buffer.from(await imgResp.arrayBuffer());
                     await writeFile2(join8(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port2}/images/${filename}`;
-                    console.log(`[XClawRouter] Image downloaded & saved \u2192 ${img.url}`);
+                    console.log(`[ClawRouter] Image downloaded & saved \u2192 ${img.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
+                    `[ClawRouter] Failed to download image, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
                   );
                 }
               }
@@ -78287,7 +78061,7 @@ async function startProxy(options) {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Image editing error: ${msg}`);
+          console.error(`[ClawRouter] Image editing error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Image editing failed", details: msg }));
@@ -78342,11 +78116,11 @@ async function startProxy(options) {
                     const buf = Buffer.from(await audioResp.arrayBuffer());
                     await writeFile2(join8(AUDIO_DIR, filename), buf);
                     track.url = `http://localhost:${port2}/audio/${filename}`;
-                    console.log(`[XClawRouter] Audio saved \u2192 ${track.url}`);
+                    console.log(`[ClawRouter] Audio saved \u2192 ${track.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download audio, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
+                    `[ClawRouter] Failed to download audio, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
                   );
                 }
               }
@@ -78367,7 +78141,7 @@ async function startProxy(options) {
           res.end(JSON.stringify(result));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Audio generation error: ${msg}`);
+          console.error(`[ClawRouter] Audio generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Audio generation failed", details: msg }));
@@ -78415,7 +78189,7 @@ async function startProxy(options) {
             const apiOrigin = new URL(apiBase).origin;
             const pollUrl = submitResult.poll_url.startsWith("http") ? submitResult.poll_url : `${apiOrigin}${submitResult.poll_url}`;
             console.log(
-              `[XClawRouter] Video job submitted (id=${submitResult.id}), polling upstream \u2014 typical 60\u2013180s...`
+              `[ClawRouter] Video job submitted (id=${submitResult.id}), polling upstream \u2014 typical 60\u2013180s...`
             );
             const pollDeadline = Date.now() + 3e5;
             const pollInterval = 5e3;
@@ -78484,11 +78258,11 @@ async function startProxy(options) {
                     const buf = Buffer.from(await videoResp.arrayBuffer());
                     await writeFile2(join8(VIDEO_DIR, filename), buf);
                     clip.url = `http://localhost:${port2}/videos/${filename}`;
-                    console.log(`[XClawRouter] Video saved \u2192 ${clip.url}`);
+                    console.log(`[ClawRouter] Video saved \u2192 ${clip.url}`);
                   }
                 } catch (downloadErr) {
                   console.warn(
-                    `[XClawRouter] Failed to download video, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
+                    `[ClawRouter] Failed to download video, using original URL: ${downloadErr instanceof Error ? downloadErr.message : String(downloadErr)}`
                   );
                 }
               }
@@ -78509,7 +78283,7 @@ async function startProxy(options) {
           res.end(JSON.stringify(finalResult));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] Video generation error: ${msg}`);
+          console.error(`[ClawRouter] Video generation error: ${msg}`);
           if (!res.headersSent) {
             res.writeHead(502, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Video generation failed", details: msg }));
@@ -78588,7 +78362,7 @@ async function startProxy(options) {
         if (err.code === "EADDRINUSE") {
           const existingProxy2 = await checkExistingProxy(listenPort);
           if (existingProxy2) {
-            console.log(`[XClawRouter] Existing proxy detected on port ${listenPort}, reusing`);
+            console.log(`[ClawRouter] Existing proxy detected on port ${listenPort}, reusing`);
             rejectAttempt({
               code: "REUSE_EXISTING",
               wallet: existingProxy2.wallet,
@@ -78598,13 +78372,13 @@ async function startProxy(options) {
           }
           if (attempt < PORT_RETRY_ATTEMPTS) {
             console.log(
-              `[XClawRouter] Port ${listenPort} in TIME_WAIT, retrying in ${PORT_RETRY_DELAY_MS}ms (attempt ${attempt}/${PORT_RETRY_ATTEMPTS})`
+              `[ClawRouter] Port ${listenPort} in TIME_WAIT, retrying in ${PORT_RETRY_DELAY_MS}ms (attempt ${attempt}/${PORT_RETRY_ATTEMPTS})`
             );
             rejectAttempt({ code: "RETRY", attempt });
             return;
           }
           console.error(
-            `[XClawRouter] Port ${listenPort} still in use after ${PORT_RETRY_ATTEMPTS} attempts`
+            `[ClawRouter] Port ${listenPort} still in use after ${PORT_RETRY_ATTEMPTS} attempts`
           );
           rejectAttempt(err);
           return;
@@ -78660,11 +78434,11 @@ async function startProxy(options) {
   options.onReady?.(port);
   checkForUpdates();
   server.on("error", (err) => {
-    console.error(`[XClawRouter] Server runtime error: ${err.message}`);
+    console.error(`[ClawRouter] Server runtime error: ${err.message}`);
     options.onError?.(err);
   });
   server.on("clientError", (err, socket) => {
-    console.error(`[XClawRouter] Client error: ${err.message}`);
+    console.error(`[ClawRouter] Client error: ${err.message}`);
     if (socket.writable && !socket.destroyed) {
       socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
     }
@@ -78673,13 +78447,13 @@ async function startProxy(options) {
     connections.add(socket);
     socket.setTimeout(3e5);
     socket.on("timeout", () => {
-      console.error(`[XClawRouter] Socket timeout, destroying connection`);
+      console.error(`[ClawRouter] Socket timeout, destroying connection`);
       socket.destroy();
     });
     socket.on("end", () => {
     });
     socket.on("error", (err) => {
-      console.error(`[XClawRouter] Socket error: ${err.message}`);
+      console.error(`[ClawRouter] Socket error: ${err.message}`);
     });
     socket.on("close", () => {
       connections.delete(socket);
@@ -78693,7 +78467,7 @@ async function startProxy(options) {
     balanceMonitor,
     close: () => new Promise((res, rej) => {
       const timeout = setTimeout(() => {
-        rej(new Error("[XClawRouter] Close timeout after 4s"));
+        rej(new Error("[ClawRouter] Close timeout after 4s"));
       }, 4e3);
       sessionStore.close();
       for (const socket of connections) {
@@ -78865,7 +78639,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
             parsed.messages = messages;
             bodyModified = true;
             console.log(
-              `[XClawRouter] Injected session journal (${journalText.length} chars) for session ${sessionId.slice(0, 8)}...`
+              `[ClawRouter] Injected session journal (${journalText.length} chars) for session ${sessionId.slice(0, 8)}...`
             );
           }
         }
@@ -78900,7 +78674,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         const sessLine = sess ? `Session: ${sessionId.slice(0, 8)}... \u2192 pinned: ${sess.model} (${sess.requestCount} requests)` : sessionId ? `Session: ${sessionId.slice(0, 8)}... \u2192 no pinned model` : "Session: none";
         const { simpleMedium, mediumComplex, complexReasoning } = DEFAULT_ROUTING_CONFIG.scoring.tierBoundaries;
         const debugText = [
-          "XClawRouter Debug",
+          "ClawRouter Debug",
           "",
           `Profile: ${debugProfile} | Tier: ${debugRouting.tier} | Model: ${debugRouting.model}`,
           `Confidence: ${debugRouting.confidence.toFixed(2)} | Cost: $${debugRouting.costEstimate.toFixed(4)} | Savings: ${(debugRouting.savings * 100).toFixed(0)}%`,
@@ -78967,7 +78741,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify(syntheticResponse));
         }
-        console.log(`[XClawRouter] /debug command \u2192 ${debugRouting.tier} | ${debugRouting.model}`);
+        console.log(`[ClawRouter] /debug command \u2192 ${debugRouting.tier} | ${debugRouting.model}`);
         return;
       }
       if (lastContent.startsWith("/imagegen")) {
@@ -79058,11 +78832,11 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
               })
             );
           }
-          console.log(`[XClawRouter] /imagegen command \u2192 showing usage help`);
+          console.log(`[ClawRouter] /imagegen command \u2192 showing usage help`);
           return;
         }
         console.log(
-          `[XClawRouter] /imagegen command \u2192 ${imageModel} (${imageSize}): ${imagePrompt.slice(0, 80)}...`
+          `[ClawRouter] /imagegen command \u2192 ${imageModel} (${imageSize}): ${imagePrompt.slice(0, 80)}...`
         );
         try {
           const imageUpstreamUrl = `${apiBase}/v1/images/generations`;
@@ -79082,7 +78856,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           if (!imageResponse.ok || imageResult.error) {
             const errMsg = typeof imageResult.error === "string" ? imageResult.error : imageResult.error?.message ?? `HTTP ${imageResponse.status}`;
             responseText = `Image generation failed: ${errMsg}`;
-            console.log(`[XClawRouter] /imagegen error: ${errMsg}`);
+            console.log(`[ClawRouter] /imagegen error: ${errMsg}`);
           } else {
             const images = imageResult.data ?? [];
             if (images.length === 0) {
@@ -79097,7 +78871,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                       lines.push(hostedUrl);
                     } catch (uploadErr) {
                       console.error(
-                        `[XClawRouter] /imagegen: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`
+                        `[ClawRouter] /imagegen: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`
                       );
                       lines.push(
                         "Image generated but upload failed. Try again or use --model dall-e-3."
@@ -79112,7 +78886,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
               lines.push("", `Model: ${imageModel} | Size: ${imageSize}`);
               responseText = lines.join("\n");
             }
-            console.log(`[XClawRouter] /imagegen success: ${images.length} image(s) generated`);
+            console.log(`[ClawRouter] /imagegen success: ${images.length} image(s) generated`);
             const imagegenActualCost = paymentStore.getStore()?.amountUsd ?? estimateImageCost(imageModel, imageSize, 1);
             logUsage({
               timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -79166,7 +78940,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           }
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] /imagegen error: ${errMsg}`);
+          console.error(`[ClawRouter] /imagegen error: ${errMsg}`);
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(
@@ -79283,7 +79057,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           return;
         }
         console.log(
-          `[XClawRouter] /img2img \u2192 ${img2imgModel} (${img2imgSize}): ${img2imgPrompt.slice(0, 80)}`
+          `[ClawRouter] /img2img \u2192 ${img2imgModel} (${img2imgSize}): ${img2imgPrompt.slice(0, 80)}`
         );
         try {
           const img2imgBody = JSON.stringify({
@@ -79304,7 +79078,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           if (!img2imgResponse.ok || img2imgResult.error) {
             const errMsg = typeof img2imgResult.error === "string" ? img2imgResult.error : img2imgResult.error?.message ?? `HTTP ${img2imgResponse.status}`;
             responseText = `Image editing failed: ${errMsg}`;
-            console.log(`[XClawRouter] /img2img error: ${errMsg}`);
+            console.log(`[ClawRouter] /img2img error: ${errMsg}`);
           } else {
             const images = img2imgResult.data ?? [];
             if (images.length === 0) {
@@ -79319,7 +79093,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                       lines.push(hostedUrl);
                     } catch (uploadErr) {
                       console.error(
-                        `[XClawRouter] /img2img: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`
+                        `[ClawRouter] /img2img: failed to upload data URI: ${uploadErr instanceof Error ? uploadErr.message : String(uploadErr)}`
                       );
                       lines.push("Image edited but upload failed. Try again.");
                     }
@@ -79332,7 +79106,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
               lines.push("", `Model: ${img2imgModel} | Size: ${img2imgSize}`);
               responseText = lines.join("\n");
             }
-            console.log(`[XClawRouter] /img2img success: ${images.length} image(s)`);
+            console.log(`[ClawRouter] /img2img success: ${images.length} image(s)`);
             const img2imgActualCost2 = paymentStore.getStore()?.amountUsd ?? estimateImageCost(img2imgModel, img2imgSize, 1);
             logUsage({
               timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -79348,7 +79122,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           sendImg2ImgText(responseText);
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
-          console.error(`[XClawRouter] /img2img error: ${errMsg}`);
+          console.error(`[ClawRouter] /img2img error: ${errMsg}`);
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(
@@ -79373,7 +79147,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         routingProfile = profileName;
       }
       console.log(
-        `[XClawRouter] Received model: "${parsed.model}" -> normalized: "${normalizedModel}"${wasAlias ? ` -> alias: "${resolvedModel}"` : ""}${routingProfile ? `, profile: ${routingProfile}` : ""}`
+        `[ClawRouter] Received model: "${parsed.model}" -> normalized: "${normalizedModel}"${wasAlias ? ` -> alias: "${resolvedModel}"` : ""}${routingProfile ? `, profile: ${routingProfile}` : ""}`
       );
       if (!isRoutingProfile) {
         if (parsed.model !== resolvedModel) {
@@ -79385,7 +79159,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         if (explicitPinSessionId) {
           sessionStore.setSession(explicitPinSessionId, resolvedModel, "MEDIUM", true);
           console.log(
-            `[XClawRouter] Session ${explicitPinSessionId.slice(0, 8)}... user-explicit pin set: ${resolvedModel}`
+            `[ClawRouter] Session ${explicitPinSessionId.slice(0, 8)}... user-explicit pin set: ${resolvedModel}`
           );
         }
       }
@@ -79400,7 +79174,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           const tools = parsed.tools;
           hasTools = Array.isArray(tools) && tools.length > 0;
           if (hasTools && tools) {
-            console.log(`[XClawRouter] Tools detected (${tools.length}), forcing agentic tiers`);
+            console.log(`[ClawRouter] Tools detected (${tools.length}), forcing agentic tiers`);
           }
           hasVision = parsedMessages.some((m) => {
             if (Array.isArray(m.content)) {
@@ -79409,9 +79183,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
             return false;
           });
           if (hasVision) {
-            console.log(
-              `[XClawRouter] Vision content detected, filtering to vision-capable models`
-            );
+            console.log(`[ClawRouter] Vision content detected, filtering to vision-capable models`);
           }
           routingDecision = route(prompt, systemPrompt, maxTokens, {
             ...routerOpts,
@@ -79420,14 +79192,14 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
           });
           if (hasTools && routingDecision.tier === "SIMPLE") {
             console.log(
-              `[XClawRouter] SIMPLE+tools: keeping agentic model ${routingDecision.model} (tools need reliable function-call support)`
+              `[ClawRouter] SIMPLE+tools: keeping agentic model ${routingDecision.model} (tools need reliable function-call support)`
             );
           }
           if (existingSession) {
             if (existingSession.userExplicit) {
               stickyExplicitModel = existingSession.model;
               console.log(
-                `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... user-explicit pin: ${existingSession.model} (overriding auto-routed ${routingDecision.tier} \u2192 ${routingDecision.model})`
+                `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... user-explicit pin: ${existingSession.model} (overriding auto-routed ${routingDecision.tier} \u2192 ${routingDecision.model})`
               );
               parsed.model = existingSession.model;
               modelId = existingSession.model;
@@ -79449,7 +79221,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
               const newRank = tierRank[routingDecision.tier] ?? 0;
               if (newRank > existingRank) {
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... upgrading: ${existingSession.tier} \u2192 ${routingDecision.tier} (${routingDecision.model})`
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... upgrading: ${existingSession.tier} \u2192 ${routingDecision.tier} (${routingDecision.model})`
                 );
                 parsed.model = routingDecision.model;
                 modelId = routingDecision.model;
@@ -79463,7 +79235,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                 }
               } else if (routingDecision.tier === "SIMPLE") {
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... SIMPLE follow-up, using cheap model: ${routingDecision.model} (bypassing pinned ${existingSession.tier})`
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... SIMPLE follow-up, using cheap model: ${routingDecision.model} (bypassing pinned ${existingSession.tier})`
                 );
                 parsed.model = routingDecision.model;
                 modelId = routingDecision.model;
@@ -79471,7 +79243,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                 sessionStore.touchSession(effectiveSessionId);
               } else {
                 console.log(
-                  `[XClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... keeping pinned model: ${existingSession.model} (${existingSession.tier} >= ${routingDecision.tier})`
+                  `[ClawRouter] Session ${effectiveSessionId?.slice(0, 8)}... keeping pinned model: ${existingSession.model} (${existingSession.tier} >= ${routingDecision.tier})`
                 );
                 parsed.model = existingSession.model;
                 modelId = existingSession.model;
@@ -79499,7 +79271,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                 );
                 if (escalation) {
                   console.log(
-                    `[XClawRouter] \u26A1 3-strike escalation: ${existingSession.model} \u2192 ${escalation.model} (${existingSession.tier} \u2192 ${escalation.tier})`
+                    `[ClawRouter] \u26A1 3-strike escalation: ${existingSession.model} \u2192 ${escalation.model} (${existingSession.tier} \u2192 ${escalation.tier})`
                   );
                   parsed.model = escalation.model;
                   modelId = escalation.model;
@@ -79522,7 +79294,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
                 routingDecision.tier
               );
               console.log(
-                `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... pinned to model: ${routingDecision.model}`
+                `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... pinned to model: ${routingDecision.model}`
               );
             }
           }
@@ -79540,8 +79312,8 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      console.error(`[XClawRouter] Routing error: ${errorMsg}`);
-      console.error(`[XClawRouter] Need help? Run: npx @blockrun/xclawrouter doctor`);
+      console.error(`[ClawRouter] Routing error: ${errorMsg}`);
+      console.error(`[ClawRouter] Need help? Run: npx @blockrun/clawrouter doctor`);
       options.onError?.(new Error(`Routing failed: ${errorMsg}`));
     }
   }
@@ -79551,7 +79323,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   if (autoCompress && requestSizeKB > compressionThreshold) {
     try {
       console.log(
-        `[XClawRouter] Request size ${requestSizeKB}KB exceeds threshold ${compressionThreshold}KB, applying compression...`
+        `[ClawRouter] Request size ${requestSizeKB}KB exceeds threshold ${compressionThreshold}KB, applying compression...`
       );
       const parsed = JSON.parse(body.toString());
       if (parsed.messages && parsed.messages.length > 0 && shouldCompress(parsed.messages)) {
@@ -79584,14 +79356,14 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         const compressedSizeKB = Math.ceil(compressionResult.compressedChars / 1024);
         const savings = ((requestSizeKB - compressedSizeKB) / requestSizeKB * 100).toFixed(1);
         console.log(
-          `[XClawRouter] Compressed ${requestSizeKB}KB \u2192 ${compressedSizeKB}KB (${savings}% reduction)`
+          `[ClawRouter] Compressed ${requestSizeKB}KB \u2192 ${compressedSizeKB}KB (${savings}% reduction)`
         );
         parsed.messages = compressionResult.messages;
         body = Buffer.from(JSON.stringify(parsed));
       }
     } catch (err) {
       console.warn(
-        `[XClawRouter] Compression failed: ${err instanceof Error ? err.message : String(err)}`
+        `[ClawRouter] Compression failed: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   }
@@ -79603,7 +79375,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   if (responseCache2.shouldCache(body, reqHeaders)) {
     const cachedResponse = responseCache2.get(cacheKey2);
     if (cachedResponse) {
-      console.log(`[XClawRouter] Cache HIT for ${cachedResponse.model} (saved API call)`);
+      console.log(`[ClawRouter] Cache HIT for ${cachedResponse.model} (saved API call)`);
       res.writeHead(cachedResponse.status, cachedResponse.headers);
       res.end(cachedResponse.body);
       return;
@@ -79636,14 +79408,14 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         sufficiency = await balanceMonitor.checkSufficient(bufferedCostMicros);
       } catch (balanceErr) {
         console.warn(
-          `[XClawRouter] Balance check failed (${balanceErr instanceof Error ? balanceErr.message : String(balanceErr)}) \u2014 proceeding optimistically`
+          `[ClawRouter] Balance check failed (${balanceErr instanceof Error ? balanceErr.message : String(balanceErr)}) \u2014 proceeding optimistically`
         );
       }
       if (sufficiency && (sufficiency.info.isEmpty || !sufficiency.sufficient)) {
         const freeFallback = pickFreeModel(loadExcludeList()) ?? FREE_MODEL;
         const originalModel = modelId;
         console.log(
-          `[XClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${freeFallback} (requested: ${originalModel})`
+          `[ClawRouter] Wallet ${sufficiency.info.isEmpty ? "empty" : "insufficient"} (${sufficiency.info.balanceUSD}), falling back to free model: ${freeFallback} (requested: ${originalModel})`
         );
         modelId = freeFallback;
         isFreeModel = true;
@@ -79676,16 +79448,16 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
     const projectedCostUsd = runCostUsd + thisReqEstUsd;
     if (projectedCostUsd > options.maxCostPerRunUsd) {
       console.log(
-        `[XClawRouter] Cost cap exceeded for session ${effectiveSessionId.slice(0, 8)}...: projected $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) > $${options.maxCostPerRunUsd} limit`
+        `[ClawRouter] Cost cap exceeded for session ${effectiveSessionId.slice(0, 8)}...: projected $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) > $${options.maxCostPerRunUsd} limit`
       );
       res.writeHead(429, {
         "Content-Type": "application/json",
-        "X-XClawRouter-Cost-Cap-Exceeded": "1"
+        "X-ClawRouter-Cost-Cap-Exceeded": "1"
       });
       res.end(
         JSON.stringify({
           error: {
-            message: `XClawRouter cost cap exceeded: projected spend $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) would exceed limit $${options.maxCostPerRunUsd}`,
+            message: `ClawRouter cost cap exceeded: projected spend $${projectedCostUsd.toFixed(4)} (spent $${runCostUsd.toFixed(4)} + est $${thisReqEstUsd.toFixed(4)}) would exceed limit $${options.maxCostPerRunUsd}`,
             type: "cost_cap_exceeded",
             code: "cost_cap_exceeded"
           }
@@ -79707,17 +79479,17 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       });
       if (!canAffordAnyNonFreeModel) {
         console.log(
-          `[XClawRouter] Budget insufficient for agentic/complex session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining \u2014 blocking (silent downgrade would corrupt tool/complex responses)`
+          `[ClawRouter] Budget insufficient for agentic/complex session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining \u2014 blocking (silent downgrade would corrupt tool/complex responses)`
         );
         res.writeHead(429, {
           "Content-Type": "application/json",
-          "X-XClawRouter-Cost-Cap-Exceeded": "1",
-          "X-XClawRouter-Budget-Mode": "blocked"
+          "X-ClawRouter-Cost-Cap-Exceeded": "1",
+          "X-ClawRouter-Budget-Mode": "blocked"
         });
         res.end(
           JSON.stringify({
             error: {
-              message: `XClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue.`,
+              message: `ClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue.`,
               type: "cost_cap_exceeded",
               code: "budget_exhausted"
             }
@@ -79731,17 +79503,17 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const canAfford = !est || Number(est) / 1e6 <= remainingUsd;
       if (!canAfford) {
         console.log(
-          `[XClawRouter] Budget insufficient for explicit model ${modelId} in session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining \u2014 blocking (user explicitly chose ${modelId})`
+          `[ClawRouter] Budget insufficient for explicit model ${modelId} in session ${effectiveSessionId.slice(0, 8)}...: $${Math.max(0, remainingUsd).toFixed(4)} remaining \u2014 blocking (user explicitly chose ${modelId})`
         );
         res.writeHead(429, {
           "Content-Type": "application/json",
-          "X-XClawRouter-Cost-Cap-Exceeded": "1",
-          "X-XClawRouter-Budget-Mode": "blocked"
+          "X-ClawRouter-Cost-Cap-Exceeded": "1",
+          "X-ClawRouter-Budget-Mode": "blocked"
         });
         res.end(
           JSON.stringify({
             error: {
-              message: `XClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue using ${modelId}.`,
+              message: `ClawRouter budget exhausted: $${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd}). Increase maxCostPerRun to continue using ${modelId}.`,
               type: "cost_cap_exceeded",
               code: "budget_exhausted"
             }
@@ -79801,7 +79573,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   const timeoutId = setTimeout(() => globalController.abort(), timeoutMs);
   const onClientClose = () => {
     if (!globalController.signal.aborted) {
-      console.log(`[XClawRouter] Client disconnected \u2014 aborting upstream request`);
+      console.log(`[ClawRouter] Client disconnected \u2014 aborting upstream request`);
       globalController.abort();
     }
   };
@@ -79813,7 +79585,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const freeFallback = pickFreeModel(excludeList) ?? FREE_MODEL;
       modelsToTry = [freeFallback];
       console.log(
-        `[XClawRouter] Wallet empty \u2014 skipping routing chain, using free model: ${freeFallback}`
+        `[ClawRouter] Wallet empty \u2014 skipping routing chain, using free model: ${freeFallback}`
       );
     } else if (routingDecision) {
       const prependStickyExplicitModel = (chain3) => {
@@ -79837,7 +79609,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const contextExcluded = fullChain.filter((m) => !contextFiltered.includes(m));
       if (contextExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Context filter (~${estimatedTotalTokens} tokens): excluded ${contextExcluded.join(", ")}`
+          `[ClawRouter] Context filter (~${estimatedTotalTokens} tokens): excluded ${contextExcluded.join(", ")}`
         );
       }
       const excludeFiltered = prependStickyExplicitModel(
@@ -79846,7 +79618,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const excludeExcluded = contextFiltered.filter((m) => !excludeFiltered.includes(m));
       if (excludeExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`
+          `[ClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`
         );
       }
       let toolFiltered = prependStickyExplicitModel(
@@ -79855,7 +79627,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const toolExcluded = excludeFiltered.filter((m) => !toolFiltered.includes(m));
       if (toolExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Tool-calling filter: excluded ${toolExcluded.join(", ")} (no structured function call support)`
+          `[ClawRouter] Tool-calling filter: excluded ${toolExcluded.join(", ")} (no structured function call support)`
         );
       }
       const TOOL_NONCOMPLIANT_MODELS = [
@@ -79868,7 +79640,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         if (compliant.length > 0 && compliant.length < toolFiltered.length) {
           const dropped = toolFiltered.filter((m) => TOOL_NONCOMPLIANT_MODELS.includes(m));
           console.log(
-            `[XClawRouter] Tool-compliance filter: excluded ${dropped.join(", ")} (unreliable tool schema handling)`
+            `[ClawRouter] Tool-compliance filter: excluded ${dropped.join(", ")} (unreliable tool schema handling)`
           );
           toolFiltered = prependStickyExplicitModel(compliant);
         }
@@ -79879,7 +79651,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       const visionExcluded = toolFiltered.filter((m) => !visionFiltered.includes(m));
       if (visionExcluded.length > 0) {
         console.log(
-          `[XClawRouter] Vision filter: excluded ${visionExcluded.join(", ")} (no vision support)`
+          `[ClawRouter] Vision filter: excluded ${visionExcluded.join(", ")} (no vision support)`
         );
       }
       modelsToTry = prependStickyExplicitModel(visionFiltered).slice(0, MAX_FALLBACK_ATTEMPTS);
@@ -79909,11 +79681,11 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       if (isComplexOrAgenticFilter && filteredToFreeOnly) {
         const budgetSummary = `$${Math.max(0, remainingUsd).toFixed(4)} remaining (limit: $${options.maxCostPerRunUsd})`;
         console.log(
-          `[XClawRouter] Budget filter left only free model for complex/agentic session \u2014 blocking (${budgetSummary})`
+          `[ClawRouter] Budget filter left only free model for complex/agentic session \u2014 blocking (${budgetSummary})`
         );
         const errPayload = JSON.stringify({
           error: {
-            message: `XClawRouter budget exhausted: remaining budget (${budgetSummary}) cannot support a complex/tool request. Increase maxCostPerRun to continue.`,
+            message: `ClawRouter budget exhausted: remaining budget (${budgetSummary}) cannot support a complex/tool request. Increase maxCostPerRun to continue.`,
             type: "cost_cap_exceeded",
             code: "budget_exhausted"
           }
@@ -79929,8 +79701,8 @@ data: [DONE]
         } else {
           res.writeHead(429, {
             "Content-Type": "application/json",
-            "X-XClawRouter-Cost-Cap-Exceeded": "1",
-            "X-XClawRouter-Budget-Mode": "blocked"
+            "X-ClawRouter-Cost-Cap-Exceeded": "1",
+            "X-ClawRouter-Budget-Mode": "blocked"
           });
           res.end(errPayload);
         }
@@ -79940,7 +79712,7 @@ data: [DONE]
       if (excluded.length > 0) {
         const budgetSummary = remainingUsd > 0 ? `$${remainingUsd.toFixed(4)} remaining` : `budget exhausted ($${runCostUsd.toFixed(4)}/$${options.maxCostPerRunUsd})`;
         console.log(
-          `[XClawRouter] Budget downgrade (${budgetSummary}): excluded ${excluded.join(", ")}`
+          `[ClawRouter] Budget downgrade (${budgetSummary}): excluded ${excluded.join(", ")}`
         );
         const fromModel = excluded[0];
         const usingFree = modelsToTry.length === 1 && FREE_MODELS.has(modelsToTry[0]);
@@ -79967,7 +79739,7 @@ data: [DONE]
       if (globalController.signal.aborted) {
         throw new Error(`Request timed out after ${timeoutMs}ms`);
       }
-      console.log(`[XClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
+      console.log(`[ClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
       const modelController = new AbortController();
       const modelTimeoutId = setTimeout(() => modelController.abort(), PER_MODEL_TIMEOUT_MS);
       const combinedSignal = AbortSignal.any([globalController.signal, modelController.signal]);
@@ -79988,7 +79760,7 @@ data: [DONE]
       }
       if (!result.success && modelController.signal.aborted && !isLastAttempt) {
         console.log(
-          `[XClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`
+          `[ClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`
         );
         recordProviderError(tryModel, "server_error");
         continue;
@@ -79998,7 +79770,7 @@ data: [DONE]
         const bodyBuf = Buffer.concat(bodyChunks2);
         if (isDegenerateCompletion(bodyBuf) && !isLastAttempt) {
           console.warn(
-            `[XClawRouter] \u26A0\uFE0F  Degenerate output from ${tryModel} (finish_reason=length + repetition loop) \u2014 retrying with next fallback`
+            `[ClawRouter] \u26A0\uFE0F  Degenerate output from ${tryModel} (finish_reason=length + repetition loop) \u2014 retrying with next fallback`
           );
           recordProviderError(tryModel, "server_error");
           failedAttempts.push({
@@ -80014,7 +79786,7 @@ data: [DONE]
           headers: result.response.headers
         });
         actualModelUsed = tryModel;
-        console.log(`[XClawRouter] Success with model: ${tryModel}`);
+        console.log(`[ClawRouter] Success with model: ${tryModel}`);
         if (options.maxCostPerRunUsd && effectiveSessionId && !FREE_MODELS.has(tryModel)) {
           const costEst = estimateAmount(tryModel, body.length, maxTokens);
           if (costEst) {
@@ -80043,7 +79815,7 @@ data: [DONE]
         const freeInChain = modelsToTry.findIndex((m, idx) => idx > i && FREE_MODELS.has(m));
         if (freeInChain > i + 1) {
           console.log(
-            `[XClawRouter] Payment error \u2014 skipping to free model: ${modelsToTry[freeInChain]}`
+            `[ClawRouter] Payment error \u2014 skipping to free model: ${modelsToTry[freeInChain]}`
           );
           i = freeInChain - 1;
           continue;
@@ -80052,7 +79824,7 @@ data: [DONE]
           const freeFallback = pickFreeModel(excludeList);
           if (freeFallback) {
             modelsToTry.push(freeFallback);
-            console.log(`[XClawRouter] Payment error \u2014 appending free model: ${freeFallback}`);
+            console.log(`[ClawRouter] Payment error \u2014 appending free model: ${freeFallback}`);
             continue;
           }
         }
@@ -80061,7 +79833,7 @@ data: [DONE]
       const isRetryableServerError = result.errorCategory === "server_error" || result.errorCategory === "overloaded";
       if (isExplicitPin && isLastAttempt && isRetryableServerError && !globalController.signal.aborted) {
         console.log(
-          `[XClawRouter] Explicit pin ${tryModel} got ${result.errorCategory} (HTTP ${result.errorStatus ?? "?"}), retrying once in 500ms`
+          `[ClawRouter] Explicit pin ${tryModel} got ${result.errorCategory} (HTTP ${result.errorStatus ?? "?"}), retrying once in 500ms`
         );
         await new Promise((resolve) => setTimeout(resolve, 500));
         if (!globalController.signal.aborted) {
@@ -80083,7 +79855,7 @@ data: [DONE]
           if (retryResult.success && retryResult.response) {
             upstream = retryResult.response;
             actualModelUsed = tryModel;
-            console.log(`[XClawRouter] Explicit-pin retry succeeded for: ${tryModel}`);
+            console.log(`[ClawRouter] Explicit-pin retry succeeded for: ${tryModel}`);
             if (options.maxCostPerRunUsd && effectiveSessionId && !FREE_MODELS.has(tryModel)) {
               const costEst = estimateAmount(tryModel, body.length, maxTokens);
               if (costEst) {
@@ -80108,7 +79880,7 @@ data: [DONE]
         const isUnknownExplicitModel = isExplicitModelError && /unknown.*model|invalid.*model/i.test(result.errorBody || "");
         if (isUnknownExplicitModel) {
           console.log(
-            `[XClawRouter] Explicit model error from ${tryModel}, not falling back: ${result.errorBody?.slice(0, 100)}`
+            `[ClawRouter] Explicit model error from ${tryModel}, not falling back: ${result.errorBody?.slice(0, 100)}`
           );
           break;
         }
@@ -80119,7 +79891,7 @@ data: [DONE]
         if (errorCat === "rate_limited") {
           if (!isLastAttempt && !globalController.signal.aborted) {
             console.log(
-              `[XClawRouter] Rate-limited on ${tryModel}, retrying in 200ms before failover`
+              `[ClawRouter] Rate-limited on ${tryModel}, retrying in 200ms before failover`
             );
             await new Promise((resolve) => setTimeout(resolve, 200));
             if (!globalController.signal.aborted) {
@@ -80147,7 +79919,7 @@ data: [DONE]
               if (retryResult.success && retryResult.response) {
                 upstream = retryResult.response;
                 actualModelUsed = tryModel;
-                console.log(`[XClawRouter] Rate-limit retry succeeded for: ${tryModel}`);
+                console.log(`[ClawRouter] Rate-limit retry succeeded for: ${tryModel}`);
                 if (options.maxCostPerRunUsd && effectiveSessionId && tryModel !== FREE_MODEL) {
                   const costEst = estimateAmount(tryModel, body.length, maxTokens);
                   if (costEst) {
@@ -80164,10 +79936,10 @@ data: [DONE]
             if (parsed.update_available) {
               console.log("");
               console.log(
-                `\x1B[33m\u2B06\uFE0F  XClawRouter ${parsed.update_available} available (you have ${VERSION})\x1B[0m`
+                `\x1B[33m\u2B06\uFE0F  ClawRouter ${parsed.update_available} available (you have ${VERSION})\x1B[0m`
               );
               console.log(
-                `   Run: \x1B[36mcurl -fsSL ${parsed.update_url || "https://blockrun.ai/xclawrouter-update"} | bash\x1B[0m`
+                `   Run: \x1B[36mcurl -fsSL ${parsed.update_url || "https://blockrun.ai/ClawRouter-update"} | bash\x1B[0m`
               );
               console.log("");
             }
@@ -80177,17 +79949,17 @@ data: [DONE]
           markOverloaded(tryModel);
         } else if (errorCat === "auth_failure" || errorCat === "quota_exceeded") {
           console.log(
-            `[XClawRouter] \u{1F511} ${errorCat === "auth_failure" ? "Auth failure" : "Quota exceeded"} for ${tryModel} \u2014 check provider config`
+            `[ClawRouter] \u{1F511} ${errorCat === "auth_failure" ? "Auth failure" : "Quota exceeded"} for ${tryModel} \u2014 check provider config`
           );
         }
         console.log(
-          `[XClawRouter] Provider error from ${tryModel}, trying fallback: ${result.errorBody?.slice(0, 100)}`
+          `[ClawRouter] Provider error from ${tryModel}, trying fallback: ${result.errorBody?.slice(0, 100)}`
         );
         continue;
       }
       if (!result.isProviderError) {
         console.log(
-          `[XClawRouter] Non-provider error from ${tryModel}, not retrying: ${result.errorBody?.slice(0, 100)}`
+          `[ClawRouter] Non-provider error from ${tryModel}, not retrying: ${result.errorBody?.slice(0, 100)}`
         );
       }
       break;
@@ -80226,12 +79998,12 @@ data: [DONE]
         const pinnedSession = sessionStore.getSession(effectiveSessionId);
         if (pinnedSession?.userExplicit) {
           console.log(
-            `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... fallback used ${actualModelUsed}, preserving user-explicit pin: ${pinnedSession.model}`
+            `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... fallback used ${actualModelUsed}, preserving user-explicit pin: ${pinnedSession.model}`
           );
         } else {
           sessionStore.setSession(effectiveSessionId, actualModelUsed, routingDecision.tier);
           console.log(
-            `[XClawRouter] Session ${effectiveSessionId.slice(0, 8)}... updated pin to fallback: ${actualModelUsed}`
+            `[ClawRouter] Session ${effectiveSessionId.slice(0, 8)}... updated pin to fallback: ${actualModelUsed}`
           );
         }
       }
@@ -80239,7 +80011,7 @@ data: [DONE]
     if (!upstream) {
       const attemptSummary = failedAttempts.length > 0 ? failedAttempts.map((a) => `${a.model} (${a.reason})`).join(", ") : "unknown";
       const structuredMessage = failedAttempts.length > 0 ? `All ${failedAttempts.length} models failed. Tried: ${attemptSummary}` : "All models in fallback chain failed";
-      console.log(`[XClawRouter] ${structuredMessage}`);
+      console.log(`[ClawRouter] ${structuredMessage}`);
       const rawErrBody = lastError?.body || structuredMessage;
       const errStatus = lastError?.status || 502;
       const transformedErr = transformPaymentError(rawErrBody);
@@ -80630,7 +80402,7 @@ data: [DONE]
           model: actualModelUsed
         });
         console.log(
-          `[XClawRouter] Cached response for ${actualModelUsed} (${responseBody.length} bytes)`
+          `[ClawRouter] Cached response for ${actualModelUsed} (${responseBody.length} bytes)`
         );
       }
       try {
@@ -80655,7 +80427,7 @@ data: [DONE]
       const sameCount = tailChars.filter((c) => c === firstChar).length;
       if (isPunct && sameCount >= 60) {
         console.warn(
-          `[XClawRouter] \u26A0\uFE0F  Degenerate output detected \u2014 model=${actualModelUsed || "unknown"} len=${accumulatedContent.length} head=${JSON.stringify(accumulatedContent.slice(0, 40))} tail_repeats_${JSON.stringify(firstChar)}=${sameCount}/80`
+          `[ClawRouter] \u26A0\uFE0F  Degenerate output detected \u2014 model=${actualModelUsed || "unknown"} len=${accumulatedContent.length} head=${JSON.stringify(accumulatedContent.slice(0, 40))} tail_repeats_${JSON.stringify(firstChar)}=${sameCount}/80`
         );
       }
     }
@@ -80664,7 +80436,7 @@ data: [DONE]
       if (events.length > 0) {
         sessionJournal.record(sessionId, events, actualModelUsed);
         console.log(
-          `[XClawRouter] Recorded ${events.length} events to session journal for session ${sessionId.slice(0, 8)}...`
+          `[ClawRouter] Recorded ${events.length} events to session journal for session ${sessionId.slice(0, 8)}...`
         );
       }
     }
@@ -80935,11 +80707,11 @@ async function runBlockrunExaSearch(args) {
 var blockrunExaWebSearchProvider = {
   id: BLOCKRUN_EXA_PROVIDER_ID,
   label: "BlockRun Exa Search",
-  hint: "Neural web search paid through your XClawRouter wallet",
+  hint: "Neural web search paid through your ClawRouter wallet",
   onboardingScopes: ["text-inference"],
   requiresCredential: false,
   envVars: [],
-  placeholder: "(uses XClawRouter wallet)",
+  placeholder: "(uses ClawRouter wallet)",
   signupUrl: "https://blockrun.ai",
   docsUrl: BLOCKRUN_EXA_DOCS_URL,
   autoDetectOrder: 5,
@@ -80950,7 +80722,7 @@ var blockrunExaWebSearchProvider = {
   },
   applySelectionConfig: ensureBlockrunExaSelection,
   createTool: () => ({
-    description: "Search the web through BlockRun's Exa backend. Uses your XClawRouter wallet for x402 micropayments, so no Exa API key is required.",
+    description: "Search the web through BlockRun's Exa backend. Uses your ClawRouter wallet for x402 micropayments, so no Exa API key is required.",
     parameters: {
       type: "object",
       additionalProperties: false,
@@ -80994,7 +80766,7 @@ var blockrunExaWebSearchProvider = {
 // src/index.ts
 import {
   writeFileSync as writeFileSync3,
-  existsSync as existsSync4,
+  existsSync as existsSync3,
   readdirSync,
   mkdirSync as mkdirSync3,
   copyFileSync,
@@ -81067,7 +80839,7 @@ function loadTopModels() {
 var TOP_MODELS = Object.freeze(loadTopModels());
 
 // src/index.ts
-import { homedir as homedir8 } from "os";
+import { homedir as homedir7 } from "os";
 import { join as join10, dirname as dirname3 } from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
 init_accounts();
@@ -81686,7 +81458,7 @@ function buildPartnerTools(proxyBaseUrl) {
 function createStatsCommand() {
   return {
     name: "stats",
-    description: "Show XClawRouter usage statistics and cost savings",
+    description: "Show ClawRouter usage statistics and cost savings",
     acceptsArgs: true,
     requireAuth: false,
     handler: async (ctx) => {
@@ -81848,8 +81620,8 @@ init_solana_balance();
 // src/spend-control.ts
 import * as fs from "fs";
 import * as path from "path";
-import { homedir as homedir7 } from "os";
-var WALLET_DIR2 = path.join(homedir7(), ".openclaw", "blockrun");
+import { homedir as homedir6 } from "os";
+var WALLET_DIR2 = path.join(homedir6(), ".openclaw", "blockrun");
 var HOUR_MS = 60 * 60 * 1e3;
 var DAY_MS = 24 * HOUR_MS;
 var FileSpendControlStorage = class {
@@ -81886,7 +81658,7 @@ var FileSpendControlStorage = class {
         return { limits, history };
       }
     } catch (err) {
-      console.error(`[XClawRouter] Failed to load spending data, starting fresh: ${err}`);
+      console.error(`[ClawRouter] Failed to load spending data, starting fresh: ${err}`);
     }
     return null;
   }
@@ -81899,7 +81671,7 @@ var FileSpendControlStorage = class {
         mode: 384
       });
     } catch (err) {
-      console.error(`[XClawRouter] Failed to save spending data: ${err}`);
+      console.error(`[ClawRouter] Failed to save spending data: ${err}`);
     }
   }
 };
@@ -82172,12 +81944,12 @@ function installSkillsToWorkspace(logger) {
   try {
     const packageRoot = getPackageRoot();
     const bundledSkillsDir = join10(packageRoot, "skills");
-    if (!existsSync4(bundledSkillsDir)) {
+    if (!existsSync3(bundledSkillsDir)) {
       return;
     }
     const profile = (process["env"].OPENCLAW_PROFILE ?? "").trim().toLowerCase();
     const workspaceDirName = profile && profile !== "default" ? `workspace-${profile}` : "workspace";
-    const workspaceSkillsDir = join10(homedir8(), ".openclaw", workspaceDirName, "skills");
+    const workspaceSkillsDir = join10(homedir7(), ".openclaw", workspaceDirName, "skills");
     mkdirSync3(workspaceSkillsDir, { recursive: true });
     const INTERNAL_SKILLS = /* @__PURE__ */ new Set(["release"]);
     const entries = readdirSync(bundledSkillsDir, { withFileTypes: true });
@@ -82187,11 +81959,11 @@ function installSkillsToWorkspace(logger) {
       const skillName = entry.name;
       if (INTERNAL_SKILLS.has(skillName)) continue;
       const srcSkillFile = join10(bundledSkillsDir, skillName, "SKILL.md");
-      if (!existsSync4(srcSkillFile)) continue;
+      if (!existsSync3(srcSkillFile)) continue;
       const destDir = join10(workspaceSkillsDir, skillName);
       const destSkillFile = join10(destDir, "SKILL.md");
       let needsUpdate = true;
-      if (existsSync4(destSkillFile)) {
+      if (existsSync3(destSkillFile)) {
         try {
           const srcContent = readTextFileSync(srcSkillFile);
           const destContent = readTextFileSync(destSkillFile);
@@ -82221,11 +81993,11 @@ function isGatewayMode() {
   return args.includes("gateway");
 }
 function injectModelsConfig(logger) {
-  const configDir = join10(homedir8(), ".openclaw");
+  const configDir = join10(homedir7(), ".openclaw");
   const configPath = join10(configDir, "openclaw.json");
   let config = {};
   let needsWrite = false;
-  if (!existsSync4(configDir)) {
+  if (!existsSync3(configDir)) {
     try {
       mkdirSync3(configDir, { recursive: true });
       logger.info("Created OpenClaw config directory");
@@ -82236,7 +82008,7 @@ function injectModelsConfig(logger) {
       return;
     }
   }
-  if (existsSync4(configPath)) {
+  if (existsSync3(configPath)) {
     try {
       const content = readTextFileSync(configPath).trim();
       if (content) {
@@ -82408,8 +82180,8 @@ function injectModelsConfig(logger) {
   }
 }
 function injectAuthProfile(logger) {
-  const agentsDir = join10(homedir8(), ".openclaw", "agents");
-  if (!existsSync4(agentsDir)) {
+  const agentsDir = join10(homedir7(), ".openclaw", "agents");
+  if (!existsSync3(agentsDir)) {
     try {
       mkdirSync3(agentsDir, { recursive: true });
     } catch (err) {
@@ -82427,7 +82199,7 @@ function injectAuthProfile(logger) {
     for (const agentId of agents) {
       const authDir = join10(agentsDir, agentId, "agent");
       const authPath = join10(authDir, "auth-profiles.json");
-      if (!existsSync4(authDir)) {
+      if (!existsSync3(authDir)) {
         try {
           mkdirSync3(authDir, { recursive: true });
         } catch {
@@ -82438,7 +82210,7 @@ function injectAuthProfile(logger) {
         version: 1,
         profiles: {}
       };
-      if (existsSync4(authPath)) {
+      if (existsSync3(authPath)) {
         try {
           const existing = JSON.parse(readTextFileSync(authPath));
           if (existing.version && existing.profiles) {
@@ -82561,18 +82333,12 @@ async function startProxyInBackground(api, startupGeneration) {
     }
     wallet = await resolveOrGenerateWalletKey();
   }
-  if (wallet.source === "okx") {
-    api.logger.info(
-      `Using OKX onchainos wallet: ${wallet.address}${wallet.email ? ` (${wallet.email})` : ""}`
-    );
-  } else if (wallet.source === "generated") {
+  if (wallet.source === "generated") {
     api.logger.warn(`\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
     api.logger.warn(`  NEW WALLET GENERATED \u2014 BACK UP YOUR KEY NOW!`);
     api.logger.warn(`  Address : ${wallet.address}`);
     api.logger.warn(`  Run /wallet export to get your private key`);
     api.logger.warn(`  Losing this key = losing your USDC funds`);
-    api.logger.warn(`  Or install OKX onchainos to use your OKX wallet:`);
-    api.logger.warn(`     https://web3.okx.com/onchainos`);
     api.logger.warn(`\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
   } else if (wallet.source === "saved") {
     api.logger.info(`Using saved wallet: ${wallet.address}`);
@@ -82634,7 +82400,7 @@ async function startProxyInBackground(api, startupGeneration) {
       `Model exclusions active (${startupExclusions.size}): ${[...startupExclusions].join(", ")}`
     );
   }
-  api.logger.info(`XClawRouter ready \u2014 smart routing enabled`);
+  api.logger.info(`ClawRouter ready \u2014 smart routing enabled`);
   api.logger.info(`Pricing: Simple ~$0.001 | Code ~$0.01 | Complex ~$0.05 | Free: $0`);
   const currentChain = await resolvePaymentChain();
   const displayAddress = currentChain === "solana" && proxy.solanaAddress ? proxy.solanaAddress : wallet.address;
@@ -82716,8 +82482,8 @@ function startProxyAfterPortProbe(api, startupGeneration) {
     );
   });
 }
-var IMAGE_DIR2 = join10(homedir8(), ".openclaw", "blockrun", "images");
-var AUDIO_DIR2 = join10(homedir8(), ".openclaw", "blockrun", "audio");
+var IMAGE_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "images");
+var AUDIO_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "audio");
 function parseGenArgs(raw) {
   const promptParts = [];
   let model;
@@ -82789,7 +82555,7 @@ function buildImageGenerationProvider() {
         ]
       }
     },
-    isConfigured: () => existsSync4(WALLET_FILE),
+    isConfigured: () => existsSync3(WALLET_FILE),
     generateImage: async (req) => {
       const port = getProxyPort();
       const body = JSON.stringify({
@@ -82839,7 +82605,7 @@ function buildMusicGenerationProvider() {
       supportsFormat: true,
       supportedFormats: ["mp3"]
     },
-    isConfigured: () => existsSync4(WALLET_FILE),
+    isConfigured: () => existsSync3(WALLET_FILE),
     generateMusic: async (req) => {
       const port = getProxyPort();
       const body = JSON.stringify({
@@ -82889,7 +82655,7 @@ function buildMusicGenerationProvider() {
     }
   };
 }
-var VIDEO_DIR2 = join10(homedir8(), ".openclaw", "blockrun", "videos");
+var VIDEO_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "videos");
 function buildVideoGenerationProvider() {
   return {
     id: "blockrun",
@@ -82914,7 +82680,7 @@ function buildVideoGenerationProvider() {
         supportedDurationSeconds: [5, 8, 10]
       }
     },
-    isConfigured: () => existsSync4(WALLET_FILE),
+    isConfigured: () => existsSync3(WALLET_FILE),
     generateVideo: async (req) => {
       const port = getProxyPort();
       const imageUrl = req.inputImages?.[0]?.url;
@@ -82996,7 +82762,7 @@ function createWalletCommand(api) {
       let walletKey;
       let address2;
       try {
-        if (existsSync4(WALLET_FILE)) {
+        if (existsSync3(WALLET_FILE)) {
           walletKey = readTextFileSync(WALLET_FILE).trim();
           if (walletKey.startsWith("0x") && walletKey.length === 66) {
             const account = privateKeyToAccount(walletKey);
@@ -83007,15 +82773,15 @@ function createWalletCommand(api) {
       }
       if (!walletKey || !address2) {
         return {
-          text: `No XClawRouter wallet found.
+          text: `No ClawRouter wallet found.
 
-Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
+Run \`openclaw plugins install @blockrun/clawrouter\` to generate a wallet.`,
           isError: true
         };
       }
       if (subcommand === "export") {
         const lines = [
-          "**XClawRouter Wallet Export**",
+          "**ClawRouter Wallet Export**",
           "",
           "**SECURITY WARNING**: Your private key and mnemonic control your wallet funds.",
           "Never share these. Anyone with them can spend your USDC.",
@@ -83026,7 +82792,7 @@ Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
         ];
         let hasMnemonic = false;
         try {
-          if (existsSync4(MNEMONIC_FILE)) {
+          if (existsSync3(MNEMONIC_FILE)) {
             const mnemonic = readTextFileSync(MNEMONIC_FILE).trim();
             if (mnemonic) {
               hasMnemonic = true;
@@ -83068,7 +82834,7 @@ Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
       if (subcommand === "solana") {
         try {
           let solanaAddr;
-          if (existsSync4(MNEMONIC_FILE)) {
+          if (existsSync3(MNEMONIC_FILE)) {
             const existingMnemonic = readTextFileSync(MNEMONIC_FILE).trim();
             if (existingMnemonic) {
               await savePaymentChain("solana");
@@ -83139,7 +82905,7 @@ Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
       })();
       const solanaPromise = (async () => {
         try {
-          if (!existsSync4(MNEMONIC_FILE)) return "";
+          if (!existsSync3(MNEMONIC_FILE)) return "";
           const { deriveSolanaKeyBytes: deriveSolanaKeyBytes2 } = await Promise.resolve().then(() => (init_wallet(), wallet_exports));
           const mnemonic = readTextFileSync(MNEMONIC_FILE).trim();
           if (!mnemonic) return "";
@@ -83195,7 +82961,7 @@ Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
       ]);
       return {
         text: [
-          "**XClawRouter Wallet**",
+          "**ClawRouter Wallet**",
           "",
           `**Payment Chain:** ${currentChain === "solana" ? "Solana" : "Base (EVM)"}`,
           "",
@@ -83222,13 +82988,13 @@ Run \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
 }
 var plugin = {
   id: "clawrouter",
-  name: "XClawRouter",
+  name: "ClawRouter",
   description: "Smart LLM router \u2014 55+ models, x402 micropayments, 78% cost savings",
   version: VERSION,
   register(api) {
     const isDisabled = process["env"].CLAWROUTER_DISABLED === "true" || process["env"].CLAWROUTER_DISABLED === "1";
     if (isDisabled) {
-      api.logger.info("XClawRouter disabled (CLAWROUTER_DISABLED=true). Using default routing.");
+      api.logger.info("ClawRouter disabled (CLAWROUTER_DISABLED=true). Using default routing.");
       return;
     }
     installSkillsToWorkspace(api.logger);
@@ -83484,19 +83250,13 @@ ${errText}`
     });
     if (!isGatewayMode()) {
       if (shouldLogRegistration) {
-        resolveOrGenerateWalletKey().then(({ address: address2, source, email }) => {
-          if (source === "okx") {
-            api.logger.info(
-              `Using OKX onchainos wallet: ${address2}${email ? ` (${email})` : ""}`
-            );
-          } else if (source === "generated") {
+        resolveOrGenerateWalletKey().then(({ address: address2, source }) => {
+          if (source === "generated") {
             api.logger.warn(`\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
             api.logger.warn(`  NEW WALLET GENERATED \u2014 BACK UP YOUR KEY NOW!`);
             api.logger.warn(`  Address : ${address2}`);
             api.logger.warn(`  Run /wallet export to get your private key`);
             api.logger.warn(`  Losing this key = losing your USDC funds`);
-            api.logger.warn(`  Or install OKX onchainos to use your OKX wallet:`);
-            api.logger.warn(`     https://web3.okx.com/onchainos`);
             api.logger.warn(`\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550`);
           } else if (source === "saved") {
             api.logger.info(`Using saved wallet: ${address2}`);
@@ -83564,20 +83324,20 @@ ${errText}`
     }
     resetProxyStartupState();
     try {
-      const configPath = join10(homedir8(), ".openclaw", "openclaw.json");
-      if (existsSync4(configPath)) {
+      const configPath = join10(homedir7(), ".openclaw", "openclaw.json");
+      if (existsSync3(configPath)) {
         const config = JSON.parse(readTextFileSync(configPath));
         if (config.models?.providers?.blockrun) {
           delete config.models.providers.blockrun;
         }
         removeManagedBlockrunMcpServerConfig(config);
-        for (const key of ["clawrouter", "XClawRouter", "@blockrun/xclawrouter"]) {
+        for (const key of ["clawrouter", "ClawRouter", "@blockrun/clawrouter"]) {
           if (config.plugins?.entries?.[key]) delete config.plugins.entries[key];
           if (config.plugins?.installs?.[key]) delete config.plugins.installs[key];
         }
         if (Array.isArray(config.plugins?.allow)) {
           config.plugins.allow = config.plugins.allow.filter(
-            (p) => p !== "clawrouter" && p !== "XClawRouter" && p !== "@blockrun/xclawrouter"
+            (p) => p !== "clawrouter" && p !== "ClawRouter" && p !== "@blockrun/clawrouter"
           );
         }
         if (config.agents?.defaults?.models) {
@@ -83594,18 +83354,18 @@ ${errText}`
         const tmpPath = `${configPath}.tmp.${process.pid}`;
         writeFileSync3(tmpPath, JSON.stringify(config, null, 2));
         renameSync(tmpPath, configPath);
-        api.logger.info("XClawRouter config cleaned up");
+        api.logger.info("ClawRouter config cleaned up");
       }
     } catch (err) {
       api.logger.warn(`Config cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     try {
-      const agentsDir = join10(homedir8(), ".openclaw", "agents");
-      if (existsSync4(agentsDir)) {
+      const agentsDir = join10(homedir7(), ".openclaw", "agents");
+      if (existsSync3(agentsDir)) {
         for (const entry of readdirSync(agentsDir, { withFileTypes: true })) {
           if (!entry.isDirectory()) continue;
           const authPath = join10(agentsDir, entry.name, "agent", "auth-profiles.json");
-          if (!existsSync4(authPath)) continue;
+          if (!existsSync3(authPath)) continue;
           try {
             const store = JSON.parse(readTextFileSync(authPath));
             if (store.profiles?.["blockrun:default"]) {
@@ -83618,7 +83378,7 @@ ${errText}`
       }
     } catch {
     }
-    api.logger.info("XClawRouter deactivated \u2014 restart gateway to complete uninstall");
+    api.logger.info("ClawRouter deactivated \u2014 restart gateway to complete uninstall");
   }
 };
 var index_default2 = plugin;

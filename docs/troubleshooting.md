@@ -1,8 +1,8 @@
 # Troubleshooting
 
-Quick solutions for common XClawRouter issues.
+Quick solutions for common ClawRouter issues.
 
-> Need help? [Open a Discussion](https://github.com/BlockRunAI/XClawRouter/discussions) or check [existing issues](https://github.com/BlockRunAI/XClawRouter/issues).
+> Need help? [Open a Discussion](https://github.com/BlockRunAI/ClawRouter/discussions) or check [existing issues](https://github.com/BlockRunAI/ClawRouter/issues).
 
 ## Table of Contents
 
@@ -59,7 +59,7 @@ Plugin directory was removed but config still references it. This blocks all Ope
 
 ### "No USDC balance" / "Insufficient funds"
 
-Wallet needs funding. XClawRouter accepts **USDC** (not SOL or ETH) on either chain.
+Wallet needs funding. ClawRouter accepts **USDC** (not SOL or ETH) on either chain.
 
 **Fix:**
 
@@ -76,7 +76,7 @@ Wallet needs funding. XClawRouter accepts **USDC** (not SOL or ETH) on either ch
 
 ### "WARNING: dangerous code patterns — possible credential harvesting"
 
-This is a **false positive**. XClawRouter legitimately:
+This is a **false positive**. ClawRouter legitimately:
 
 1. Reads `BLOCKRUN_WALLET_KEY` from environment (for authentication)
 2. Sends authenticated requests to BlockRun API (for x402 micropayments)
@@ -85,7 +85,7 @@ This pattern triggers OpenClaw's security scanner, but it's the intended behavio
 
 ### "env-harvesting" Warning
 
-OpenClaw's security scanner may flag XClawRouter with:
+OpenClaw's security scanner may flag ClawRouter with:
 
 ```
 [env-harvesting] Environment variable access combined with network send
@@ -93,13 +93,13 @@ OpenClaw's security scanner may flag XClawRouter with:
 
 **This is a false positive.** The scanner's heuristic (`env variable + network request = suspicious`) flags all payment plugins, but this pattern is inherently required for non-custodial payments.
 
-XClawRouter reads `BLOCKRUN_WALLET_KEY` to sign x402 payment transactions — this is required and intentional:
+ClawRouter reads `BLOCKRUN_WALLET_KEY` to sign x402 payment transactions — this is required and intentional:
 
 - The wallet key is used **locally** for cryptographic signing (EIP-712)
 - The **signature** is transmitted, not the private key itself
 - The key **never leaves the machine** — only cryptographic proofs are sent
 - This is standard [x402 payment protocol](https://x402.org) behavior
-- Source code is [MIT licensed and fully auditable](https://github.com/BlockRunAI/XClawRouter)
+- Source code is [MIT licensed and fully auditable](https://github.com/BlockRunAI/ClawRouter)
 
 See [`openclaw.security.json`](../openclaw.security.json) for detailed security documentation and [this discussion](https://x.com/bc1beat/status/2020158972561428686) for more context.
 
@@ -109,7 +109,7 @@ See [`openclaw.security.json`](../openclaw.security.json) for detailed security 
 
 ### Port 8402 already in use
 
-As of v0.4.1, XClawRouter automatically detects and reuses an existing proxy on the configured port instead of failing with `EADDRINUSE`. You should no longer see this error.
+As of v0.4.1, ClawRouter automatically detects and reuses an existing proxy on the configured port instead of failing with `EADDRINUSE`. You should no longer see this error.
 
 If you need to use a different port:
 
@@ -131,14 +131,14 @@ lsof -i :8402
 ## How to Update
 
 ```bash
-npx @blockrun/xclawrouter@latest
+npx @blockrun/clawrouter@latest
 openclaw gateway restart
 ```
 
 This installs the latest version and restarts the gateway. Alternatively:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/BlockRunAI/XClawRouter/main/scripts/reinstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BlockRunAI/ClawRouter/main/scripts/reinstall.sh | bash
 openclaw gateway restart
 ```
 

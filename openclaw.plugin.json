@@ -1,14 +1,14 @@
 {
-  "id": "xclawrouter",
-  "name": "XClawRouter",
-  "description": "Smart LLM router for OKX — agentic wallet, 55+ models, x402 micropayments on Base + Solana",
+  "id": "clawrouter",
+  "name": "ClawRouter",
+  "description": "Smart LLM router — 41+ models, x402 micropayments, 92% cost savings",
   "skills": ["./skills"],
   "configSchema": {
     "type": "object",
     "properties": {
-      "onchainosBin": {
+      "walletKey": {
         "type": "string",
-        "description": "Path to OKX's onchainos CLI. Defaults to `onchainos` on PATH."
+        "description": "EVM wallet private key (0x...). Optional — auto-generated if not set."
       },
       "routing": {
         "type": "object",
@@ -17,10 +17,10 @@
     }
   },
   "uiHints": {
-    "onchainosBin": {
-      "label": "onchainos CLI path",
-      "sensitive": false,
-      "placeholder": "onchainos"
+    "walletKey": {
+      "label": "Wallet Private Key",
+      "sensitive": true,
+      "placeholder": "0x... (optional — auto-generated)"
     }
   }
 }

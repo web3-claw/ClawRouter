@@ -2,7 +2,7 @@
  * Test for Google model message normalization.
  *
  * Tests that when a conversation starts with an assistant/model message,
- * XClawRouter prepends a placeholder user message for Google models.
+ * ClawRouter prepends a placeholder user message for Google models.
  *
  * Usage:
  *   npx tsx test/google-messages.ts
@@ -97,13 +97,13 @@ async function runTests() {
   // Generate an ephemeral test wallet key
   const testWalletKey = generatePrivateKey();
 
-  // Start XClawRouter proxy pointing to mock API
+  // Start ClawRouter proxy pointing to mock API
   const proxy = await startProxy({
     wallet: testWalletKey,
     apiBase: `http://127.0.0.1:${mockApi.port}`,
     port: 0,
     skipBalanceCheck: true,
-    onReady: (port) => console.log(`XClawRouter proxy started on port ${port}`),
+    onReady: (port) => console.log(`ClawRouter proxy started on port ${port}`),
   });
 
   // Helper to make requests

@@ -2,9 +2,9 @@
 
 > **For Claude implementing this:** Use `superpowers:executing-plans` to implement the tasks section task-by-task.
 
-**Goal:** Let XClawRouter users opt in as worker nodes — poll tasks, execute HTTP checks, earn USDC via x402 micropayments.
+**Goal:** Let ClawRouter users opt in as worker nodes — poll tasks, execute HTTP checks, earn USDC via x402 micropayments.
 
-**Architecture:** XClawRouter polls every 30s, signs results with existing wallet key. BlockRun verifies signature, writes to DB, triggers batched x402 payout at $0.01 threshold, simultaneously writes calldata log tx to Base for immutable audit trail.
+**Architecture:** ClawRouter polls every 30s, signs results with existing wallet key. BlockRun verifies signature, writes to DB, triggers batched x402 payout at $0.01 threshold, simultaneously writes calldata log tx to Base for immutable audit trail.
 
 **Tech Stack:** viem (signing + calldata tx), x402 reversed payTo (worker payout), DB (credits ledger), GCS (result logs + reputation source), Base calldata (audit trail)
 
@@ -12,9 +12,9 @@
 
 ## Overview
 
-XClawRouter Worker Mode transforms any XClawRouter installation into a node in a decentralized uptime monitoring network. Workers earn USDC by executing HTTP health checks assigned by BlockRun. Buyers purchase monitoring with tamper-proof, multi-node uptime proof — a stronger signal than self-reported metrics.
+ClawRouter Worker Mode transforms any ClawRouter installation into a node in a decentralized uptime monitoring network. Workers earn USDC by executing HTTP health checks assigned by BlockRun. Buyers purchase monitoring with tamper-proof, multi-node uptime proof — a stronger signal than self-reported metrics.
 
-**Current supply-side advantage:** ~1,000 paying XClawRouter users already have wallets and geographic distribution. Turning them into workers requires zero additional setup.
+**Current supply-side advantage:** ~1,000 paying ClawRouter users already have wallets and geographic distribution. Turning them into workers requires zero additional setup.
 
 ---
 
@@ -93,7 +93,7 @@ Reputation is computed from BlockRun's own GCS logs (LLM call history per wallet
 
 ## Worker Availability Reality
 
-XClawRouter users are developers on their own machines, not 24/7 server operators.
+ClawRouter users are developers on their own machines, not 24/7 server operators.
 
 **Estimated concurrent online workers:**
 
@@ -243,7 +243,7 @@ A separate 0 ETH transaction broadcast alongside the USDC transfer:
 
 ## Trust & Verification Model
 
-Workers are **existing paying XClawRouter users**. The work is trivially cheap:
+Workers are **existing paying ClawRouter users**. The work is trivially cheap:
 
 ```javascript
 const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
@@ -329,7 +329,7 @@ Future (V2): nonce injection for BlockRun-owned endpoints, spot-check verificati
 
 ## Files to Touch
 
-### XClawRouter
+### ClawRouter
 
 | File                   | Action |
 | ---------------------- | ------ |
@@ -351,7 +351,7 @@ Future (V2): nonce injection for BlockRun-owned endpoints, spot-check verificati
 
 ### Environment Variables
 
-**XClawRouter `.env` / shell:**
+**ClawRouter `.env` / shell:**
 
 ```bash
 CLAWROUTER_WORKER=1
@@ -369,7 +369,7 @@ DATABASE_URL=postgres://...      # your DB
 
 ---
 
-## Task 1: XClawRouter — Types
+## Task 1: ClawRouter — Types
 
 **File:** `src/worker/types.ts`
 
@@ -413,7 +413,7 @@ export interface WorkerStatus {
 
 ---
 
-## Task 2: XClawRouter — HTTP Check Executor
+## Task 2: ClawRouter — HTTP Check Executor
 
 **File:** `src/worker/checks.ts`
 
@@ -478,7 +478,7 @@ export function buildSignableMessage(params: {
 
 ---
 
-## Task 3: XClawRouter — WorkerNode Class
+## Task 3: ClawRouter — WorkerNode Class
 
 **File:** `src/worker/index.ts`
 
@@ -602,7 +602,7 @@ export class WorkerNode {
 
 ---
 
-## Task 4: XClawRouter — Wire Worker Mode
+## Task 4: ClawRouter — Wire Worker Mode
 
 **File:** `src/index.ts` — modify `startProxyInBackground()`.
 
@@ -1317,8 +1317,8 @@ pnpm dev
 curl "http://localhost:3000/api/v1/worker/tasks?address=0x0000000000000000000000000000000000000001"
 # → JSON array with 3 tasks
 
-# 3. Start XClawRouter in worker mode (pointed at localhost)
-cd /Users/vickyfu/Documents/blockrun-web/XClawRouter
+# 3. Start ClawRouter in worker mode (pointed at localhost)
+cd /Users/vickyfu/Documents/blockrun-web/ClawRouter
 CLAWROUTER_WORKER=1 BLOCKRUN_API_BASE=http://localhost:3000/api npx openclaw gateway start
 
 # 4. Watch for logs:

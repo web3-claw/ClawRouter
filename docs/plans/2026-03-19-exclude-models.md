@@ -6,7 +6,7 @@
 
 **Architecture:** New `exclude-models.json` file at `~/.openclaw/blockrun/` stores the exclusion list. A `filterByExcludeList()` function in `selector.ts` filters the fallback chain (same safety pattern as existing filters). The `/exclude` command manages the list via add/remove/clear subcommands. The proxy loads the list at startup and re-reads on each request (hot-reload).
 
-**Tech Stack:** TypeScript, Node.js fs, existing XClawRouter command pattern
+**Tech Stack:** TypeScript, Node.js fs, existing ClawRouter command pattern
 
 ---
 
@@ -274,7 +274,7 @@ const excludeFiltered = filterByExcludeList(contextFiltered, options.excludeMode
 const excludeExcluded = contextFiltered.filter((m) => !excludeFiltered.includes(m));
 if (excludeExcluded.length > 0) {
   console.log(
-    `[XClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`,
+    `[ClawRouter] Exclude filter: excluded ${excludeExcluded.join(", ")} (user preference)`,
   );
 }
 ```

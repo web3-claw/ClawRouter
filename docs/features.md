@@ -1,6 +1,6 @@
 # Advanced Features
 
-XClawRouter v0.5+ includes intelligent routing features that work automatically.
+ClawRouter v0.5+ includes intelligent routing features that work automatically.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ XClawRouter v0.5+ includes intelligent routing features that work automatically.
 
 ## Response Cache
 
-XClawRouter includes LLM response caching inspired by LiteLLM's caching system. Identical requests return cached responses, saving both cost and latency.
+ClawRouter includes LLM response caching inspired by LiteLLM's caching system. Identical requests return cached responses, saving both cost and latency.
 
 **How it works:**
 
@@ -84,7 +84,7 @@ Response:
 Response caching is enabled by default with sensible defaults. For advanced tuning, the cache can be configured programmatically:
 
 ```typescript
-import { ResponseCache } from "@blockrun/xclawrouter";
+import { ResponseCache } from "@blockrun/clawrouter";
 
 const cache = new ResponseCache({
   maxSize: 500, // Max cached responses
@@ -98,7 +98,7 @@ const cache = new ResponseCache({
 
 ## Agentic Auto-Detection
 
-XClawRouter automatically detects multi-step agentic tasks and routes to models optimized for autonomous execution:
+ClawRouter automatically detects multi-step agentic tasks and routes to models optimized for autonomous execution:
 
 ```
 "what is 2+2"                    → gemini-flash (standard)
@@ -128,7 +128,7 @@ You can also force agentic mode via config:
 ```yaml
 # openclaw.yaml
 plugins:
-  - id: "@blockrun/xclawrouter"
+  - id: "@blockrun/clawrouter"
     config:
       routing:
         overrides:
@@ -139,7 +139,7 @@ plugins:
 
 ## Tool Detection
 
-When your request includes a `tools` array (function calling), XClawRouter automatically switches to agentic tiers:
+When your request includes a `tools` array (function calling), ClawRouter automatically switches to agentic tiers:
 
 ```typescript
 // Request with tools → auto-agentic mode
@@ -158,7 +158,7 @@ When your request includes a `tools` array (function calling), XClawRouter autom
 
 ## Context-Length-Aware Routing
 
-XClawRouter automatically filters out models that can't handle your context size:
+ClawRouter automatically filters out models that can't handle your context size:
 
 ```
 150K token request:
@@ -197,7 +197,7 @@ All aliases work with `/model blockrun/xxx` or just `/model xxx`.
 
 ## Free Tier Fallback
 
-When your wallet balance hits $0, XClawRouter automatically falls back to the free model (`gpt-oss-120b`):
+When your wallet balance hits $0, ClawRouter automatically falls back to the free model (`gpt-oss-120b`):
 
 ```
 Wallet: $0.00
@@ -213,7 +213,7 @@ You'll never get blocked by an empty wallet — the free tier keeps you running.
 
 ## Session Persistence
 
-For multi-turn conversations, XClawRouter pins the model to prevent mid-task switching:
+For multi-turn conversations, ClawRouter pins the model to prevent mid-task switching:
 
 ```
 Turn 1: "Build a React component" → claude-sonnet-4.6
@@ -238,7 +238,7 @@ Output:
 
 ```
 +============================================================+
-|              XClawRouter Usage Statistics                   |
+|              ClawRouter Usage Statistics                   |
 +============================================================+
 |  Period: last 7 days                                      |
 |  Total Requests: 442                                      |

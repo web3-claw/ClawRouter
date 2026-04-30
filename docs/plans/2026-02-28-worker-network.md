@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Let XClawRouter users opt in as worker nodes that execute HTTP health checks and earn USDC micropayments via x402.
+**Goal:** Let ClawRouter users opt in as worker nodes that execute HTTP health checks and earn USDC micropayments via x402.
 
-**Architecture:** XClawRouter polls BlockRun for tasks every 30s, executes HTTP checks, signs results with its existing wallet key, and submits to BlockRun. BlockRun verifies the signature, accumulates credits per worker, and pays out via x402 (TransferWithAuthorization with `payTo = worker address`) when credits hit a $0.01 threshold.
+**Architecture:** ClawRouter polls BlockRun for tasks every 30s, executes HTTP checks, signs results with its existing wallet key, and submits to BlockRun. BlockRun verifies the signature, accumulates credits per worker, and pays out via x402 (TransferWithAuthorization with `payTo = worker address`) when credits hit a $0.01 threshold.
 
 **Tech Stack:** viem (signing), x402 (payment), existing CDP facilitator (settlement), in-memory task queue (pilot)
 
@@ -14,7 +14,7 @@
 
 ### Verification: Trust-based (no consensus needed)
 
-Workers are existing paying XClawRouter users. The actual work (one HTTP fetch) is cheaper than writing cheating code. Reward is $0.0001 — no rational incentive to fabricate. Simple signature proves identity; that's enough.
+Workers are existing paying ClawRouter users. The actual work (one HTTP fetch) is cheaper than writing cheating code. Reward is $0.0001 — no rational incentive to fabricate. Simple signature proves identity; that's enough.
 
 ### Payment: x402 with reversed payTo
 
@@ -74,7 +74,7 @@ Pilot (1,000 workers, 3 tasks):
 
 ## Files
 
-### XClawRouter (new files)
+### ClawRouter (new files)
 
 | File                   | Action                                                    |
 | ---------------------- | --------------------------------------------------------- |
@@ -100,7 +100,7 @@ Pilot (1,000 workers, 3 tasks):
 
 ---
 
-## Task 1: XClawRouter — Worker Types
+## Task 1: ClawRouter — Worker Types
 
 **Files:**
 
@@ -149,7 +149,7 @@ git commit -m "feat(worker): add worker network types"
 
 ---
 
-## Task 2: XClawRouter — HTTP Check Executor
+## Task 2: ClawRouter — HTTP Check Executor
 
 **Files:**
 
@@ -217,7 +217,7 @@ git commit -m "feat(worker): add HTTP check executor"
 
 ---
 
-## Task 3: XClawRouter — WorkerNode Class
+## Task 3: ClawRouter — WorkerNode Class
 
 **Files:**
 
@@ -382,7 +382,7 @@ export class WorkerNode {
 **Step 2:** Verify TypeScript compiles
 
 ```bash
-cd /Users/vickyfu/Documents/blockrun-web/XClawRouter
+cd /Users/vickyfu/Documents/blockrun-web/ClawRouter
 npx tsc --noEmit
 ```
 
@@ -397,7 +397,7 @@ git commit -m "feat(worker): add WorkerNode class with polling and signing"
 
 ---
 
-## Task 4: XClawRouter — Wire Worker Mode in index.ts
+## Task 4: ClawRouter — Wire Worker Mode in index.ts
 
 **Files:**
 
@@ -630,7 +630,7 @@ async function sendUsdcToWorker(
   const nonce = `0x${Buffer.from(nonceBytes).toString("hex")}` as `0x${string}`;
 
   // Sign TransferWithAuthorization: BlockRun treasury → worker
-  // Same scheme as XClawRouter's x402.ts but payTo = worker address
+  // Same scheme as ClawRouter's x402.ts but payTo = worker address
   const signature = await signTypedData({
     privateKey: payoutKey as `0x${string}`,
     domain: {
@@ -929,7 +929,7 @@ git commit -m "feat(worker): add POST /api/v1/worker/results with sig verify and
 
 ## Task 9: Environment Variables
 
-**XClawRouter** (no new env vars needed for basic mode):
+**ClawRouter** (no new env vars needed for basic mode):
 
 ```bash
 CLAWROUTER_WORKER=1        # opt-in to worker mode
@@ -964,10 +964,10 @@ curl "http://localhost:3000/api/v1/worker/tasks?address=0x0000000000000000000000
 # Expected: [{id: "task_br_health", ...}, ...]
 ```
 
-**Step 3:** Start XClawRouter in worker mode (pointing at localhost)
+**Step 3:** Start ClawRouter in worker mode (pointing at localhost)
 
 ```bash
-cd /Users/vickyfu/Documents/blockrun-web/XClawRouter
+cd /Users/vickyfu/Documents/blockrun-web/ClawRouter
 CLAWROUTER_WORKER=1 BLOCKRUN_API_BASE=http://localhost:3000/api npx openclaw gateway start
 ```
 
@@ -991,4 +991,4 @@ CLAWROUTER_WORKER=1 BLOCKRUN_API_BASE=http://localhost:3000/api npx openclaw gat
 - Buyer dashboard (custom endpoint monitoring)
 - Geographic routing (assign tasks by region)
 - Slash mechanism if needed at scale (currently not needed)
-- `/wallet worker-status` command in XClawRouter to show earnings
+- `/wallet worker-status` command in ClawRouter to show earnings

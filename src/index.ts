@@ -1,12 +1,12 @@
 /**
- * @blockrun/xclawrouter
+ * @blockrun/clawrouter
  *
  * Smart LLM router for OpenClaw — 55+ models, x402 micropayments, 78% cost savings.
  * Routes each request to the cheapest model that can handle it.
  *
  * Usage:
  *   # Install the plugin
- *   openclaw plugins install @blockrun/xclawrouter
+ *   openclaw plugins install @blockrun/clawrouter
  *
  *   # Fund your wallet with USDC on Base (address printed on install)
  *
@@ -91,7 +91,7 @@ function getPackageRoot(): string {
 }
 
 /**
- * Install XClawRouter skills into OpenClaw's workspace skills directory.
+ * Install ClawRouter skills into OpenClaw's workspace skills directory.
  *
  * OpenClaw agents discover skills by scanning {workspaceDir}/skills/ for SKILL.md
  * files. While the plugin manifest (`openclaw.plugin.json`) exposes skills for
@@ -126,7 +126,7 @@ function installSkillsToWorkspace(logger: {
     mkdirSync(workspaceSkillsDir, { recursive: true });
 
     // Scan bundled skills: each subdirectory contains a SKILL.md
-    // Skip internal-only skills (release is for XClawRouter maintainers, not end users)
+    // Skip internal-only skills (release is for ClawRouter maintainers, not end users)
     const INTERNAL_SKILLS = new Set(["release"]);
     const entries = readdirSync(bundledSkillsDir, { withFileTypes: true });
     let installed = 0;
@@ -688,18 +688,12 @@ async function startProxyInBackground(
   }
 
   // Log wallet source
-  if (wallet.source === "okx") {
-    api.logger.info(
-      `Using OKX onchainos wallet: ${wallet.address}${wallet.email ? ` (${wallet.email})` : ""}`,
-    );
-  } else if (wallet.source === "generated") {
+  if (wallet.source === "generated") {
     api.logger.warn(`════════════════════════════════════════════════`);
     api.logger.warn(`  NEW WALLET GENERATED — BACK UP YOUR KEY NOW!`);
     api.logger.warn(`  Address : ${wallet.address}`);
     api.logger.warn(`  Run /wallet export to get your private key`);
     api.logger.warn(`  Losing this key = losing your USDC funds`);
-    api.logger.warn(`  Or install OKX onchainos to use your OKX wallet:`);
-    api.logger.warn(`     https://web3.okx.com/onchainos`);
     api.logger.warn(`════════════════════════════════════════════════`);
   } else if (wallet.source === "saved") {
     api.logger.info(`Using saved wallet: ${wallet.address}`);
@@ -776,7 +770,7 @@ async function startProxyInBackground(
     );
   }
 
-  api.logger.info(`XClawRouter ready — smart routing enabled`);
+  api.logger.info(`ClawRouter ready — smart routing enabled`);
   api.logger.info(`Pricing: Simple ~$0.001 | Code ~$0.01 | Complex ~$0.05 | Free: $0`);
 
   // Non-blocking balance check AFTER proxy is ready (won't hang startup)
@@ -883,7 +877,7 @@ function startProxyAfterPortProbe(api: OpenClawPluginApi, startupGeneration: num
 // createExcludeCommand moved to src/commands/exclude.ts
 
 /**
- * /wallet command handler for XClawRouter.
+ * /wallet command handler for ClawRouter.
  * - /wallet or /wallet status: Show wallet address, balance, usage, and key file location
  * - /wallet export: Show private key for backup (with security warning)
  */
@@ -1250,7 +1244,7 @@ function createWalletCommand(api?: OpenClawPluginApi): OpenClawPluginCommandDefi
 
       if (!walletKey || !address) {
         return {
-          text: `No XClawRouter wallet found.\n\nRun \`openclaw plugins install @blockrun/xclawrouter\` to generate a wallet.`,
+          text: `No ClawRouter wallet found.\n\nRun \`openclaw plugins install @blockrun/clawrouter\` to generate a wallet.`,
           isError: true,
         };
       }
@@ -1258,7 +1252,7 @@ function createWalletCommand(api?: OpenClawPluginApi): OpenClawPluginCommandDefi
       if (subcommand === "export") {
         // Export private key + mnemonic for backup
         const lines = [
-          "**XClawRouter Wallet Export**",
+          "**ClawRouter Wallet Export**",
           "",
           "**SECURITY WARNING**: Your private key and mnemonic control your wallet funds.",
           "Never share these. Anyone with them can spend your USDC.",
@@ -1478,7 +1472,7 @@ function createWalletCommand(api?: OpenClawPluginApi): OpenClawPluginCommandDefi
 
       return {
         text: [
-          "**XClawRouter Wallet**",
+          "**ClawRouter Wallet**",
           "",
           `**Payment Chain:** ${currentChain === "solana" ? "Solana" : "Base (EVM)"}`,
           "",
@@ -1508,17 +1502,17 @@ function createWalletCommand(api?: OpenClawPluginApi): OpenClawPluginCommandDefi
 
 const plugin: OpenClawPluginDefinition = {
   id: "clawrouter",
-  name: "XClawRouter",
+  name: "ClawRouter",
   description: "Smart LLM router — 55+ models, x402 micropayments, 78% cost savings",
   version: VERSION,
 
   register(api: OpenClawPluginApi) {
-    // Check if XClawRouter is disabled via environment variable
+    // Check if ClawRouter is disabled via environment variable
     // Usage: CLAWROUTER_DISABLED=true openclaw gateway start
     const isDisabled =
       process["env"].CLAWROUTER_DISABLED === "true" || process["env"].CLAWROUTER_DISABLED === "1";
     if (isDisabled) {
-      api.logger.info("XClawRouter disabled (CLAWROUTER_DISABLED=true). Using default routing.");
+      api.logger.info("ClawRouter disabled (CLAWROUTER_DISABLED=true). Using default routing.");
       return;
     }
 
@@ -1842,19 +1836,13 @@ const plugin: OpenClawPluginDefinition = {
         // Generate wallet on first install (even outside gateway mode)
         // This ensures users can see their wallet address immediately after install
         resolveOrGenerateWalletKey()
-          .then(({ address, source, email }) => {
-            if (source === "okx") {
-              api.logger.info(
-                `Using OKX onchainos wallet: ${address}${email ? ` (${email})` : ""}`,
-              );
-            } else if (source === "generated") {
+          .then(({ address, source }) => {
+            if (source === "generated") {
               api.logger.warn(`════════════════════════════════════════════════`);
               api.logger.warn(`  NEW WALLET GENERATED — BACK UP YOUR KEY NOW!`);
               api.logger.warn(`  Address : ${address}`);
               api.logger.warn(`  Run /wallet export to get your private key`);
               api.logger.warn(`  Losing this key = losing your USDC funds`);
-              api.logger.warn(`  Or install OKX onchainos to use your OKX wallet:`);
-              api.logger.warn(`     https://web3.okx.com/onchainos`);
               api.logger.warn(`════════════════════════════════════════════════`);
             } else if (source === "saved") {
               api.logger.info(`Using saved wallet: ${address}`);
@@ -1976,7 +1964,7 @@ const plugin: OpenClawPluginDefinition = {
         removeManagedBlockrunMcpServerConfig(config as OpenClawConfig);
 
         // Remove plugin entries (all case variants)
-        for (const key of ["clawrouter", "XClawRouter", "@blockrun/xclawrouter"]) {
+        for (const key of ["clawrouter", "ClawRouter", "@blockrun/clawrouter"]) {
           if (config.plugins?.entries?.[key]) delete config.plugins.entries[key];
           if (config.plugins?.installs?.[key]) delete config.plugins.installs[key];
         }
@@ -1984,8 +1972,7 @@ const plugin: OpenClawPluginDefinition = {
         // Remove from plugins.allow
         if (Array.isArray(config.plugins?.allow)) {
           config.plugins.allow = config.plugins.allow.filter(
-            (p: string) =>
-              p !== "clawrouter" && p !== "XClawRouter" && p !== "@blockrun/xclawrouter",
+            (p: string) => p !== "clawrouter" && p !== "ClawRouter" && p !== "@blockrun/clawrouter",
           );
         }
 
@@ -2009,7 +1996,7 @@ const plugin: OpenClawPluginDefinition = {
         const tmpPath = `${configPath}.tmp.${process.pid}`;
         writeFileSync(tmpPath, JSON.stringify(config, null, 2));
         renameSync(tmpPath, configPath);
-        api.logger.info("XClawRouter config cleaned up");
+        api.logger.info("ClawRouter config cleaned up");
       }
     } catch (err) {
       api.logger.warn(`Config cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -2038,7 +2025,7 @@ const plugin: OpenClawPluginDefinition = {
       // Best-effort cleanup
     }
 
-    api.logger.info("XClawRouter deactivated — restart gateway to complete uninstall");
+    api.logger.info("ClawRouter deactivated — restart gateway to complete uninstall");
   },
 };
 

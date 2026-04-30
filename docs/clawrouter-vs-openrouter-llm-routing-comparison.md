@@ -25,7 +25,7 @@ These aren't edge cases. They're structural consequences of how OpenRouter works
 
 ![The Anatomy of Middleman Failure — Treemap showing issue distribution: Broken Fallback (~20), Model ID Mangling (~15), Missing Feature Parity (~10), Authentication/401s (~8), Cost Opacity (~6), Routing Opacity (~5), Model Staleness (~5), Rate Limits (~4). These are the inevitable consequences of a custodial middleman architecture.](./assets/clawrouter-anatomy-of-middleman-failure.png)
 
-![The Architectural Shift: Middleman vs. Local Router — OpenRouter adds latency, translation errors, and hidden limits as a middleman aggregator. XClawRouter moves routing logic locally, eliminating the black box. One hop, not two. Zero translation errors. Total control.](./assets/clawrouter-architectural-shift-middleman-vs-local.png)
+![The Architectural Shift: Middleman vs. Local Router — OpenRouter adds latency, translation errors, and hidden limits as a middleman aggregator. ClawRouter moves routing logic locally, eliminating the black box. One hop, not two. Zero translation errors. Total control.](./assets/clawrouter-architectural-shift-middleman-vs-local.png)
 
 ---
 
@@ -41,9 +41,9 @@ From [#50389](https://github.com/openclaw/openclaw/issues/50389):
 
 When OpenRouter returns a 429 or provider error, OpenClaw's failover logic often doesn't recognize it as retriable. The user sees a raw error. The agent stops. ~20 issues document variations of this: HTTP 529 (Anthropic overloaded) not triggering fallback ([#49079](https://github.com/openclaw/openclaw/issues/49079)), invalid model IDs causing 400 instead of failover ([#50017](https://github.com/openclaw/openclaw/issues/50017)), timeouts in cron sessions with no recovery ([#49597](https://github.com/openclaw/openclaw/issues/49597)).
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-XClawRouter maintains 8-deep fallback chains per routing tier. When a model fails:
+ClawRouter maintains 8-deep fallback chains per routing tier. When a model fails:
 
 1. **200ms retry** — short-burst rate limits often recover in milliseconds
 2. **Next model** — if retry fails, move to the next model in the chain
@@ -51,15 +51,15 @@ XClawRouter maintains 8-deep fallback chains per routing tier. When a model fail
 4. **All-failed summary** — if every model in the chain fails, you get a structured error listing every attempt and failure reason
 
 ```
-[XClawRouter] Trying model 1/6: google/gemini-2.5-flash
-[XClawRouter] Model google/gemini-2.5-flash returned 429, retrying in 200ms...
-[XClawRouter] Retry failed, trying model 2/6: deepseek/deepseek-chat
-[XClawRouter] Success with model: deepseek/deepseek-chat
+[ClawRouter] Trying model 1/6: google/gemini-2.5-flash
+[ClawRouter] Model google/gemini-2.5-flash returned 429, retrying in 200ms...
+[ClawRouter] Retry failed, trying model 2/6: deepseek/deepseek-chat
+[ClawRouter] Success with model: deepseek/deepseek-chat
 ```
 
 No silent failures. No raw 429s surfaced to the agent.
 
-![Surviving the 429: Cascading Fallback Chains — OpenRouter surfaces raw HTTP 429 errors and the agent stops. XClawRouter maintains 8-deep isolated fallback chains per tier with 200ms retry, per-model isolation, and seamless cascading. No silent failures.](./assets/clawrouter-cascading-fallback-chains-429.png)
+![Surviving the 429: Cascading Fallback Chains — OpenRouter surfaces raw HTTP 429 errors and the agent stops. ClawRouter maintains 8-deep isolated fallback chains per tier with 200ms retry, per-model isolation, and seamless cascading. No silent failures.](./assets/clawrouter-cascading-fallback-chains-429.png)
 
 ---
 
@@ -75,9 +75,9 @@ From [#50711](https://github.com/openclaw/openclaw/issues/50711):
 
 OpenRouter uses nested model IDs: `openrouter/deepseek/deepseek-v3.2`. OpenClaw's UI, Discord bot, and web gateway all handle these differently. Some add the prefix. Some strip it. Some double it. 15 issues trace back to model ID confusion.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-XClawRouter uses clean aliases. You say `sonnet` and get `anthropic/claude-sonnet-4-6`. You say `flash` and get `google/gemini-2.5-flash`. No nested prefixes. No double-prefix bugs.
+ClawRouter uses clean aliases. You say `sonnet` and get `anthropic/claude-sonnet-4-6`. You say `flash` and get `google/gemini-2.5-flash`. No nested prefixes. No double-prefix bugs.
 
 ```typescript
 // resolveModelAlias() handles all normalization
@@ -90,7 +90,7 @@ XClawRouter uses clean aliases. You say `sonnet` and get `anthropic/claude-sonne
 
 One canonical format. No mangling. No UI inconsistency.
 
-![Eliminating Model ID Mangling — OpenRouter's nested prefixes cause double-prefix bugs (openrouter/openrouter/auto) and UI stripping issues. XClawRouter uses one canonical format with clean aliases: "sonnet" → anthropic/claude-sonnet-4-6, "flash" → google/gemini-2.5-flash.](./assets/clawrouter-eliminating-model-id-mangling.png)
+![Eliminating Model ID Mangling — OpenRouter's nested prefixes cause double-prefix bugs (openrouter/openrouter/auto) and UI stripping issues. ClawRouter uses one canonical format with clean aliases: "sonnet" → anthropic/claude-sonnet-4-6, "flash" → google/gemini-2.5-flash.](./assets/clawrouter-eliminating-model-id-mangling.png)
 
 ---
 
@@ -106,9 +106,9 @@ From [#8615](https://github.com/openclaw/openclaw/issues/8615):
 
 API keys are the root cause of an entire category of failures. Keys expire. Keys leak into LLM context (every provider sees every other provider's keys in the serialized request). Keys hit rate limits that can't be load-balanced. 8 issues document auth failures alone.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-XClawRouter has no API keys. Zero.
+ClawRouter has no API keys. Zero.
 
 Payment happens via [x402](https://x402.org/) — a cryptographic micropayment protocol. Your agent generates a wallet on first run (BIP-44 derivation, both EVM and Solana). Each request is signed with the wallet's private key. USDC moves per-request.
 
@@ -121,7 +121,7 @@ No keys to expire.
 
 The wallet is the identity. The signature is the authentication. Nothing to configure, nothing to paste into a config file, nothing for the LLM to accidentally serialize.
 
-![Cryptographic Auth: The End of API Key Hell — API keys are exposed in config, serialized into LLM context, share rate limits, and expire. XClawRouter replaces them with BIP-44 EVM/Solana wallets and per-request cryptographic signatures via x402.](./assets/clawrouter-cryptographic-auth-x402-wallet.png)
+![Cryptographic Auth: The End of API Key Hell — API keys are exposed in config, serialized into LLM context, share rate limits, and expire. ClawRouter replaces them with BIP-44 EVM/Solana wallets and per-request cryptographic signatures via x402.](./assets/clawrouter-cryptographic-auth-x402-wallet.png)
 
 ---
 
@@ -137,7 +137,7 @@ From [#7006](https://github.com/openclaw/openclaw/issues/7006):
 
 When OpenRouter runs out of credits, it returns a 402 that OpenClaw misreads as a context overflow. OpenClaw then auto-compacts the context and retries — on the same empty balance. Each retry charges the compaction cost. Credits drain faster. The agent burns money trying to fix a billing error it doesn't understand.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
 **Per-request cost visibility.** Every response includes cost headers:
 
@@ -169,9 +169,9 @@ From [#35842](https://github.com/openclaw/openclaw/issues/35842):
 
 When you use `openrouter/auto`, you don't know what model served your request. You can't debug quality regressions. You can't understand cost spikes. You're paying for a black box.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-XClawRouter's routing is 100% local, open-source, and transparent.
+ClawRouter's routing is 100% local, open-source, and transparent.
 
 **14-dimension weighted classifier** runs locally in <1ms. It scores every request across: token count, code presence, reasoning markers, technical terms, multi-step patterns, question complexity, tool signals, and more.
 
@@ -198,7 +198,7 @@ x-clawrouter-reasoning: "Code task with moderate complexity"
 
 No black box. No mystery routing. Full visibility, full control.
 
-![Transparent Routing via 14-Dimension Classification — Radar chart showing XClawRouter's local classifier scoring across Token Count, Code Presence, Reasoning Markers, Technical Terms, Multi-step Patterns, and Tool Signals. Executes locally in <1ms with SSE debug headers. Four profiles: auto (balanced), eco (cheapest), premium (best), free (GPT-OSS).](./assets/clawrouter-14-dimension-routing-classification.png)
+![Transparent Routing via 14-Dimension Classification — Radar chart showing ClawRouter's local classifier scoring across Token Count, Code Presence, Reasoning Markers, Technical Terms, Multi-step Patterns, and Tool Signals. Executes locally in <1ms with SSE debug headers. Four profiles: auto (balanced), eco (cheapest), premium (best), free (GPT-OSS).](./assets/clawrouter-14-dimension-routing-classification.png)
 
 ---
 
@@ -214,13 +214,13 @@ From [#47707](https://github.com/openclaw/openclaw/issues/47707):
 
 OpenRouter doesn't always pass through provider-specific features correctly. Image payloads get dropped. Cache retention headers get ignored. Tool call ID formats cause silent failures with strict providers.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-**Vision auto-detection.** When `image_url` content parts are detected, XClawRouter automatically filters the fallback chain to vision-capable models only. No images dropped.
+**Vision auto-detection.** When `image_url` content parts are detected, ClawRouter automatically filters the fallback chain to vision-capable models only. No images dropped.
 
-**Tool calling validation.** Every model has a `toolCalling` flag. When tools are present in the request, XClawRouter forces agentic routing tiers and excludes models without tool support. No silent tool call failures.
+**Tool calling validation.** Every model has a `toolCalling` flag. When tools are present in the request, ClawRouter forces agentic routing tiers and excludes models without tool support. No silent tool call failures.
 
-**Direct provider routing.** XClawRouter routes through BlockRun's API directly to providers — not through a second aggregator. One hop, not two. Provider-specific features work because there's no middleman translating them.
+**Direct provider routing.** ClawRouter routes through BlockRun's API directly to providers — not through a second aggregator. One hop, not two. Provider-specific features work because there's no middleman translating them.
 
 ![Guaranteed Feature Parity & Direct Connectivity — Three-panel diagram: Vision (image_url auto-detected → vision-capable models only), Tool Calling (toolCalling flag → agentic models only), Catalog (curated 55+ models with automatic legacy-to-modern redirects). Direct provider routing means no dropped payloads.](./assets/clawrouter-feature-parity-direct-connectivity.png)
 
@@ -238,9 +238,9 @@ From [#30152](https://github.com/openclaw/openclaw/issues/30152):
 
 When new models launch, OpenRouter's catalog lags. Users configure a model that exists at the provider but isn't in the catalog. The request fails silently or gets rerouted.
 
-### How XClawRouter Solves This
+### How ClawRouter Solves This
 
-XClawRouter maintains a curated catalog of 55+ models across 9 providers (including 11 free models), updated with each release. Delisted models have automatic redirect aliases:
+ClawRouter maintains a curated catalog of 55+ models across 9 providers (including 11 free models), updated with each release. Delisted models have automatic redirect aliases:
 
 ```typescript
 // Delisted models redirect automatically
@@ -250,13 +250,13 @@ XClawRouter maintains a curated catalog of 55+ models across 9 providers (includ
 
 No silent drops. No stale catalog. Models are benchmarked for speed, quality, and tool support before inclusion.
 
-![The Cost/Transparency Nexus — Local routing engine + direct connections + x402 micropayments = 100% transparency = 92% cost savings. Direct Opus routing: $25.00/M tokens. XClawRouter auto-routed: $2.05/M tokens. Transparency and cost savings are two sides of the same architectural coin.](./assets/clawrouter-cost-transparency-nexus-92-savings.png)
+![The Cost/Transparency Nexus — Local routing engine + direct connections + x402 micropayments = 100% transparency = 92% cost savings. Direct Opus routing: $25.00/M tokens. ClawRouter auto-routed: $2.05/M tokens. Transparency and cost savings are two sides of the same architectural coin.](./assets/clawrouter-cost-transparency-nexus-92-savings.png)
 
 ---
 
 ## The Full Comparison
 
-|                     | OpenRouter                       | XClawRouter                                    |
+|                     | OpenRouter                       | ClawRouter                                     |
 | ------------------- | -------------------------------- | ---------------------------------------------- |
 | **Authentication**  | API key (leak risk)              | Wallet signature (no keys)                     |
 | **Payment**         | Prepaid balance (custodial)      | Per-request USDC (non-custodial)               |
@@ -273,7 +273,7 @@ No silent drops. No stale catalog. Models are benchmarked for speed, quality, an
 | **Setup**           | Create account, paste key        | Agent generates wallet, auto-configured        |
 | **Average cost**    | $25/M tokens (Opus direct)       | $2.05/M tokens (auto-routed) = **92% savings** |
 
-![The Engineering Matrix — Side-by-side feature comparison: OpenRouter vs XClawRouter across Routing, Authentication, Payment, Fallback, Model IDs, Empty Wallet, Vision/Tools, and Average Cost. XClawRouter wins on every dimension.](./assets/clawrouter-engineering-matrix-comparison.png)
+![The Engineering Matrix — Side-by-side feature comparison: OpenRouter vs ClawRouter across Routing, Authentication, Payment, Fallback, Model IDs, Empty Wallet, Vision/Tools, and Average Cost. ClawRouter wins on every dimension.](./assets/clawrouter-engineering-matrix-comparison.png)
 
 ---
 
@@ -281,7 +281,7 @@ No silent drops. No stale catalog. Models are benchmarked for speed, quality, an
 
 ```bash
 # Install
-npm install -g @blockrun/xclawrouter
+npm install -g @blockrun/clawrouter
 
 # Start (auto-configures OpenClaw)
 clawrouter
@@ -293,12 +293,12 @@ clawrouter
 # /stats
 ```
 
-XClawRouter auto-injects itself into `~/.openclaw/openclaw.json` as a provider on startup. Your existing tools, sessions, and extensions are unchanged.
+ClawRouter auto-injects itself into `~/.openclaw/openclaw.json` as a provider on startup. Your existing tools, sessions, and extensions are unchanged.
 
 Load a wallet with USDC on Base or Solana, pick a routing profile, and run.
 
-![Frictionless Integration — npm install -g @blockrun/xclawrouter, auto-injected provider into ~/.openclaw/openclaw.json. No code rewrites. Your existing tools, sessions, and extensions remain entirely unchanged.](./assets/clawrouter-frictionless-integration.png)
+![Frictionless Integration — npm install -g @blockrun/clawrouter, auto-injected provider into ~/.openclaw/openclaw.json. No code rewrites. Your existing tools, sessions, and extensions remain entirely unchanged.](./assets/clawrouter-frictionless-integration.png)
 
 ---
 
-_[github.com/BlockRunAI/XClawRouter](https://github.com/BlockRunAI/XClawRouter) · [blockrun.ai](https://blockrun.ai) · `npm install -g @blockrun/xclawrouter`_
+_[github.com/BlockRunAI/ClawRouter](https://github.com/BlockRunAI/ClawRouter) · [blockrun.ai](https://blockrun.ai) · `npm install -g @blockrun/clawrouter`_

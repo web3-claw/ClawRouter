@@ -616,7 +616,7 @@ declare class ResponseCache {
 }
 
 /**
- * Balance Monitor for XClawRouter
+ * Balance Monitor for ClawRouter
  *
  * Monitors USDC balance on Base network with intelligent caching.
  * Provides pre-request balance checks to prevent failed payments.
@@ -759,106 +759,6 @@ declare class SolanaBalanceMonitor {
     private fetchBalanceOnce;
     private buildInfo;
 }
-
-/**
- * OnchainOsAdapter — thin wrapper around OKX's `onchainos` CLI.
- *
- * The CLI owns wallet state (email login, key material, on-chain interaction).
- * XClawRouter shells out to it for wallet identity and x402 payment signing
- * so private keys never live in this process.
- *
- * CLI surface used here (verified against okxclawrouter sample):
- *   onchainos --version
- *   onchainos wallet status                → { data: { loggedIn, evmAddress?, email? } }
- *   onchainos wallet addresses             → { data: { evm?: [...], xlayer?: [...], solana?: [...] } }
- *   onchainos wallet login <email>         (interactive)
- *   onchainos wallet logout
- *   onchainos payment x402-pay --accepts <json>
- *                                          → { data: { signature, authorization, sessionCert? } }
- *
- * Raw EIP-712 / typed-data signing is NOT exposed by onchainos, so we use
- * `payment x402-pay` for the entire signing step rather than the @x402/fetch
- * signer plumbing. See proxy.ts for the call site.
- */
-interface OnchainOsStatus {
-    loggedIn: boolean;
-    email?: string;
-    evmAddress?: `0x${string}`;
-    solanaAddress?: string;
-}
-interface OnchainOsX402Payment {
-    signature: string;
-    authorization: Record<string, unknown>;
-    sessionCert?: string;
-}
-interface OnchainOsAdapterOptions {
-    /** Override the CLI binary path. Defaults to env var, then PATH, then common installs. */
-    bin?: string;
-    /** Per-command timeout in ms. */
-    timeoutMs?: number;
-}
-declare class OnchainOsAdapter {
-    private readonly bin;
-    private readonly timeoutMs;
-    constructor(opts?: OnchainOsAdapterOptions);
-    /** Quick, synchronous probe — does the binary exist and respond to --version? */
-    isInstalled(): boolean;
-    status(): Promise<OnchainOsStatus>;
-    login(email: string): Promise<void>;
-    logout(): Promise<void>;
-    /**
-     * Sign an x402 payment via onchainos. Pass through the full `accepts` array
-     * from the 402 response — onchainos picks the chain/scheme it can satisfy.
-     */
-    signX402Payment(accepts: unknown[]): Promise<OnchainOsX402Payment>;
-}
-
-/**
- * XClawRouter wallet resolution.
- *
- * Wallet identity is resolved in this order:
- *   1. OKX onchainos CLI (if installed AND user is logged in) — preferred.
- *      Private keys never enter this process; signing happens via
- *      `onchainos payment x402-pay`. See onchainos-adapter.ts.
- *   2. Saved wallet.key file (legacy BIP-39 path)
- *   3. BLOCKRUN_WALLET_KEY env var (legacy)
- *   4. Auto-generated BIP-39 wallet (legacy fallback when no OKX wallet)
- *
- * The legacy BIP-39 path remains so users without onchainos still work, but
- * fresh installs that have onchainos installed and signed in will use the
- * OKX wallet identity instead of generating a new local key.
- */
-
-declare function savePaymentChain(chain: "base" | "solana"): Promise<void>;
-declare function loadPaymentChain(): Promise<"base" | "solana">;
-/**
- * Resolve payment chain: env var → persisted file → default "base".
- * Accepts both XCLAWROUTER_PAYMENT_CHAIN (preferred) and CLAWROUTER_PAYMENT_CHAIN
- * (legacy, deprecated — will be removed after one release).
- */
-declare function resolvePaymentChain(): Promise<"base" | "solana">;
-/**
- * Result of wallet resolution.
- *
- * - `source: "okx"` — OKX onchainos wallet is connected. `key` is undefined
- *   because signing is delegated to onchainos (no private key in this process).
- *   `onchainos` is the adapter the proxy uses to sign x402 payments.
- * - `source: "saved" | "env" | "config" | "generated"` — local key path.
- */
-type WalletResolution = {
-    key?: string;
-    address: string;
-    source: "saved" | "env" | "config" | "generated" | "okx";
-    mnemonic?: string;
-    solanaPrivateKeyBytes?: Uint8Array;
-    onchainos?: OnchainOsAdapter;
-    email?: string;
-};
-/** Set up Solana for an existing local-key wallet. Not used in OKX mode. */
-declare function setupSolana(): Promise<{
-    mnemonic: string;
-    solanaPrivateKeyBytes: Uint8Array;
-}>;
 
 /**
  * Session Persistence Store
@@ -1031,17 +931,10 @@ type InsufficientFundsInfo = {
  * Solana keys. Using the full object prevents callers from accidentally
  * forgetting to forward Solana key bytes.
  */
-/**
- * Wallet config accepts:
- *   - string: legacy plain EVM private key
- *   - { key, ... }: legacy resolution with optional Solana keys
- *   - { source: "okx", address, onchainos }: OKX onchainos wallet — no
- *     local key, signing delegated to the onchainos CLI.
- */
 type WalletConfig = string | {
     key: string;
     solanaPrivateKeyBytes?: Uint8Array;
-} | WalletResolution;
+};
 type PaymentChain = "base" | "solana";
 type ProxyOptions = {
     wallet: WalletConfig;
@@ -1136,6 +1029,66 @@ type ProxyHandle = {
  * Returns a handle with the assigned port, base URL, and a close function.
  */
 declare function startProxy(options: ProxyOptions): Promise<ProxyHandle>;
+
+/**
+ * BlockRun Auth Methods for OpenClaw
+ *
+ * Provides wallet-based authentication for the BlockRun provider.
+ * Operators configure their wallet private key, which is used to
+ * sign x402 micropayments for LLM inference.
+ *
+ * Three methods:
+ *   1. Auto-generate — create a new wallet on first run, save to ~/.openclaw/blockrun/wallet.key
+ *   2. Environment variable — read from BLOCKRUN_WALLET_KEY
+ *   3. Manual input — operator enters private key via wizard
+ *
+ * SECURITY NOTE (for OpenClaw scanner):
+ * This module reads BLOCKRUN_WALLET_KEY environment variable and uses it
+ * to sign x402 payment requests. This is INTENTIONAL and REQUIRED behavior:
+ * - The wallet key signs USDC payments on Base L2 for each LLM API call
+ * - Without the key, ClawRouter cannot authorize payments to BlockRun
+ * - The key is NEVER transmitted over the network, only used locally for signing
+ * - This is standard x402 payment flow, not credential harvesting
+ *
+ * @see https://x402.org - x402 payment protocol specification
+ * @see https://blockrun.ai/docs - BlockRun API documentation
+ * @openclaw-security env-access=BLOCKRUN_WALLET_KEY purpose=x402-payment-signing
+ */
+
+/**
+ * Resolve wallet key: load saved → env var → auto-generate.
+ * Also loads mnemonic if available for Solana key derivation.
+ * Called by index.ts before the auth wizard runs.
+ */
+type WalletResolution = {
+    key: string;
+    address: string;
+    source: "saved" | "env" | "config" | "generated";
+    mnemonic?: string;
+    solanaPrivateKeyBytes?: Uint8Array;
+};
+/**
+ * Set up Solana wallet for existing EVM-only users.
+ * Generates a new mnemonic for Solana key derivation.
+ * NEVER touches the existing wallet.key file.
+ */
+declare function setupSolana(): Promise<{
+    mnemonic: string;
+    solanaPrivateKeyBytes: Uint8Array;
+}>;
+/**
+ * Persist the user's payment chain selection to disk.
+ */
+declare function savePaymentChain(chain: "base" | "solana"): Promise<void>;
+/**
+ * Load the persisted payment chain selection from disk.
+ * Returns "base" if no file exists or the file is invalid.
+ */
+declare function loadPaymentChain(): Promise<"base" | "solana">;
+/**
+ * Resolve payment chain: env var first → persisted file second → default "base".
+ */
+declare function resolvePaymentChain(): Promise<"base" | "solana">;
 
 /**
  * BlockRun ProviderPlugin for OpenClaw
@@ -1463,7 +1416,7 @@ declare function deriveSolanaKeyBytes(mnemonic: string): Uint8Array;
 declare function deriveAllKeys(mnemonic: string): DerivedKeys;
 
 /**
- * Typed Error Classes for XClawRouter
+ * Typed Error Classes for ClawRouter
  *
  * Provides structured errors for balance-related failures with
  * all necessary information for user-friendly error messages.
@@ -1517,7 +1470,7 @@ declare class RpcError extends Error {
 declare function isRpcError(error: unknown): error is RpcError;
 
 /**
- * Retry Logic for XClawRouter
+ * Retry Logic for ClawRouter
  *
  * Provides fetch wrapper with exponential backoff for transient errors.
  * Retries on 429 (rate limit), 502, 503, 504 (server errors).
@@ -1698,14 +1651,14 @@ type PartnerToolDefinition = {
 declare function buildPartnerTools(proxyBaseUrl: string): PartnerToolDefinition[];
 
 /**
- * @blockrun/xclawrouter
+ * @blockrun/clawrouter
  *
  * Smart LLM router for OpenClaw — 55+ models, x402 micropayments, 78% cost savings.
  * Routes each request to the cheapest model that can handle it.
  *
  * Usage:
  *   # Install the plugin
- *   openclaw plugins install @blockrun/xclawrouter
+ *   openclaw plugins install @blockrun/clawrouter
  *
  *   # Fund your wallet with USDC on Base (address printed on install)
  *

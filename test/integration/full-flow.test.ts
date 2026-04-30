@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { startTestProxy, stopTestProxy, getTestProxyUrl } from "./setup.js";
 
-describe.skipIf(!process.env.BLOCKRUN_WALLET_KEY)("XClawRouter full-flow (funded wallet)", () => {
+describe.skipIf(!process.env.BLOCKRUN_WALLET_KEY)("ClawRouter full-flow (funded wallet)", () => {
   beforeAll(async () => {
     await startTestProxy();
   });

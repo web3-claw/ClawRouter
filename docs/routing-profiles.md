@@ -1,6 +1,6 @@
 # Routing Profiles & Pricing
 
-XClawRouter offers four routing profiles to balance cost vs quality. Prices are in **$/M tokens** (input/output).
+ClawRouter offers four routing profiles to balance cost vs quality. Prices are in **$/M tokens** (input/output).
 
 ## ECO (Absolute Cheapest)
 
@@ -43,7 +43,7 @@ Use `blockrun/premium` for maximum quality.
 
 ## AGENTIC (Multi-Step Tasks)
 
-Use `blockrun/agentic` for autonomous multi-step tasks, or let XClawRouter auto-detect agentic patterns.
+Use `blockrun/agentic` for autonomous multi-step tasks, or let ClawRouter auto-detect agentic patterns.
 
 | Tier      | Primary Model        | Input | Output |
 | --------- | -------------------- | ----- | ------ |
@@ -67,7 +67,7 @@ Use `blockrun/agentic` for autonomous multi-step tasks, or let XClawRouter auto-
 
 ## How Tiers Work
 
-XClawRouter automatically classifies your query into one of four tiers:
+ClawRouter automatically classifies your query into one of four tiers:
 
 - **SIMPLE**: Basic questions, short responses, simple lookups
 - **MEDIUM**: Code generation, moderate complexity tasks
