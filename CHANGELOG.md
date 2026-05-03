@@ -4,6 +4,14 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.174 — May 2, 2026
+
+- **`profile=auto` and `profile=agentic` MEDIUM-tier primary swapped from Kimi K2.5 → K2.6.** Per-call cost on these MEDIUM routes goes from $0.60/$3.00 → $0.95/$4.00 — that's **+58% on input tokens, +33% on output tokens** for default-profile users whose classifier returns MEDIUM. The decision deliberately reverses v0.12.170's "tier primaries unchanged pending K2.6 retention/IQ data" stance. The trigger: BlockRun hid K2.5 from its public UI on 2026-04-28 (commit `bfbdedf`) and we hid it from ClawRouter's picker in v0.12.173, so the trajectory toward server-side K2.5 retirement is clear. Promoting K2.6 now is future-proofing — if BlockRun pulls K2.5 server-side later, every MEDIUM call would otherwise 400 → fallback-second-choice silently, which is harder to debug than a clean primary that is already on the still-supported model.
+- **Cost-stability opt-out**: users who prefer K2.5's pricing can pin `model: "moonshot/kimi-k2.5"` directly (or use the `kimi-k2.5` alias). K2.5 stays in `BLOCKRUN_MODELS`, the alias map, and is now wired in as the **first fallback** in both `autoTiers.MEDIUM` and `agenticTiers.MEDIUM` chains — so even on the auto path, if K2.6 has an infra hiccup the next attempt is K2.5 (same model, same cost as the v0.12.173 default). Profiles `eco` and `premium` are unaffected (eco MEDIUM = `gemini-3.1-flash-lite`, premium SIMPLE was already K2.6).
+- **Registry, picker, and other tier primaries unchanged.** Both Kimi versions remain in `src/models.ts`, `src/top-models.json` is identical to v0.12.173, and no other auto/agentic/eco/premium primaries moved. The two known "hidden but still primary" inconsistencies (`autoTiers.SIMPLE` = `google/gemini-2.5-flash`, `agenticTiers.SIMPLE` = `openai/gpt-4o-mini`) are tracked but deferred — they don't have the same urgency signal (BlockRun hasn't pulled them from its UI).
+
+---
+
 ## v0.12.173 — May 2, 2026
 
 - **Picker decluttered: 12 superseded long-tail models hidden from OpenClaw `/model` UI.** `src/top-models.json` trimmed from 50 → 38 entries. Hidden: `anthropic/claude-opus-4.5`, `openai/gpt-5.3`, `openai/gpt-5-mini`, `openai/gpt-5-nano`, `openai/gpt-4o`, `openai/gpt-4o-mini`, `openai/o3`, `openai/o4-mini`, `google/gemini-2.5-pro`, `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`, `moonshot/kimi-k2.5`. Picker count drops from "55 available" to ~43 once users run `clawrouter update` or reinstall.

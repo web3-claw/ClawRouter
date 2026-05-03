@@ -1055,8 +1055,9 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
       ],
     },
     MEDIUM: {
-      primary: "moonshot/kimi-k2.5", // 1,646ms, IQ 47, $0.60/$3.00 — strong tool use, quality output
+      primary: "moonshot/kimi-k2.6", // $0.95/$4.00, 256K ctx, vision + reasoning — Moonshot flagship; promoted from K2.5 (2026-05-02) after BlockRun hid K2.5 from its UI on 2026-04-28
       fallback: [
+        "moonshot/kimi-k2.5", // $0.60/$3.00 — graceful-degradation backstop while K2.6 stabilizes
         "google/gemini-3-flash-preview", // 1,398ms, IQ 46 — nearly same IQ, faster + cheaper
         "deepseek/deepseek-chat", // 1,431ms, IQ 32, 41% retention
         "google/gemini-2.5-flash", // 1,238ms, 60% retention
@@ -1196,8 +1197,9 @@ export const DEFAULT_ROUTING_CONFIG: RoutingConfig = {
       ],
     },
     MEDIUM: {
-      primary: "moonshot/kimi-k2.5", // 1,646ms, $0.60/$3.00 - strong tool use, proper function calls
+      primary: "moonshot/kimi-k2.6", // $0.95/$4.00 — Moonshot flagship, strong tool use; promoted from K2.5 (2026-05-02) after BlockRun hid K2.5 from its UI on 2026-04-28
       fallback: [
+        "moonshot/kimi-k2.5", // $0.60/$3.00 — graceful-degradation backstop while K2.6 stabilizes
         "xai/grok-4-1-fast-non-reasoning", // 1,244ms, fast fallback
         "openai/gpt-4o-mini", // 2,764ms, reliable tool calling
         "anthropic/claude-haiku-4.5", // 2,305ms
