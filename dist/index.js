@@ -76820,8 +76820,15 @@ function toUpstreamModelId(modelId) {
 var MAX_MESSAGES = 200;
 var CONTEXT_LIMIT_KB = 5120;
 var HEARTBEAT_INTERVAL_MS = 2e3;
-var DEFAULT_REQUEST_TIMEOUT_MS = 18e4;
+var DEFAULT_REQUEST_TIMEOUT_MS = 3e5;
 var PER_MODEL_TIMEOUT_MS = 6e4;
+var REASONING_MODEL_TIMEOUT_MS = 18e4;
+var REASONING_MODEL_IDS = new Set(
+  BLOCKRUN_MODELS.filter((m) => m.reasoning).map((m) => m.id)
+);
+function timeoutForModel(modelId) {
+  return REASONING_MODEL_IDS.has(modelId) ? REASONING_MODEL_TIMEOUT_MS : PER_MODEL_TIMEOUT_MS;
+}
 var MAX_FALLBACK_ATTEMPTS = 5;
 var HEALTH_CHECK_TIMEOUT_MS = 2e3;
 var RATE_LIMIT_COOLDOWN_MS = 6e4;
@@ -79871,8 +79878,9 @@ data: [DONE]
         throw new Error(`Request timed out after ${timeoutMs}ms`);
       }
       console.log(`[ClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
+      const perAttemptTimeoutMs = timeoutForModel(tryModel);
       const modelController = new AbortController();
-      const modelTimeoutId = setTimeout(() => modelController.abort(), PER_MODEL_TIMEOUT_MS);
+      const modelTimeoutId = setTimeout(() => modelController.abort(), perAttemptTimeoutMs);
       const combinedSignal = AbortSignal.any([globalController.signal, modelController.signal]);
       const result = await tryModelRequest(
         upstreamUrl,
@@ -79891,7 +79899,7 @@ data: [DONE]
       }
       if (!result.success && modelController.signal.aborted && !isLastAttempt) {
         console.log(
-          `[ClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`
+          `[ClawRouter] Model ${tryModel} timed out after ${perAttemptTimeoutMs}ms, trying fallback`
         );
         recordProviderError(tryModel, "server_error");
         continue;
@@ -79969,7 +79977,7 @@ data: [DONE]
         await new Promise((resolve) => setTimeout(resolve, 500));
         if (!globalController.signal.aborted) {
           const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(() => retryController.abort(), PER_MODEL_TIMEOUT_MS);
+          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutForModel(tryModel));
           const retrySignal = AbortSignal.any([globalController.signal, retryController.signal]);
           const retryResult = await tryModelRequest(
             upstreamUrl,
@@ -80029,7 +80037,7 @@ data: [DONE]
               const retryController = new AbortController();
               const retryTimeoutId = setTimeout(
                 () => retryController.abort(),
-                PER_MODEL_TIMEOUT_MS
+                timeoutForModel(tryModel)
               );
               const retrySignal = AbortSignal.any([
                 globalController.signal,

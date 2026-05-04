@@ -4,6 +4,20 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.182 — May 4, 2026
+
+- **Reasoning models no longer get aborted before they emit their first token.** `PER_MODEL_TIMEOUT_MS` was hard-coded to 60s for every model. Reasoning/thinking-mode models (o-series, GPT-5 reasoning, Claude opus thinking, Gemini Pro, Grok reasoning, DeepSeek V4 Pro / reasoner, Kimi K2.x, Qwen3-thinking, etc. — 37 IDs total flagged with `reasoning: true` in `BLOCKRUN_MODELS`) routinely take 60–120s to produce the first token on a cold cache. ClawRouter was firing the per-attempt abort right at the moment the model was about to start streaming, so a hard-pinned reasoning model would 100% time out, and `auto`-routed reasoning fallbacks chained more reasoning timeouts back-to-back. End user surfaces this as `LLM request failed: network connection error` from the agent's HTTP client.
+- **Fix**: per-attempt timeout is now model-aware:
+  - `REASONING_MODEL_TIMEOUT_MS = 180_000` (3 min) for any model with `reasoning: true`
+  - `PER_MODEL_TIMEOUT_MS = 60_000` (unchanged) for everything else
+  - `timeoutForModel(id)` helper looks up the flag from `BLOCKRUN_MODELS` (computed once into a Set at module init for O(1) lookup)
+  - All three AbortController setup sites updated: primary attempt loop (`src/proxy.ts:4694`), explicit-pin retry (`src/proxy.ts:4827`), and 429 backoff retry (`src/proxy.ts:4897`).
+- **`DEFAULT_REQUEST_TIMEOUT_MS` 180s → 300s** (5 min). The global deadline now leaves headroom for one reasoning attempt (180s) + a non-reasoning fallback (60s) + on-chain settlement (~30s buffer). Was 180s, which would have collided exactly with a single reasoning attempt and starved fallback.
+- **Heartbeat path unchanged.** Streaming requests already get an immediate `: heartbeat\n\n` followed by 2s-cadence keep-alive (`src/proxy.ts:4378-4389`). Non-streaming clients can't be helped by heartbeats over HTTP/1.1; they need to extend their own client-side HTTP timeouts (or switch to streaming).
+- **Diagnosed in the field**: a Telegram bot user reported `LLM request failed: network connection error` after pinning their default model to `clawrouter/free/deepseek-v4-pro`. Reproduced locally on v0.12.181 with $36 balance: V4 Pro upstream took >30s for first token, client-side curl `--max-time 30` gave up, and ClawRouter's 60s per-model abort would have fired at 60s if the upstream hadn't returned by then. New 180s window covers normal V4 Pro cold-start. (Today V4 Pro is also experiencing an upstream NIM outage that's unrelated to this fix; `auto` profile correctly routes around it to other free models.)
+
+---
+
 ## v0.12.181 — May 4, 2026
 
 - **Main `clawrouter` SKILL caught up to multi-venue scope.** v0.12.180 expanded the dedicated `predexon` SKILL to BlockRun's 49-endpoint registry, but the **headline `clawrouter` SKILL** (the one OpenClaw and AI agents read first to decide whether ClawRouter is relevant) still said "Polymarket prediction market data" + "8 tools, Polymarket ↔ Kalshi". That description would have steered agents away from prediction-market questions about Kalshi/Limitless/Opinion/Predict.Fun, UMA resolution status, and wallet identity — even though the proxy and the predexon SKILL handle them.

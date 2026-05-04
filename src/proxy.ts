@@ -150,8 +150,17 @@ function toUpstreamModelId(modelId: string): string {
 const MAX_MESSAGES = 200; // BlockRun API limit - truncate older messages if exceeded
 const CONTEXT_LIMIT_KB = 5120; // Server-side limit: 5MB in KB
 const HEARTBEAT_INTERVAL_MS = 2_000;
-const DEFAULT_REQUEST_TIMEOUT_MS = 180_000; // 3 minutes (allows for on-chain tx + LLM response)
-const PER_MODEL_TIMEOUT_MS = 60_000; // 60s per individual model attempt (fallback to next on exceed)
+const DEFAULT_REQUEST_TIMEOUT_MS = 300_000; // 5 minutes (allows reasoning model first-attempt + non-reasoning fallback)
+const PER_MODEL_TIMEOUT_MS = 60_000; // 60s per non-reasoning model attempt (fallback to next on exceed)
+const REASONING_MODEL_TIMEOUT_MS = 180_000; // 3min per reasoning model attempt — first-token cold-start can take 60-120s on V4 Pro / Claude opus thinking / GPT-5 reasoning_effort=high
+
+const REASONING_MODEL_IDS: Set<string> = new Set(
+  BLOCKRUN_MODELS.filter((m) => m.reasoning).map((m) => m.id),
+);
+
+function timeoutForModel(modelId: string): number {
+  return REASONING_MODEL_IDS.has(modelId) ? REASONING_MODEL_TIMEOUT_MS : PER_MODEL_TIMEOUT_MS;
+}
 const MAX_FALLBACK_ATTEMPTS = 5; // Maximum models to try in fallback chain (increased from 3 to ensure cheap models are tried)
 const HEALTH_CHECK_TIMEOUT_MS = 2_000; // Timeout for checking existing proxy
 const RATE_LIMIT_COOLDOWN_MS = 60_000; // 60 seconds cooldown for rate-limited models
@@ -4677,10 +4686,13 @@ async function proxyRequest(
 
       console.log(`[ClawRouter] Trying model ${i + 1}/${modelsToTry.length}: ${tryModel}`);
 
-      // Per-model abort controller — each model attempt gets its own 60s window.
-      // When it fires, the fallback loop moves to the next model rather than failing.
+      // Per-model abort controller — each attempt gets its own window.
+      // Reasoning models (o-series, GPT-5 reasoning, Claude opus, V4 Pro, etc.)
+      // get 3min for cold-start first-token; everything else 60s. When it fires,
+      // the fallback loop moves to the next model rather than failing.
+      const perAttemptTimeoutMs = timeoutForModel(tryModel);
       const modelController = new AbortController();
-      const modelTimeoutId = setTimeout(() => modelController.abort(), PER_MODEL_TIMEOUT_MS);
+      const modelTimeoutId = setTimeout(() => modelController.abort(), perAttemptTimeoutMs);
       const combinedSignal = AbortSignal.any([globalController.signal, modelController.signal]);
 
       const result = await tryModelRequest(
@@ -4704,7 +4716,7 @@ async function proxyRequest(
       // If the per-model timeout fired (but not global), treat as fallback-worthy error
       if (!result.success && modelController.signal.aborted && !isLastAttempt) {
         console.log(
-          `[ClawRouter] Model ${tryModel} timed out after ${PER_MODEL_TIMEOUT_MS}ms, trying fallback`,
+          `[ClawRouter] Model ${tryModel} timed out after ${perAttemptTimeoutMs}ms, trying fallback`,
         );
         recordProviderError(tryModel, "server_error");
         continue;
@@ -4812,7 +4824,7 @@ async function proxyRequest(
         await new Promise<void>((resolve) => setTimeout(resolve, 500));
         if (!globalController.signal.aborted) {
           const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(() => retryController.abort(), PER_MODEL_TIMEOUT_MS);
+          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutForModel(tryModel));
           const retrySignal = AbortSignal.any([globalController.signal, retryController.signal]);
           const retryResult = await tryModelRequest(
             upstreamUrl,
@@ -4883,7 +4895,7 @@ async function proxyRequest(
               const retryController = new AbortController();
               const retryTimeoutId = setTimeout(
                 () => retryController.abort(),
-                PER_MODEL_TIMEOUT_MS,
+                timeoutForModel(tryModel),
               );
               const retrySignal = AbortSignal.any([
                 globalController.signal,
