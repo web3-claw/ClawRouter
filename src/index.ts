@@ -463,7 +463,21 @@ function injectModelsConfig(logger: { info: (msg: string) => void }): void {
   // Write config file if any changes were made
   // Use atomic write (temp file + rename) to prevent partial writes that could
   // corrupt the config and cause other plugins to lose their settings on next load.
+  //
+  // CRITICAL: Skip writes outside gateway mode. OpenClaw's `plugins install`
+  // (and other CLI commands that load plugins) loads the config, hashes it as
+  // a baseHash, runs plugin activation, then commits its own changes via
+  // replaceConfigFile() which calls assertBaseHashMatches(). If we write the
+  // file from inside our activation hook, the hash check fails with
+  // ConfigMutationConflictError and the entire install rolls back — leaving
+  // the user stranded on the previous version. Defer to first gateway start
+  // (gateway mode), where no install transaction is in flight; the same hooks
+  // re-run there and writes succeed cleanly.
   if (needsWrite) {
+    if (!isGatewayMode()) {
+      logger.info("Deferring config write to first gateway start (outside gateway mode)");
+      return;
+    }
     try {
       const tmpPath = `${configPath}.tmp.${process.pid}`;
       writeFileSync(tmpPath, JSON.stringify(config, null, 2));
