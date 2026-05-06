@@ -60,17 +60,56 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
       required,
     },
     execute: async (_toolCallId: string, params: Record<string, unknown>) => {
-      // Build URL: substitute :pathParam placeholders, remaining params become query string (GET) or body (POST)
-      let path = `/v1${service.proxyPath}`;
+      let path: string;
       const leftoverParams: Record<string, unknown> = {};
 
-      for (const [key, value] of Object.entries(params)) {
-        if (value === undefined || value === null) continue;
-        const placeholder = `:${key}`;
-        if (path.includes(placeholder)) {
-          path = path.replace(placeholder, encodeURIComponent(String(value)));
-        } else {
-          leftoverParams[key] = value;
+      if (service.proxyPath === "/pm/__dynamic__") {
+        // Dynamic-path tool: caller supplies `path` and optional `query` JSON.
+        // Validate `path` to prevent escaping the /pm namespace via leading-slash tricks.
+        const rawPath = typeof params.path === "string" ? params.path : "";
+        const normalized = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+        if (!normalized.startsWith("/pm/") || normalized.includes("..")) {
+          throw new Error(
+            `predexon_endpoint_call: invalid path '${rawPath}' — must begin with '/pm/' and contain no '..'`,
+          );
+        }
+        path = `/v1${normalized}`;
+
+        if (typeof params.query === "string" && params.query.trim().length > 0) {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(params.query);
+          } catch (err) {
+            throw new Error(
+              `predexon_endpoint_call: query must be a JSON object string — ${err instanceof Error ? err.message : String(err)}`,
+              { cause: err },
+            );
+          }
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+              if (value === undefined || value === null) continue;
+              leftoverParams[key] = value;
+            }
+          }
+        } else if (params.query && typeof params.query === "object" && !Array.isArray(params.query)) {
+          // Some tool runners forward the parsed object directly even though schema says string.
+          for (const [key, value] of Object.entries(params.query as Record<string, unknown>)) {
+            if (value === undefined || value === null) continue;
+            leftoverParams[key] = value;
+          }
+        }
+      } else {
+        // Standard tool: substitute :pathParam placeholders, remaining params → query/body.
+        path = `/v1${service.proxyPath}`;
+
+        for (const [key, value] of Object.entries(params)) {
+          if (value === undefined || value === null) continue;
+          const placeholder = `:${key}`;
+          if (path.includes(placeholder)) {
+            path = path.replace(placeholder, encodeURIComponent(String(value)));
+          } else {
+            leftoverParams[key] = value;
+          }
         }
       }
 
@@ -86,7 +125,10 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
       const response = await fetch(url, {
         method: service.method,
         headers: { "Content-Type": "application/json" },
-        body: service.method === "POST" ? JSON.stringify(params) : undefined,
+        body:
+          service.method === "POST" && service.proxyPath !== "/pm/__dynamic__"
+            ? JSON.stringify(params)
+            : undefined,
       });
 
       if (!response.ok) {

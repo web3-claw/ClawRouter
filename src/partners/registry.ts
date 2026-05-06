@@ -283,6 +283,99 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
       description: "Compare equivalent markets on Polymarket vs Kalshi",
     },
   },
+  {
+    id: "predexon_endpoint_call",
+    name: "Predexon Endpoint Call (Full Catalog)",
+    partner: "Predexon",
+    category: "Prediction markets",
+    shortDescription: "Direct call to any Predexon endpoint",
+    description:
+      "Call ANY Predexon endpoint by path. Use this when the named predexon_* tools " +
+      "don't cover what you need (orderbooks, candlesticks, top-holders, UMA oracle, " +
+      "wallet identity/cluster, Kalshi/Limitless/Opinion/Predict.Fun, dFlow, Binance " +
+      "Futures, cross-platform search). All responses wrapped as { data: ... }.\n\n" +
+      "POLYMARKET — Tier 1 ($0.001/call):\n" +
+      "  /pm/polymarket/markets               (search,limit,offset)\n" +
+      "  /pm/polymarket/events                (limit,offset,tag)\n" +
+      "  /pm/polymarket/crypto-updown\n" +
+      "  /pm/polymarket/orderbooks            (tokenId,limit)\n" +
+      "  /pm/polymarket/trades                (wallet,limit,start_ts,end_ts)\n" +
+      "  /pm/polymarket/positions             (wallet,limit)\n" +
+      "  /pm/polymarket/leaderboard           (limit,offset)\n" +
+      "  /pm/polymarket/leaderboard/market/{conditionId}\n" +
+      "  /pm/polymarket/cohorts/stats\n" +
+      "  /pm/polymarket/market/{conditionId}/top-holders\n" +
+      "  /pm/polymarket/market-price/{tokenId}\n" +
+      "  /pm/polymarket/candlesticks/{conditionId}\n" +
+      "  /pm/polymarket/candlesticks/token/{tokenId}\n" +
+      "  /pm/polymarket/volume-chart/{conditionId}\n" +
+      "  /pm/polymarket/uma/markets           (state,limit,offset)\n" +
+      "  /pm/polymarket/uma/market/{conditionId}\n\n" +
+      "POLYMARKET — Tier 2 ($0.005/call) wallet analytics:\n" +
+      "  /pm/polymarket/wallet/{wallet}\n" +
+      "  /pm/polymarket/wallet/{wallet}/markets\n" +
+      "  /pm/polymarket/wallet/{wallet}/similar\n" +
+      "  /pm/polymarket/wallet/pnl/{wallet}\n" +
+      "  /pm/polymarket/wallet/positions/{wallet}\n" +
+      "  /pm/polymarket/wallet/volume-chart/{wallet}\n" +
+      "  /pm/polymarket/wallets/profiles      (wallets=csv)\n" +
+      "  /pm/polymarket/wallets/filter        (conditionId,side)\n" +
+      "  /pm/polymarket/market/{conditionId}/smart-money\n" +
+      "  /pm/polymarket/markets/smart-activity\n" +
+      "  /pm/polymarket/wallet/identity       (wallet)\n" +
+      "  /pm/polymarket/wallet/identities-batch  (wallets=csv, GET)\n" +
+      "  /pm/polymarket/wallet/cluster        (wallet seed)\n\n" +
+      "KALSHI ($0.001):\n" +
+      "  /pm/kalshi/markets                   (search,limit)\n" +
+      "  /pm/kalshi/trades                    (limit)\n" +
+      "  /pm/kalshi/orderbooks                (marketId)\n\n" +
+      "LIMITLESS / OPINION / PREDICT.FUN ($0.001):\n" +
+      "  /pm/limitless/markets   |  /pm/limitless/orderbooks\n" +
+      "  /pm/opinion/markets     |  /pm/opinion/orderbooks\n" +
+      "  /pm/predictfun/markets  |  /pm/predictfun/orderbooks\n\n" +
+      "DFLOW (trades $0.001, wallet $0.005):\n" +
+      "  /pm/dflow/trades                     (wallet,limit)\n" +
+      "  /pm/dflow/wallet/positions/{wallet}\n" +
+      "  /pm/dflow/wallet/pnl/{wallet}\n\n" +
+      "BINANCE FUTURES ($0.005):\n" +
+      "  /pm/binance/candles/{symbol}         (interval,limit)\n" +
+      "  /pm/binance/ticks/{symbol}           (limit)\n\n" +
+      "CROSS-PLATFORM ($0.005):\n" +
+      "  /pm/matching-markets                 (limit,offset)\n" +
+      "  /pm/matching-markets/pairs\n" +
+      "  /pm/markets/search                   (q required, limit, offset, venue)",
+    proxyPath: "/pm/__dynamic__",
+    method: "GET",
+    params: [
+      {
+        name: "path",
+        type: "string",
+        description:
+          "Endpoint path under /v1/pm. Either the literal path (e.g. '/pm/polymarket/orderbooks') " +
+          "or with template segments substituted (e.g. '/pm/polymarket/wallet/0xabc.../similar'). " +
+          "Leading /v1 must NOT be included — proxy adds it.",
+        required: true,
+      },
+      {
+        name: "query",
+        type: "string",
+        description:
+          "JSON object of query parameters as a string, e.g. '{\"limit\":20,\"search\":\"trump\"}'. " +
+          "Encoded into URL query string by the tool runner.",
+        required: false,
+      },
+    ],
+    pricing: {
+      perUnit: "$0.001 or $0.005",
+      unit: "request",
+      minimum: "$0.001",
+      maximum: "$0.005",
+    },
+    example: {
+      input: { path: "/pm/polymarket/orderbooks", query: '{"tokenId":"0xabc...","limit":20}' },
+      description: "Read a Polymarket orderbook by token id",
+    },
+  },
   // ---------------------------------------------------------------------------
   // BlockRun Markets — Realtime market data (stocks, crypto, FX, commodities)
   // ---------------------------------------------------------------------------

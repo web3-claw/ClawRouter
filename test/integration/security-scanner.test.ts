@@ -81,8 +81,13 @@ describe("OpenClaw security scanner", () => {
       }
       const scannerPath = resolve(openclawDist, scannerFile);
       const mod = (await import(pathToFileURL(scannerPath).href)) as Record<string, unknown>;
-      // The scanner exports scanDirectoryWithSummary as a minified name
-      const fn = Object.values(mod).find((v) => typeof v === "function") as ScanFn | undefined;
+      // 2026.5.4+ re-exports the function under its proper name.
+      // Older builds minified it; fall back to "first function export" for those.
+      const named = mod.scanDirectoryWithSummary;
+      const fn =
+        typeof named === "function"
+          ? (named as ScanFn)
+          : (Object.values(mod).find((v) => typeof v === "function") as ScanFn | undefined);
       if (fn) {
         scanDirectoryWithSummary = fn;
       } else {

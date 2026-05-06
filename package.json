@@ -1,6 +1,6 @@
 {
   "name": "@blockrun/clawrouter",
-  "version": "0.12.185",
+  "version": "0.12.186",
   "description": "Smart LLM router — save 85% on inference costs. 55+ models (11 free), one wallet, x402 micropayments.",
   "type": "module",
   "main": "dist/index.js",
@@ -14,7 +14,7 @@
     ],
     "compat": {
       "pluginApiRange": ">=2026.3.24",
-      "minGatewayVersion": "2026.4.5"
+      "minGatewayVersion": "2026.5.2"
     }
   },
   "exports": {
@@ -96,7 +96,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.2.0",
-    "openclaw": "^2026.4.21",
+    "openclaw": "^2026.5.4",
     "prettier": "^3.8.1",
     "tsup": "^8.0.0",
     "tsx": "^4.21.0",

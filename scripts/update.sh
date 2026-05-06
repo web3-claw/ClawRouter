@@ -244,6 +244,17 @@ try {
     if (removed > 0) { changed = true; console.log('  Removed ' + removed + ' stale plugins.allow entry(ies)'); }
   }
 
+  // OpenClaw 2026.5.2+ validates tools.web.search.provider at config-load
+  // time. Pre-v0.12.186 ClawRouter persisted 'blockrun-exa' here, which is
+  // unknown to the validator BEFORE our register() callback declares it,
+  // causing an install rollback. Strip the legacy value; v0.12.186+ sets it
+  // only on the runtime config after registerWebSearchProvider() succeeds.
+  if (config?.tools?.web?.search?.provider === 'blockrun-exa') {
+    delete config.tools.web.search.provider;
+    changed = true;
+    console.log('  Removed legacy tools.web.search.provider=blockrun-exa (set at runtime now)');
+  }
+
   if (changed) {
     const tmp = configPath + '.tmp.' + process.pid;
     fs.writeFileSync(tmp, JSON.stringify(config, null, 2));

@@ -63,7 +63,7 @@ async function waitForProxyHealth(port: number, timeoutMs = 3000): Promise<boole
   }
   return false;
 }
-import { OPENCLAW_MODELS, VISIBLE_OPENCLAW_MODELS, resolveModelAlias } from "./models.js";
+import { VISIBLE_OPENCLAW_MODELS, resolveModelAlias } from "./models.js";
 import {
   writeFileSync,
   existsSync,
@@ -429,30 +429,44 @@ function injectModelsConfig(
     }
   }
 
-  // Force web_search onto BlockRun Exa so OpenClaw never silently falls back
-  // to a native provider that expects the user's own Exa API key.
+  // web_search: set `enabled = true` (safe — boolean, no provider validator),
+  // but DELETE any persisted `provider` value. OpenClaw 2026.5.2+ runs a
+  // strict known-providers validator on `tools.web.search.provider` at
+  // config-load time and during writeConfigFile; persisting `blockrun-exa`
+  // (or any plugin-registered provider ID) trips it before register()
+  // declares the provider, causing install rollback.
+  //
+  // With `provider` absent and `enabled = true`, OpenClaw auto-detects the
+  // active provider from registered providers — our `registerWebSearchProvider`
+  // call in register() makes blockrun-exa the only candidate, so it gets used.
+  //
+  // Migration: pre-v0.12.186 wrote `blockrun-exa` here. Strip it on next
+  // write so users upgrading via install scripts (or `clawrouter setup`)
+  // get a clean disk state and the validator stops failing.
   if (!config.tools || typeof config.tools !== "object" || Array.isArray(config.tools)) {
     config.tools = {};
     needsWrite = true;
   }
-  const tools = config.tools as Record<string, unknown>;
-  if (!tools.web || typeof tools.web !== "object" || Array.isArray(tools.web)) {
-    tools.web = {};
+  const toolsCfg = config.tools as Record<string, unknown>;
+  if (!toolsCfg.web || typeof toolsCfg.web !== "object" || Array.isArray(toolsCfg.web)) {
+    toolsCfg.web = {};
     needsWrite = true;
   }
-  const web = tools.web as Record<string, unknown>;
-  if (!web.search || typeof web.search !== "object" || Array.isArray(web.search)) {
-    web.search = {};
+  const webCfg = toolsCfg.web as Record<string, unknown>;
+  if (!webCfg.search || typeof webCfg.search !== "object" || Array.isArray(webCfg.search)) {
+    webCfg.search = {};
     needsWrite = true;
   }
-  const search = web.search as Record<string, unknown>;
-  if (search.provider !== BLOCKRUN_EXA_PROVIDER_ID) {
-    search.provider = BLOCKRUN_EXA_PROVIDER_ID;
-    logger.info(`Forced web_search provider to ${BLOCKRUN_EXA_PROVIDER_ID}`);
+  const searchCfg = webCfg.search as Record<string, unknown>;
+  if (searchCfg.provider === BLOCKRUN_EXA_PROVIDER_ID) {
+    delete searchCfg.provider;
     needsWrite = true;
+    logger.info(
+      `Removed legacy tools.web.search.provider=${BLOCKRUN_EXA_PROVIDER_ID} (auto-detected at runtime now)`,
+    );
   }
-  if (search.enabled !== true) {
-    search.enabled = true;
+  if (searchCfg.enabled !== true) {
+    searchCfg.enabled = true;
     needsWrite = true;
   }
 
@@ -1620,17 +1634,15 @@ const plugin: OpenClawPluginDefinition = {
       apiKey: "x402-proxy-handles-auth",
       models: VISIBLE_OPENCLAW_MODELS,
     };
-    if (!api.config.tools) {
-      api.config.tools = {};
-    }
-    if (!api.config.tools.web) {
-      api.config.tools.web = {};
-    }
-    if (!api.config.tools.web.search) {
-      api.config.tools.web.search = {};
-    }
-    api.config.tools.web.search.provider = BLOCKRUN_EXA_PROVIDER_ID;
-    api.config.tools.web.search.enabled = true;
+    // NOTE: tools.web.search.{provider,enabled} are NOT written to runtime
+    // api.config here. OpenClaw 2026.5.4 appears to auto-inject the plugin's
+    // registered provider id into config.tools.web.search.provider when it
+    // sees runtime web_search config + registerWebSearchProvider() — and its
+    // own writeConfigFile validator then rejects the auto-injected value.
+    // We persist `enabled = true` only via injectModelsConfig (file write
+    // path), which runs in gateway mode or under `clawrouter setup
+    // --forceWrite`. The file write is gated to only set boolean `enabled`,
+    // never the provider field, keeping the disk state validator-safe.
     const runtimeMcpRemoved = removeManagedBlockrunMcpServerConfig(api.config);
 
     // Only log provider/tool registration on the first register() call.
