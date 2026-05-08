@@ -293,15 +293,20 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
       "Call ANY Predexon endpoint by path. Use this when the named predexon_* tools " +
       "don't cover what you need (orderbooks, candlesticks, top-holders, UMA oracle, " +
       "wallet identity/cluster, Kalshi/Limitless/Opinion/Predict.Fun, dFlow, Binance " +
-      "Futures, cross-platform search). All responses wrapped as { data: ... }.\n\n" +
+      "Futures, cross-venue canonical markets, sports). Default method=GET; pass " +
+      "method=POST with body for the bulk identities endpoint. Responses are raw " +
+      "upstream JSON (no { data: ... } wrapper as of v2 spec).\n\n" +
       "POLYMARKET — Tier 1 ($0.001/call):\n" +
-      "  /pm/polymarket/markets               (search,limit,offset)\n" +
-      "  /pm/polymarket/events                (limit,offset,tag)\n" +
+      "  /pm/polymarket/markets                       (search,limit,offset)\n" +
+      "  /pm/polymarket/markets/keyset                (cursor pagination)\n" +
+      "  /pm/polymarket/events                        (limit,offset,tag)\n" +
+      "  /pm/polymarket/events/keyset                 (cursor pagination)\n" +
       "  /pm/polymarket/crypto-updown\n" +
-      "  /pm/polymarket/orderbooks            (tokenId,limit)\n" +
-      "  /pm/polymarket/trades                (wallet,limit,start_ts,end_ts)\n" +
-      "  /pm/polymarket/positions             (wallet,limit)\n" +
-      "  /pm/polymarket/leaderboard           (limit,offset)\n" +
+      "  /pm/polymarket/orderbooks                    (tokenId,limit)\n" +
+      "  /pm/polymarket/trades                        (wallet,limit,start_ts,end_ts)\n" +
+      "  /pm/polymarket/activity                      (user)\n" +
+      "  /pm/polymarket/positions                     (wallet,limit)\n" +
+      "  /pm/polymarket/leaderboard                   (limit,offset)\n" +
       "  /pm/polymarket/leaderboard/market/{conditionId}\n" +
       "  /pm/polymarket/cohorts/stats\n" +
       "  /pm/polymarket/market/{conditionId}/top-holders\n" +
@@ -309,7 +314,9 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
       "  /pm/polymarket/candlesticks/{conditionId}\n" +
       "  /pm/polymarket/candlesticks/token/{tokenId}\n" +
       "  /pm/polymarket/volume-chart/{conditionId}\n" +
-      "  /pm/polymarket/uma/markets           (state,limit,offset)\n" +
+      "  /pm/polymarket/markets/{tokenId}/volume\n" +
+      "  /pm/polymarket/markets/{conditionId}/open_interest\n" +
+      "  /pm/polymarket/uma/markets                   (state,limit,offset)\n" +
       "  /pm/polymarket/uma/market/{conditionId}\n\n" +
       "POLYMARKET — Tier 2 ($0.005/call) wallet analytics:\n" +
       "  /pm/polymarket/wallet/{wallet}\n" +
@@ -318,32 +325,42 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
       "  /pm/polymarket/wallet/pnl/{wallet}\n" +
       "  /pm/polymarket/wallet/positions/{wallet}\n" +
       "  /pm/polymarket/wallet/volume-chart/{wallet}\n" +
-      "  /pm/polymarket/wallets/profiles      (wallets=csv)\n" +
-      "  /pm/polymarket/wallets/filter        (conditionId,side)\n" +
+      "  /pm/polymarket/wallets/profiles              (wallets=csv)\n" +
+      "  /pm/polymarket/wallets/filter                (conditionId,side)\n" +
       "  /pm/polymarket/market/{conditionId}/smart-money\n" +
-      "  /pm/polymarket/markets/smart-activity\n" +
-      "  /pm/polymarket/wallet/identity       (wallet)\n" +
-      "  /pm/polymarket/wallet/identities-batch  (wallets=csv, GET)\n" +
-      "  /pm/polymarket/wallet/cluster        (wallet seed)\n\n" +
-      "KALSHI ($0.001):\n" +
-      "  /pm/kalshi/markets                   (search,limit)\n" +
-      "  /pm/kalshi/trades                    (limit)\n" +
-      "  /pm/kalshi/orderbooks                (marketId)\n\n" +
-      "LIMITLESS / OPINION / PREDICT.FUN ($0.001):\n" +
+      "  /pm/polymarket/markets/smart-activity\n\n" +
+      "POLYMARKET — Wallet Identity (Tier 2, v2 path shapes):\n" +
+      "  /pm/polymarket/wallet/identity/{wallet}      (single — v2: path param, NOT ?wallet=)\n" +
+      "  POST /pm/polymarket/wallet/identities        (bulk, body: {addresses:[..]} ≤200)\n" +
+      "  /pm/polymarket/wallet/{address}/cluster      (cluster — v2: address path param)\n\n" +
+      "CROSS-VENUE CANONICAL (Tier 1, v2):\n" +
+      "  /pm/markets                                  (canonical containers, cross-venue Predexon IDs)\n" +
+      "  /pm/markets/listings                         (venue-native flattened listings)\n" +
+      "  /pm/outcomes/{predexon_id}                   (resolve canonical outcome → market + venues)\n\n" +
+      "SPORTS (Tier 1, v2):\n" +
+      "  /pm/sports/categories\n" +
+      "  /pm/sports/markets                           (grouped by game)\n" +
+      "  /pm/sports/markets/{game_id}                 (single game with all venue outcomes)\n" +
+      "  /pm/sports/outcomes/{predexon_id}            (equivalent outcomes across venues)\n\n" +
+      "KALSHI (Tier 1):\n" +
+      "  /pm/kalshi/markets                           (search,limit)\n" +
+      "  /pm/kalshi/trades                            (limit)\n" +
+      "  /pm/kalshi/orderbooks                        (marketId)\n\n" +
+      "LIMITLESS / OPINION / PREDICT.FUN (Tier 1):\n" +
       "  /pm/limitless/markets   |  /pm/limitless/orderbooks\n" +
       "  /pm/opinion/markets     |  /pm/opinion/orderbooks\n" +
       "  /pm/predictfun/markets  |  /pm/predictfun/orderbooks\n\n" +
-      "DFLOW (trades $0.001, wallet $0.005):\n" +
-      "  /pm/dflow/trades                     (wallet,limit)\n" +
+      "DFLOW (trades Tier 1, wallet Tier 2):\n" +
+      "  /pm/dflow/trades                             (wallet,limit)\n" +
       "  /pm/dflow/wallet/positions/{wallet}\n" +
       "  /pm/dflow/wallet/pnl/{wallet}\n\n" +
-      "BINANCE FUTURES ($0.005):\n" +
-      "  /pm/binance/candles/{symbol}         (interval,limit)\n" +
-      "  /pm/binance/ticks/{symbol}           (limit)\n\n" +
-      "CROSS-PLATFORM ($0.005):\n" +
-      "  /pm/matching-markets                 (limit,offset)\n" +
+      "BINANCE FUTURES (Tier 2):\n" +
+      "  /pm/binance/candles/{symbol}                 (interval,limit)\n" +
+      "  /pm/binance/ticks/{symbol}                   (limit)\n\n" +
+      "MATCHING (Tier 2):\n" +
+      "  /pm/matching-markets                         (limit,offset)\n" +
       "  /pm/matching-markets/pairs\n" +
-      "  /pm/markets/search                   (q required, limit, offset, venue)",
+      "  /pm/markets/search                           (q required, limit, offset, venue)",
     proxyPath: "/pm/__dynamic__",
     method: "GET",
     params: [
@@ -352,16 +369,31 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
         type: "string",
         description:
           "Endpoint path under /v1/pm. Either the literal path (e.g. '/pm/polymarket/orderbooks') " +
-          "or with template segments substituted (e.g. '/pm/polymarket/wallet/0xabc.../similar'). " +
+          "or with template segments substituted (e.g. '/pm/polymarket/wallet/identity/0xabc...'). " +
           "Leading /v1 must NOT be included — proxy adds it.",
         required: true,
+      },
+      {
+        name: "method",
+        type: "string",
+        description:
+          "HTTP method. Default 'GET'. Use 'POST' for /pm/polymarket/wallet/identities (bulk identity body).",
+        required: false,
       },
       {
         name: "query",
         type: "string",
         description:
           "JSON object of query parameters as a string, e.g. '{\"limit\":20,\"search\":\"trump\"}'. " +
-          "Encoded into URL query string by the tool runner.",
+          "Encoded into URL query string. Used for GET requests.",
+        required: false,
+      },
+      {
+        name: "body",
+        type: "string",
+        description:
+          "JSON object as a string, used as request body for POST. " +
+          "Example: '{\"addresses\":[\"0xabc\",\"0xdef\"]}' for bulk identities.",
         required: false,
       },
     ],

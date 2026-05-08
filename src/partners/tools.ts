@@ -62,9 +62,11 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
     execute: async (_toolCallId: string, params: Record<string, unknown>) => {
       let path: string;
       const leftoverParams: Record<string, unknown> = {};
+      let dynamicMethod: "GET" | "POST" = "GET";
+      let dynamicBody: unknown = undefined;
 
       if (service.proxyPath === "/pm/__dynamic__") {
-        // Dynamic-path tool: caller supplies `path` and optional `query` JSON.
+        // Dynamic-path tool: caller supplies `path`, optional `method`, `query`, `body`.
         // Validate `path` to prevent escaping the /pm namespace via leading-slash tricks.
         const rawPath = typeof params.path === "string" ? params.path : "";
         const normalized = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
@@ -74,6 +76,16 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
           );
         }
         path = `/v1${normalized}`;
+
+        if (typeof params.method === "string") {
+          const upper = params.method.toUpperCase();
+          if (upper !== "GET" && upper !== "POST") {
+            throw new Error(
+              `predexon_endpoint_call: method must be 'GET' or 'POST', got '${params.method}'`,
+            );
+          }
+          dynamicMethod = upper;
+        }
 
         if (typeof params.query === "string" && params.query.trim().length > 0) {
           let parsed: unknown;
@@ -98,6 +110,23 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
             leftoverParams[key] = value;
           }
         }
+
+        if (dynamicMethod === "POST") {
+          if (typeof params.body === "string" && params.body.trim().length > 0) {
+            try {
+              dynamicBody = JSON.parse(params.body);
+            } catch (err) {
+              throw new Error(
+                `predexon_endpoint_call: body must be a JSON object string — ${err instanceof Error ? err.message : String(err)}`,
+                { cause: err },
+              );
+            }
+          } else if (params.body && typeof params.body === "object") {
+            dynamicBody = params.body;
+          } else {
+            dynamicBody = {};
+          }
+        }
       } else {
         // Standard tool: substitute :pathParam placeholders, remaining params → query/body.
         path = `/v1${service.proxyPath}`;
@@ -113,8 +142,11 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
         }
       }
 
+      const effectiveMethod =
+        service.proxyPath === "/pm/__dynamic__" ? dynamicMethod : service.method;
+
       let url = `${proxyBaseUrl}${path}`;
-      if (service.method === "GET" && Object.keys(leftoverParams).length > 0) {
+      if (effectiveMethod === "GET" && Object.keys(leftoverParams).length > 0) {
         const qs = new URLSearchParams();
         for (const [key, value] of Object.entries(leftoverParams)) {
           qs.set(key, Array.isArray(value) ? value.join(",") : String(value));
@@ -122,13 +154,19 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
         url += `?${qs.toString()}`;
       }
 
+      let requestBody: string | undefined;
+      if (effectiveMethod === "POST") {
+        if (service.proxyPath === "/pm/__dynamic__") {
+          requestBody = JSON.stringify(dynamicBody ?? {});
+        } else {
+          requestBody = JSON.stringify(params);
+        }
+      }
+
       const response = await fetch(url, {
-        method: service.method,
+        method: effectiveMethod,
         headers: { "Content-Type": "application/json" },
-        body:
-          service.method === "POST" && service.proxyPath !== "/pm/__dynamic__"
-            ? JSON.stringify(params)
-            : undefined,
+        body: requestBody,
       });
 
       if (!response.ok) {
