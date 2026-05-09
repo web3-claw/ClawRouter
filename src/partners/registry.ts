@@ -384,7 +384,7 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
         name: "query",
         type: "string",
         description:
-          "JSON object of query parameters as a string, e.g. '{\"limit\":20,\"search\":\"trump\"}'. " +
+          'JSON object of query parameters as a string, e.g. \'{"limit":20,"search":"trump"}\'. ' +
           "Encoded into URL query string. Used for GET requests.",
         required: false,
       },
@@ -393,7 +393,7 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
         type: "string",
         description:
           "JSON object as a string, used as request body for POST. " +
-          "Example: '{\"addresses\":[\"0xabc\",\"0xdef\"]}' for bulk identities.",
+          'Example: \'{"addresses":["0xabc","0xdef"]}\' for bulk identities.',
         required: false,
       },
     ],

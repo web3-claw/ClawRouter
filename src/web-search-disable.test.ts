@@ -54,9 +54,9 @@ describe("isBlockrunWebSearchDisabled", () => {
 
     it("falls through to config when env unset", () => {
       delete process.env[ENV_KEY];
-      expect(
-        isBlockrunWebSearchDisabled({ tools: { web: { search: { enabled: false } } } }),
-      ).toBe(true);
+      expect(isBlockrunWebSearchDisabled({ tools: { web: { search: { enabled: false } } } })).toBe(
+        true,
+      );
       expect(isBlockrunWebSearchDisabled({ tools: { web: { search: { enabled: true } } } })).toBe(
         false,
       );
@@ -69,9 +69,9 @@ describe("isBlockrunWebSearchDisabled", () => {
     });
 
     it("returns true when enabled === false", () => {
-      expect(
-        isBlockrunWebSearchDisabled({ tools: { web: { search: { enabled: false } } } }),
-      ).toBe(true);
+      expect(isBlockrunWebSearchDisabled({ tools: { web: { search: { enabled: false } } } })).toBe(
+        true,
+      );
     });
 
     it("returns false when enabled === true", () => {

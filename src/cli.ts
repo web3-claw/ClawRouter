@@ -42,6 +42,11 @@ Usage:
   clawrouter report [daily|weekly|monthly] [--json]
   clawrouter logs [--days <n>]
   clawrouter setup                     # Finish OpenClaw integration after npm install -g
+  clawrouter share last [--as=<im>]    # Convert most recent response for IM (default: feishu)
+  clawrouter share list [--limit=<n>]  # Recent response ids + summaries
+  clawrouter share <id> [--as=<im>]    # Convert a specific response by id
+  clawrouter share last --all          # Write all 6 IM variants to /tmp/
+                                       # IM presets: feishu, slack, discord, telegram, whatsapp, plain
 
 Options:
   --version, -v     Show version number
@@ -83,6 +88,171 @@ async function queryProxy(path: string, port: number): Promise<unknown> {
   const res = await fetch(`http://127.0.0.1:${port}${path}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
   return res.json();
+}
+
+/**
+ * Pipe text into the system clipboard via the platform-native command.
+ * Returns null on success, or a short message describing why it failed.
+ * Never throws — clipboard is best-effort.
+ */
+async function copyToClipboard(text: string): Promise<string | null> {
+  const { spawn } = await import("node:child_process");
+  const platform = process.platform;
+  const candidates: Array<[string, string[]]> =
+    platform === "darwin"
+      ? [["pbcopy", []]]
+      : platform === "win32"
+        ? [["clip", []]]
+        : [
+            ["wl-copy", []],
+            ["xclip", ["-selection", "clipboard"]],
+            ["xsel", ["--clipboard", "--input"]],
+          ];
+  for (const [cmd, args] of candidates) {
+    try {
+      const child = spawn(cmd, args, { stdio: ["pipe", "ignore", "ignore"] });
+      const ok = await new Promise<boolean>((resolve) => {
+        let settled = false;
+        child.on("error", () => {
+          if (!settled) {
+            settled = true;
+            resolve(false);
+          }
+        });
+        child.on("close", (code) => {
+          if (!settled) {
+            settled = true;
+            resolve(code === 0);
+          }
+        });
+        child.stdin.end(text, "utf8");
+      });
+      if (ok) return null;
+    } catch {
+      // try next candidate
+    }
+  }
+  return platform === "darwin"
+    ? "pbcopy not available"
+    : platform === "win32"
+      ? "clip.exe not available"
+      : "no clipboard tool found (install xclip, xsel, or wl-clipboard)";
+}
+
+interface ShareEntry {
+  id: string;
+  timestamp: string;
+  model?: string;
+  sessionId?: string;
+  requestSummary: string;
+  responseLength?: number;
+  responseText?: string;
+}
+
+interface ShareRendered {
+  id: string;
+  timestamp: string;
+  model?: string;
+  preset: string;
+  rendered: string;
+}
+
+const VALID_PRESETS = ["feishu", "slack", "discord", "telegram", "whatsapp", "plain"];
+
+async function cmdShare(
+  port: number,
+  target: string | undefined,
+  preset: string | undefined,
+  limit: number,
+  all: boolean,
+): Promise<void> {
+  // Default target = "last" if user just typed `clawrouter share`.
+  const tgt = target ?? "last";
+
+  if (tgt === "list") {
+    try {
+      const entries = (await queryProxy(`/share/list?limit=${limit}`, port)) as ShareEntry[];
+      if (entries.length === 0) {
+        console.log("\nNo responses persisted yet.");
+        console.log(
+          "  Send a request through ClawRouter and try again, or check BLOCKRUN_RESPONSE_STORE.\n",
+        );
+        return;
+      }
+      console.log(`\nRecent responses (${entries.length}):\n`);
+      for (const e of entries) {
+        const t = new Date(e.timestamp).toLocaleString();
+        const summary = e.requestSummary || "(no prompt)";
+        const len = e.responseLength ? ` ${e.responseLength}b` : "";
+        console.log(`  ${e.id}  ${t}  [${e.model ?? "?"}${len}]`);
+        console.log(`    ${summary}`);
+      }
+      console.log(
+        `\nUse: clawrouter share <id> --as=<feishu|slack|discord|telegram|whatsapp|plain>\n`,
+      );
+    } catch (err) {
+      console.error(`✗ Cannot fetch share list: ${err instanceof Error ? err.message : err}`);
+      console.error(`  Is the proxy running on port ${port}?`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  // Render path: target is "last" or a specific id.
+  const idOrLast = tgt === "last" ? "last" : tgt;
+
+  // --all: render every preset to /tmp/, print the paths.
+  if (all) {
+    try {
+      const { writeFile } = await import("node:fs/promises");
+      const { tmpdir } = await import("node:os");
+      const { join: pjoin } = await import("node:path");
+      const paths: string[] = [];
+      for (const p of VALID_PRESETS) {
+        const path =
+          idOrLast === "last" ? `/share/last?as=${p}` : `/share/${idOrLast}/render?as=${p}`;
+        const result = (await queryProxy(path, port)) as ShareRendered;
+        const file = pjoin(tmpdir(), `claw-share-${result.id}-${p}.txt`);
+        await writeFile(file, result.rendered, "utf8");
+        paths.push(file);
+      }
+      console.log("\n✓ Wrote all 6 preset variants:");
+      for (const p of paths) console.log(`  ${p}`);
+      console.log();
+    } catch (err) {
+      console.error(`✗ Failed: ${err instanceof Error ? err.message : err}`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  const chosenPreset = preset ?? process.env.BLOCKRUN_DEFAULT_SHARE_PRESET ?? "feishu";
+  if (!VALID_PRESETS.includes(chosenPreset)) {
+    console.error(`✗ Unknown preset: ${chosenPreset}`);
+    console.error(`  Valid: ${VALID_PRESETS.join(", ")}`);
+    process.exit(1);
+  }
+
+  try {
+    const path =
+      idOrLast === "last"
+        ? `/share/last?as=${chosenPreset}`
+        : `/share/${idOrLast}/render?as=${chosenPreset}`;
+    const result = (await queryProxy(path, port)) as ShareRendered;
+    process.stdout.write(result.rendered);
+    if (!result.rendered.endsWith("\n")) process.stdout.write("\n");
+    const clipErr = await copyToClipboard(result.rendered);
+    const sizeKb = (result.rendered.length / 1024).toFixed(1);
+    if (clipErr) {
+      console.error(`\n(clipboard skipped: ${clipErr})`);
+    } else {
+      console.error(`\n✓ Copied to clipboard (preset=${chosenPreset}, ${sizeKb}KB)`);
+    }
+  } catch (err) {
+    console.error(`✗ Cannot fetch share: ${err instanceof Error ? err.message : err}`);
+    console.error(`  Is the proxy running on port ${port}?`);
+    process.exit(1);
+  }
 }
 
 async function cmdStatus(port: number): Promise<void> {
@@ -237,7 +407,10 @@ async function cmdSetup(): Promise<void> {
   // Step 1: detect OpenClaw on PATH
   let openclawPath: string;
   try {
-    openclawPath = execSync("command -v openclaw", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    openclawPath = execSync("command -v openclaw", {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
     if (!openclawPath) throw new Error("not found");
     console.log(`  ✓ Found openclaw at ${openclawPath}`);
   } catch {
@@ -265,9 +438,7 @@ async function cmdSetup(): Promise<void> {
     console.warn(
       `  ⚠ openclaw plugins install reported a problem: ${err instanceof Error ? err.message : String(err)}`,
     );
-    console.warn(
-      "    Continuing with manual config sync — if validation rejected the install,",
-    );
+    console.warn("    Continuing with manual config sync — if validation rejected the install,");
     console.warn(
       "    re-run `openclaw plugins install --force @blockrun/clawrouter` after gateway start.",
     );
@@ -285,9 +456,7 @@ async function cmdSetup(): Promise<void> {
     injectModelsConfig(setupLogger, { forceWrite: true });
     injectAuthProfile(setupLogger);
   } catch (err) {
-    console.error(
-      `  ✗ Config sync failed: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    console.error(`  ✗ Config sync failed: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
   }
 
@@ -323,6 +492,12 @@ function parseArgs(args: string[]): {
   queryStatsDays: number;
   queryCache: boolean;
   setup: boolean;
+  // Share commands
+  share: boolean;
+  shareTarget?: "last" | "list" | string; // string = an id like resp_...
+  sharePreset?: string;
+  shareLimit: number;
+  shareAll: boolean;
 } {
   const result = {
     version: false,
@@ -345,6 +520,11 @@ function parseArgs(args: string[]): {
     queryStatsDays: 7,
     queryCache: false,
     setup: false,
+    share: false,
+    shareTarget: undefined as "last" | "list" | string | undefined,
+    sharePreset: undefined as string | undefined,
+    shareLimit: 20,
+    shareAll: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -414,6 +594,39 @@ function parseArgs(args: string[]): {
       i++;
     } else if (arg === "setup") {
       result.setup = true;
+    } else if (arg === "share") {
+      result.share = true;
+      // Next positional arg is target: "last" | "list" | resp_<id>
+      const next = args[i + 1];
+      if (next && !next.startsWith("--")) {
+        result.shareTarget = next;
+        i++;
+      }
+      // Scan remaining args for share-specific flags
+      while (i + 1 < args.length) {
+        const flag = args[i + 1];
+        if (flag === "--all") {
+          result.shareAll = true;
+          i++;
+        } else if (flag === "--as" && args[i + 2]) {
+          result.sharePreset = args[i + 2];
+          i += 2;
+        } else if (flag.startsWith("--as=")) {
+          result.sharePreset = flag.slice("--as=".length);
+          i++;
+        } else if (flag === "--limit" && args[i + 2]) {
+          result.shareLimit = Math.min(Math.max(parseInt(args[i + 2], 10) || 20, 1), 100);
+          i += 2;
+        } else if (flag.startsWith("--limit=")) {
+          result.shareLimit = Math.min(
+            Math.max(parseInt(flag.slice("--limit=".length), 10) || 20, 1),
+            100,
+          );
+          i++;
+        } else {
+          break;
+        }
+      }
     }
   }
 
@@ -459,6 +672,11 @@ async function main(): Promise<void> {
   }
   if (args.queryCache) {
     await cmdCache(queryPort);
+    process.exit(0);
+  }
+
+  if (args.share) {
+    await cmdShare(queryPort, args.shareTarget, args.sharePreset, args.shareLimit, args.shareAll);
     process.exit(0);
   }
 

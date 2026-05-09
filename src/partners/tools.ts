@@ -103,7 +103,11 @@ function buildTool(service: PartnerServiceDefinition, proxyBaseUrl: string): Par
               leftoverParams[key] = value;
             }
           }
-        } else if (params.query && typeof params.query === "object" && !Array.isArray(params.query)) {
+        } else if (
+          params.query &&
+          typeof params.query === "object" &&
+          !Array.isArray(params.query)
+        ) {
           // Some tool runners forward the parsed object directly even though schema says string.
           for (const [key, value] of Object.entries(params.query as Record<string, unknown>)) {
             if (value === undefined || value === null) continue;

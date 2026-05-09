@@ -5759,24 +5759,24 @@ function wNAF(c, bits) {
       }
       return acc;
     },
-    getPrecomputes(W, P2, transform) {
+    getPrecomputes(W, P2, transform2) {
       let comp = pointPrecomputes.get(P2);
       if (!comp) {
         comp = this.precomputeWindow(P2, W);
         if (W !== 1)
-          pointPrecomputes.set(P2, transform(comp));
+          pointPrecomputes.set(P2, transform2(comp));
       }
       return comp;
     },
-    wNAFCached(P2, n, transform) {
+    wNAFCached(P2, n, transform2) {
       const W = getW(P2);
-      return this.wNAF(W, this.getPrecomputes(W, P2, transform), n);
+      return this.wNAF(W, this.getPrecomputes(W, P2, transform2), n);
     },
-    wNAFCachedUnsafe(P2, n, transform, prev) {
+    wNAFCachedUnsafe(P2, n, transform2, prev) {
       const W = getW(P2);
       if (W === 1)
         return this.unsafeLadder(P2, n, prev);
-      return this.wNAFUnsafe(W, this.getPrecomputes(W, P2, transform), n, prev);
+      return this.wNAFUnsafe(W, this.getPrecomputes(W, P2, transform2), n, prev);
     },
     // We calculate precomputes for elliptic curve point multiplication
     // using windowed method. This specifies window size and
@@ -6522,7 +6522,7 @@ function weierstrass(curveDef) {
   function prepSig(msgHash, privateKey, opts = defaultSigOpts) {
     if (["recovered", "canonical"].some((k) => k in opts))
       throw new Error("sign() legacy options not supported");
-    const { hash: hash3, randomBytes: randomBytes4 } = CURVE;
+    const { hash: hash3, randomBytes: randomBytes5 } = CURVE;
     let { lowS, prehash, extraEntropy: ent } = opts;
     if (lowS == null)
       lowS = true;
@@ -6534,7 +6534,7 @@ function weierstrass(curveDef) {
     const d = normPrivateKeyToScalar(privateKey);
     const seedArgs = [int2octets(d), int2octets(h1int)];
     if (ent != null && ent !== false) {
-      const e7 = ent === true ? randomBytes4(Fp.BYTES) : ent;
+      const e7 = ent === true ? randomBytes5(Fp.BYTES) : ent;
       seedArgs.push(ensureBytes("extraEntropy", e7));
     }
     const seed = concatBytes3(...seedArgs);
@@ -15045,27 +15045,27 @@ var init_curve2 = __esm({
         assert0(n);
         return acc;
       }
-      getPrecomputes(W, point, transform) {
+      getPrecomputes(W, point, transform2) {
         let comp = pointPrecomputes3.get(point);
         if (!comp) {
           comp = this.precomputeWindow(point, W);
           if (W !== 1) {
-            if (typeof transform === "function")
-              comp = transform(comp);
+            if (typeof transform2 === "function")
+              comp = transform2(comp);
             pointPrecomputes3.set(point, comp);
           }
         }
         return comp;
       }
-      cached(point, scalar, transform) {
+      cached(point, scalar, transform2) {
         const W = getW3(point);
-        return this.wNAF(W, this.getPrecomputes(W, point, transform), scalar);
+        return this.wNAF(W, this.getPrecomputes(W, point, transform2), scalar);
       }
-      unsafe(point, scalar, transform, prev) {
+      unsafe(point, scalar, transform2, prev) {
         const W = getW3(point);
         if (W === 1)
           return this._unsafeLadder(point, scalar, prev);
-        return this.wNAFUnsafe(W, this.getPrecomputes(W, point, transform), scalar, prev);
+        return this.wNAFUnsafe(W, this.getPrecomputes(W, point, transform2), scalar, prev);
       }
       // We calculate precomputes for elliptic curve point multiplication
       // using windowed method. This specifies window size and
@@ -15698,7 +15698,7 @@ function ecdsa(Point3, hash3, ecdsaOpts = {}) {
     bits2int_modN: "function"
   });
   ecdsaOpts = Object.assign({}, ecdsaOpts);
-  const randomBytes4 = ecdsaOpts.randomBytes || randomBytes2;
+  const randomBytes5 = ecdsaOpts.randomBytes || randomBytes2;
   const hmac4 = ecdsaOpts.hmac || ((key, msg) => hmac2(hash3, key, msg));
   const { Fp, Fn: Fn2 } = Point3;
   const { ORDER: CURVE_ORDER, BITS: fnBits } = Fn2;
@@ -15840,7 +15840,7 @@ function ecdsa(Point3, hash3, ecdsaOpts = {}) {
       throw new Error("invalid private key");
     const seedArgs = [int2octets(d), int2octets(h1int)];
     if (extraEntropy2 != null && extraEntropy2 !== false) {
-      const e7 = extraEntropy2 === true ? randomBytes4(lengths.secretKey) : extraEntropy2;
+      const e7 = extraEntropy2 === true ? randomBytes5(lengths.secretKey) : extraEntropy2;
       seedArgs.push(abytes4(e7, void 0, "extraEntropy"));
     }
     const seed = concatBytes5(...seedArgs);
@@ -21912,10 +21912,10 @@ async function createKeyPairFromBytes(bytes, extractable = false) {
     ),
     createPrivateKeyFromBytes(bytes.slice(0, 32), extractable)
   ]);
-  const randomBytes4 = new Uint8Array(32);
-  crypto.getRandomValues(randomBytes4);
-  const signedData = await signBytes(privateKey, randomBytes4);
-  const isValid2 = await verifySignature(publicKey, signedData, randomBytes4);
+  const randomBytes5 = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes5);
+  const signedData = await signBytes(privateKey, randomBytes5);
+  const isValid2 = await verifySignature(publicKey, signedData, randomBytes5);
   if (!isValid2) {
     throw new SolanaError(SOLANA_ERROR__KEYS__PUBLIC_KEY_MUST_MATCH_PRIVATE_KEY);
   }
@@ -25385,7 +25385,7 @@ function createRpcSubscriptionsApi(config) {
     }
   });
 }
-function transformChannelInboundMessages(channel, transform) {
+function transformChannelInboundMessages(channel, transform2) {
   return Object.freeze({
     ...channel,
     on(type, subscriber, options) {
@@ -25398,16 +25398,16 @@ function transformChannelInboundMessages(channel, transform) {
       }
       return channel.on(
         "message",
-        (message) => subscriber(transform(message)),
+        (message) => subscriber(transform2(message)),
         options
       );
     }
   });
 }
-function transformChannelOutboundMessages(channel, transform) {
+function transformChannelOutboundMessages(channel, transform2) {
   return Object.freeze({
     ...channel,
-    send: (message) => channel.send(transform(message))
+    send: (message) => channel.send(transform2(message))
   });
 }
 function decrementSubscriberCountAndReturnNewCount(channel, subscriptionId) {
@@ -27986,7 +27986,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes4, createHash: createHash4 } = __require("crypto");
+    var { randomBytes: randomBytes5, createHash: createHash4 } = __require("crypto");
     var { Duplex, Readable } = __require("stream");
     var { URL: URL2 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -28516,7 +28516,7 @@ var require_websocket = __commonJS({
         }
       }
       const defaultPort = isSecure ? 443 : 80;
-      const key = randomBytes4(16).toString("base64");
+      const key = randomBytes5(16).toString("base64");
       const request = isSecure ? https.request : http2.request;
       const protocolSet = /* @__PURE__ */ new Set();
       let perMessageDeflate;
@@ -45459,7 +45459,7 @@ var require_snapshot_utils = __commonJS({
 var require_snapshot_recorder = __commonJS({
   "node_modules/undici/lib/mock/snapshot-recorder.js"(exports, module) {
     "use strict";
-    var { writeFile: writeFile3, readFile: readFile2, mkdir: mkdir4 } = __require("fs/promises");
+    var { writeFile: writeFile3, readFile: readFile3, mkdir: mkdir5 } = __require("fs/promises");
     var { dirname: dirname4, resolve } = __require("path");
     var { setTimeout: setTimeout2, clearTimeout: clearTimeout2 } = __require("timers");
     var { InvalidArgumentError, UndiciError } = require_errors();
@@ -45661,7 +45661,7 @@ var require_snapshot_recorder = __commonJS({
           throw new InvalidArgumentError("Snapshot path is required");
         }
         try {
-          const data = await readFile2(resolve(path2), "utf8");
+          const data = await readFile3(resolve(path2), "utf8");
           const parsed = JSON.parse(data);
           if (Array.isArray(parsed)) {
             this.#snapshots.clear();
@@ -45691,7 +45691,7 @@ var require_snapshot_recorder = __commonJS({
           throw new InvalidArgumentError("Snapshot path is required");
         }
         const resolvedPath = resolve(path2);
-        await mkdir4(dirname4(resolvedPath), { recursive: true });
+        await mkdir5(dirname4(resolvedPath), { recursive: true });
         const data = Array.from(this.#snapshots.entries()).map(([hash3, snapshot]) => ({
           hash: hash3,
           snapshot
@@ -59228,9 +59228,9 @@ function isReasoningModel(modelId) {
 import { AsyncLocalStorage } from "async_hooks";
 import { createServer } from "http";
 import { finished } from "stream";
-import { homedir as homedir5 } from "os";
-import { join as join8 } from "path";
-import { mkdir as mkdir3, writeFile as writeFile2, readFile, stat as fsStat } from "fs/promises";
+import { homedir as homedir6 } from "os";
+import { join as join9 } from "path";
+import { mkdir as mkdir4, writeFile as writeFile2, readFile as readFile2, stat as fsStat } from "fs/promises";
 import { readFileSync as readFileSync2, existsSync } from "fs";
 
 // node_modules/viem/_esm/utils/getAction.js
@@ -64070,24 +64070,24 @@ function wNAF2(c, bits) {
       }
       return acc;
     },
-    getPrecomputes(W, P2, transform) {
+    getPrecomputes(W, P2, transform2) {
       let comp = pointPrecomputes2.get(P2);
       if (!comp) {
         comp = this.precomputeWindow(P2, W);
         if (W !== 1)
-          pointPrecomputes2.set(P2, transform(comp));
+          pointPrecomputes2.set(P2, transform2(comp));
       }
       return comp;
     },
-    wNAFCached(P2, n, transform) {
+    wNAFCached(P2, n, transform2) {
       const W = getW2(P2);
-      return this.wNAF(W, this.getPrecomputes(W, P2, transform), n);
+      return this.wNAF(W, this.getPrecomputes(W, P2, transform2), n);
     },
-    wNAFCachedUnsafe(P2, n, transform, prev) {
+    wNAFCachedUnsafe(P2, n, transform2, prev) {
       const W = getW2(P2);
       if (W === 1)
         return this.unsafeLadder(P2, n, prev);
-      return this.wNAFUnsafe(W, this.getPrecomputes(W, P2, transform), n, prev);
+      return this.wNAFUnsafe(W, this.getPrecomputes(W, P2, transform2), n, prev);
     },
     // We calculate precomputes for elliptic curve point multiplication
     // using windowed method. This specifies window size and
@@ -64932,7 +64932,7 @@ function weierstrass2(curveDef) {
   function prepSig(msgHash, privateKey, opts = defaultSigOpts) {
     if (["recovered", "canonical"].some((k) => k in opts))
       throw new Error("sign() legacy options not supported");
-    const { hash: hash3, randomBytes: randomBytes4 } = CURVE;
+    const { hash: hash3, randomBytes: randomBytes5 } = CURVE;
     let { lowS, prehash, extraEntropy: ent } = opts;
     if (lowS == null)
       lowS = true;
@@ -64944,7 +64944,7 @@ function weierstrass2(curveDef) {
     const d = normPrivateKeyToScalar(privateKey);
     const seedArgs = [int2octets(d), int2octets(h1int)];
     if (ent != null && ent !== false) {
-      const e7 = ent === true ? randomBytes4(Fp.BYTES) : ent;
+      const e7 = ent === true ? randomBytes5(Fp.BYTES) : ent;
       seedArgs.push(ensureBytes2("extraEntropy", e7));
     }
     const seed = concatBytes4(...seedArgs);
@@ -68558,12 +68558,12 @@ var ZodType = class {
   and(incoming) {
     return ZodIntersection.create(this, incoming, this._def);
   }
-  transform(transform) {
+  transform(transform2) {
     return new ZodEffects({
       ...processCreateParams(this._def),
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
-      effect: { type: "transform", transform }
+      effect: { type: "transform", transform: transform2 }
     });
   }
   default(def) {
@@ -72465,8 +72465,8 @@ function createNonce() {
   return toHex(getCrypto().getRandomValues(new Uint8Array(32)));
 }
 function createPermit2Nonce() {
-  const randomBytes4 = getCrypto().getRandomValues(new Uint8Array(32));
-  return BigInt(toHex(randomBytes4)).toString();
+  const randomBytes5 = getCrypto().getRandomValues(new Uint8Array(32));
+  return BigInt(toHex(randomBytes5)).toString();
 }
 
 // node_modules/@x402/evm/dist/esm/chunk-YUJQ7TLD.mjs
@@ -77183,13 +77183,453 @@ function extractTextualToolCalls(content) {
   return { toolCalls, cleanedContent };
 }
 
+// src/response-store.ts
+import { appendFile as appendFile2, mkdir as mkdir3, readFile, readdir as readdir2 } from "fs/promises";
+import { homedir as homedir5 } from "os";
+import { join as join8 } from "path";
+import { randomBytes as randomBytes4 } from "crypto";
+var STORE_DIR = join8(homedir5(), ".openclaw", "blockrun", "responses");
+var dirReady2 = false;
+function isEnabled() {
+  const v = process.env.BLOCKRUN_RESPONSE_STORE;
+  return !v || v.toLowerCase() !== "off";
+}
+async function ensureDir2() {
+  if (dirReady2) return;
+  await mkdir3(STORE_DIR, { recursive: true });
+  dirReady2 = true;
+}
+function dailyFile(date = /* @__PURE__ */ new Date()) {
+  const iso = date.toISOString().slice(0, 10);
+  return join8(STORE_DIR, `responses-${iso}.jsonl`);
+}
+function genId() {
+  return `resp_${Date.now()}_${randomBytes4(3).toString("hex")}`;
+}
+function summarizeRequest(text, max = 80) {
+  const oneLine = text.replace(/\s+/g, " ").trim();
+  if (oneLine.length <= max) return oneLine;
+  return oneLine.slice(0, max - 1) + "\u2026";
+}
+async function appendResponse(entry) {
+  if (!isEnabled()) return null;
+  if (!entry.responseText || entry.responseText.length === 0) return null;
+  const id = genId();
+  const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+  const full = { id, timestamp, ...entry };
+  try {
+    await ensureDir2();
+    await appendFile2(dailyFile(), JSON.stringify(full) + "\n");
+    return id;
+  } catch {
+    return null;
+  }
+}
+async function readDailyFile(file) {
+  try {
+    const text = await readFile(file, "utf8");
+    return text.split("\n").filter((l2) => l2.trim().length > 0).map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    }).filter((e7) => e7 !== null);
+  } catch {
+    return [];
+  }
+}
+async function listRecent(limit = 20, daysBack = 7) {
+  if (!isEnabled()) return [];
+  try {
+    await ensureDir2();
+    const files = await readdir2(STORE_DIR);
+    const today = /* @__PURE__ */ new Date();
+    const candidateFiles = [];
+    for (let i = 0; i < daysBack; i++) {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() - i);
+      const iso = d.toISOString().slice(0, 10);
+      const name = `responses-${iso}.jsonl`;
+      if (files.includes(name)) candidateFiles.push(join8(STORE_DIR, name));
+    }
+    const all = [];
+    for (const f of candidateFiles) {
+      all.push(...await readDailyFile(f));
+    }
+    all.sort((a, b) => a.timestamp < b.timestamp ? 1 : -1);
+    return all.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+async function getLast(sessionId) {
+  const recent = await listRecent(50);
+  if (recent.length === 0) return null;
+  if (sessionId) {
+    const match = recent.find((e7) => e7.sessionId === sessionId);
+    if (match) return match;
+  }
+  return recent[0];
+}
+async function getById(id) {
+  const recent = await listRecent(500);
+  return recent.find((e7) => e7.id === id) ?? null;
+}
+
+// src/share-formatters.ts
+var SHARE_PRESETS = [
+  "feishu",
+  "slack",
+  "discord",
+  "telegram",
+  "whatsapp",
+  "plain"
+];
+function isSharePreset(s3) {
+  return SHARE_PRESETS.includes(s3);
+}
+var PH_BOLD = "__CR_PH_BOLD_";
+var PH_LINK = "__CR_PH_LINK_";
+var PH_END = "__";
+function splitByFences(md) {
+  const segments = [];
+  const fenceRegex = /(^|\n)(```[a-zA-Z0-9_-]*\n[\s\S]*?\n```)(?=\n|$)/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = fenceRegex.exec(md)) !== null) {
+    const fenceStart = match.index + match[1].length;
+    if (fenceStart > lastIndex) {
+      segments.push({ isFence: false, content: md.slice(lastIndex, fenceStart) });
+    }
+    const block = match[2];
+    const langMatch = block.match(/^```([a-zA-Z0-9_-]*)\n/);
+    segments.push({
+      isFence: true,
+      content: block,
+      fenceLang: langMatch ? langMatch[1] : void 0
+    });
+    lastIndex = fenceStart + block.length;
+  }
+  if (lastIndex < md.length) {
+    segments.push({ isFence: false, content: md.slice(lastIndex) });
+  }
+  return segments;
+}
+function fenceInner(block) {
+  return block.replace(/^```[a-zA-Z0-9_-]*\n/, "").replace(/\n```$/, "");
+}
+var TABLE_BLOCK_REGEX = /(^|\n)((?:[ \t]*\|.*\|[ \t]*\n)(?:[ \t]*\|[\s:|-]+\|[ \t]*\n)(?:[ \t]*\|.*\|[ \t]*\n?)*)/g;
+function splitRow(line) {
+  let s3 = line.trim();
+  if (s3.startsWith("|")) s3 = s3.slice(1);
+  if (s3.endsWith("|")) s3 = s3.slice(0, -1);
+  const cells = [];
+  let buf = "";
+  for (let i = 0; i < s3.length; i++) {
+    const ch = s3[i];
+    if (ch === "\\" && s3[i + 1] === "|") {
+      buf += "|";
+      i++;
+    } else if (ch === "|") {
+      cells.push(buf.trim());
+      buf = "";
+    } else {
+      buf += ch;
+    }
+  }
+  cells.push(buf.trim());
+  return cells;
+}
+function parseTable(block) {
+  const lines = block.split("\n").filter((l2) => l2.trim().length > 0);
+  if (lines.length < 2) return null;
+  const sepCells = splitRow(lines[1]);
+  if (sepCells.length === 0 || !sepCells.every((c) => /^:?-+:?$/.test(c))) return null;
+  const headers = splitRow(lines[0]);
+  const rows = lines.slice(2).map(splitRow);
+  return { headers, rows };
+}
+function visibleWidth(s3) {
+  let w = 0;
+  for (const ch of s3) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code >= 4352 && code <= 4447 || code >= 11904 && code <= 12350 || code >= 12353 && code <= 13311 || code >= 13312 && code <= 19903 || code >= 19968 && code <= 40959 || code >= 40960 && code <= 42191 || code >= 44032 && code <= 55203 || code >= 63744 && code <= 64255 || code >= 65072 && code <= 65103 || code >= 65280 && code <= 65376 || code >= 65504 && code <= 65510 || code >= 131072 && code <= 196605) {
+      w += 2;
+    } else {
+      w += 1;
+    }
+  }
+  return w;
+}
+function padRight3(s3, width) {
+  const pad4 = width - visibleWidth(s3);
+  return pad4 > 0 ? s3 + " ".repeat(pad4) : s3;
+}
+function renderTableMonospace(table) {
+  const cols = Math.max(table.headers.length, ...table.rows.map((r) => r.length));
+  const grid = [
+    [...table.headers, ...Array(cols - table.headers.length).fill("")],
+    ...table.rows.map((r) => [...r, ...Array(cols - r.length).fill("")])
+  ];
+  const widths = [];
+  for (let c = 0; c < cols; c++) {
+    widths.push(Math.max(...grid.map((row) => visibleWidth(row[c] ?? ""))));
+  }
+  const renderRow = (row) => row.map((cell, i) => padRight3(cell ?? "", widths[i])).join("  ");
+  const sep = widths.map((w) => "-".repeat(w)).join("  ");
+  return [renderRow(grid[0]), sep, ...grid.slice(1).map(renderRow)].join("\n");
+}
+function renderTableKeyValue(table) {
+  if (table.headers.length === 2) {
+    return table.rows.map((r) => `${r[0] ?? ""}: ${r[1] ?? ""}`).join("\n");
+  }
+  const blocks = table.rows.map(
+    (row) => table.headers.map((h, i) => `${h}: ${row[i] ?? ""}`).join("\n")
+  );
+  return blocks.join("\n\n");
+}
+function applyFeishu(text) {
+  let s3 = text;
+  s3 = s3.replace(/^(#{1,6}) +(.+)$/gm, (_, _h, body) => `**${body.trim()}**`);
+  s3 = s3.replace(/^[ \t]*-{3,}[ \t]*$/gm, "");
+  return s3;
+}
+function applySlackText(text) {
+  let s3 = text;
+  s3 = s3.replace(/&/g, "&amp;");
+  const linkPlaceholders = [];
+  s3 = s3.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, url) => {
+    const i = linkPlaceholders.length;
+    linkPlaceholders.push(`<${url}|${txt}>`);
+    return `${PH_LINK}${i}${PH_END}`;
+  });
+  s3 = s3.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  s3 = s3.replace(/^(#{1,6}) +(.+)$/gm, (_, _h, body) => `**${body.trim()}**`);
+  const boldPlaceholders = [];
+  s3 = s3.replace(/\*\*([^*\n]+)\*\*/g, (_, inner) => {
+    const i = boldPlaceholders.length;
+    boldPlaceholders.push(inner);
+    return `${PH_BOLD}${i}${PH_END}`;
+  });
+  s3 = s3.replace(/(?<![\w*])\*([^*\n]+)\*(?![\w*])/g, "_$1_");
+  s3 = s3.replace(/~~([^~\n]+)~~/g, "~$1~");
+  const boldRestoreRe = new RegExp(
+    PH_BOLD.replace(/_/g, "\\_") + "(\\d+)" + PH_END.replace(/_/g, "\\_"),
+    "g"
+  );
+  s3 = s3.replace(boldRestoreRe, (_, i) => `*${boldPlaceholders[parseInt(i, 10)]}*`);
+  const linkRestoreRe = new RegExp(
+    PH_LINK.replace(/_/g, "\\_") + "(\\d+)" + PH_END.replace(/_/g, "\\_"),
+    "g"
+  );
+  s3 = s3.replace(linkRestoreRe, (_, i) => linkPlaceholders[parseInt(i, 10)]);
+  s3 = s3.replace(/^([ \t]*)-([ \t]+)/gm, "$1\u2022$2");
+  return s3;
+}
+function applyDiscordText(text) {
+  return text;
+}
+var TELEGRAM_ESCAPE_CHARS = "_*[]()~`>#+-=|{}.!";
+function escapeTelegramText(s3) {
+  let out = "";
+  for (const ch of s3) {
+    if (TELEGRAM_ESCAPE_CHARS.includes(ch)) {
+      out += "\\" + ch;
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+function applyTelegramText(text) {
+  const tokens = [];
+  let i = 0;
+  const len = text.length;
+  const peek = (s3) => text.startsWith(s3, i);
+  while (i < len) {
+    if (peek("**")) {
+      const end = text.indexOf("**", i + 2);
+      if (end !== -1) {
+        tokens.push({ kind: "bold", raw: text.slice(i, end + 2), inner: text.slice(i + 2, end) });
+        i = end + 2;
+        continue;
+      }
+    }
+    if (peek("~~")) {
+      const end = text.indexOf("~~", i + 2);
+      if (end !== -1) {
+        tokens.push({ kind: "strike", raw: text.slice(i, end + 2), inner: text.slice(i + 2, end) });
+        i = end + 2;
+        continue;
+      }
+    }
+    if (peek("`")) {
+      const end = text.indexOf("`", i + 1);
+      if (end !== -1) {
+        tokens.push({ kind: "code", raw: text.slice(i, end + 1), inner: text.slice(i + 1, end) });
+        i = end + 1;
+        continue;
+      }
+    }
+    if (peek("[")) {
+      const close = text.indexOf("](", i + 1);
+      if (close !== -1) {
+        const end = text.indexOf(")", close + 2);
+        if (end !== -1) {
+          tokens.push({
+            kind: "link",
+            raw: text.slice(i, end + 1),
+            inner: text.slice(i + 1, close),
+            url: text.slice(close + 2, end)
+          });
+          i = end + 1;
+          continue;
+        }
+      }
+    }
+    if (text[i] === "*" && text[i + 1] !== "*") {
+      const end = text.indexOf("*", i + 1);
+      if (end !== -1 && !text.slice(i + 1, end).includes("\n")) {
+        tokens.push({ kind: "italic", raw: text.slice(i, end + 1), inner: text.slice(i + 1, end) });
+        i = end + 1;
+        continue;
+      }
+    }
+    let j = i;
+    while (j < len && !text.startsWith("**", j) && !text.startsWith("~~", j) && text[j] !== "`" && text[j] !== "[" && !(text[j] === "*" && text[j + 1] !== "*")) {
+      j++;
+    }
+    tokens.push({ kind: "text", raw: text.slice(i, j) });
+    i = j;
+  }
+  let out = "";
+  for (const tok of tokens) {
+    switch (tok.kind) {
+      case "text":
+        out += escapeTelegramText(tok.raw);
+        break;
+      case "bold":
+        out += "*" + escapeTelegramText(tok.inner ?? "") + "*";
+        break;
+      case "italic":
+        out += "_" + escapeTelegramText(tok.inner ?? "") + "_";
+        break;
+      case "strike":
+        out += "~" + escapeTelegramText(tok.inner ?? "") + "~";
+        break;
+      case "code":
+        out += "`" + (tok.inner ?? "").replace(/\\/g, "\\\\").replace(/`/g, "\\`") + "`";
+        break;
+      case "link":
+        out += "[" + escapeTelegramText(tok.inner ?? "") + "](" + (tok.url ?? "").replace(/\\/g, "\\\\").replace(/\)/g, "\\)") + ")";
+        break;
+    }
+  }
+  return out;
+}
+function preProcessTelegram(text) {
+  return text.replace(
+    /^(#{1,6}) +(.+)$/gm,
+    (_, _h, body) => `**${body.trim()}**`
+  );
+}
+function applyWhatsappText(text) {
+  let s3 = text;
+  s3 = s3.replace(/^(#{1,6}) +(.+)$/gm, (_, _h, body) => `**${body.trim()}**`);
+  const boldPlaceholders = [];
+  s3 = s3.replace(/\*\*([^*\n]+)\*\*/g, (_, inner) => {
+    const i = boldPlaceholders.length;
+    boldPlaceholders.push(inner);
+    return `${PH_BOLD}${i}${PH_END}`;
+  });
+  s3 = s3.replace(/(?<![\w*])\*([^*\n]+)\*(?![\w*])/g, "_$1_");
+  s3 = s3.replace(/~~([^~\n]+)~~/g, "~$1~");
+  const boldRestoreRe = new RegExp(
+    PH_BOLD.replace(/_/g, "\\_") + "(\\d+)" + PH_END.replace(/_/g, "\\_"),
+    "g"
+  );
+  s3 = s3.replace(boldRestoreRe, (_, i) => `*${boldPlaceholders[parseInt(i, 10)]}*`);
+  s3 = s3.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1\n$2");
+  return s3;
+}
+function applyPlainText(text) {
+  let s3 = text;
+  s3 = s3.replace(/^[ \t]*-{3,}[ \t]*$/gm, "");
+  s3 = s3.replace(
+    /^# +(.+)$/gm,
+    (_, body) => `${body.trim()}
+${"=".repeat(visibleWidth(body.trim()))}`
+  );
+  s3 = s3.replace(
+    /^## +(.+)$/gm,
+    (_, body) => `${body.trim()}
+${"-".repeat(visibleWidth(body.trim()))}`
+  );
+  s3 = s3.replace(/^#{3,6} +(.+)$/gm, (_, body) => body.trim());
+  s3 = s3.replace(/\*\*([^*\n]+)\*\*/g, "$1");
+  s3 = s3.replace(/(?<![*\w])\*([^*\n]+)\*(?!\*)/g, "$1");
+  s3 = s3.replace(/(?<![_\w])_([^_\n]+)_(?!_)/g, "$1");
+  s3 = s3.replace(/~~([^~\n]+)~~/g, "$1");
+  s3 = s3.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1 ($2)");
+  s3 = s3.replace(/`([^`\n]+)`/g, "$1");
+  return s3;
+}
+function transformTablesInProse(text, preset) {
+  if (preset === "feishu") return text;
+  return text.replace(TABLE_BLOCK_REGEX, (whole, lead, block) => {
+    const table = parseTable(block);
+    if (!table) return whole;
+    if (preset === "plain") {
+      return lead + renderTableKeyValue(table);
+    }
+    const monospace = renderTableMonospace(table);
+    return lead + "```\n" + monospace + "\n```\n";
+  });
+}
+function transformFenceForPreset(seg, preset) {
+  if (preset === "plain") {
+    return fenceInner(seg.content);
+  }
+  if (preset === "telegram") {
+    const inner = fenceInner(seg.content).replace(/\\/g, "\\\\").replace(/`/g, "\\`");
+    const lang = seg.fenceLang ? seg.fenceLang : "";
+    return "```" + lang + "\n" + inner + "\n```";
+  }
+  return seg.content;
+}
+function applyTextRulesPerPreset(text, preset) {
+  switch (preset) {
+    case "feishu":
+      return applyFeishu(text);
+    case "slack":
+      return applySlackText(text);
+    case "discord":
+      return applyDiscordText(text);
+    case "telegram":
+      return applyTelegramText(preProcessTelegram(text));
+    case "whatsapp":
+      return applyWhatsappText(text);
+    case "plain":
+      return applyPlainText(text);
+  }
+}
+function transform(md, preset) {
+  const originalSegments = splitByFences(md);
+  const afterTables = originalSegments.map((seg) => seg.isFence ? seg.content : transformTablesInProse(seg.content, preset)).join("");
+  const finalSegments = splitByFences(afterTables);
+  return finalSegments.map(
+    (seg) => seg.isFence ? transformFenceForPreset(seg, preset) : applyTextRulesPerPreset(seg.content, preset)
+  ).join("");
+}
+
 // src/proxy.ts
 var paymentStore = new AsyncLocalStorage();
 var BLOCKRUN_API = "https://blockrun.ai/api";
 var BLOCKRUN_SOLANA_API = "https://sol.blockrun.ai/api";
-var IMAGE_DIR = join8(homedir5(), ".openclaw", "blockrun", "images");
-var AUDIO_DIR = join8(homedir5(), ".openclaw", "blockrun", "audio");
-var VIDEO_DIR = join8(homedir5(), ".openclaw", "blockrun", "videos");
+var IMAGE_DIR = join9(homedir6(), ".openclaw", "blockrun", "images");
+var AUDIO_DIR = join9(homedir6(), ".openclaw", "blockrun", "audio");
+var VIDEO_DIR = join9(homedir6(), ".openclaw", "blockrun", "videos");
 var AUTO_MODEL = "blockrun/auto";
 var ROUTING_PROFILES = /* @__PURE__ */ new Set([
   "blockrun/eco",
@@ -77998,7 +78438,7 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   });
 }
 function readImageFileAsDataUri(filePath) {
-  const resolved = filePath.startsWith("~/") ? join8(homedir5(), filePath.slice(2)) : filePath;
+  const resolved = filePath.startsWith("~/") ? join9(homedir6(), filePath.slice(2)) : filePath;
   if (!existsSync(resolved)) {
     throw new Error(`Image file not found: ${resolved}`);
   }
@@ -78260,6 +78700,96 @@ async function startProxy(options) {
         res.end(JSON.stringify({ object: "list", data: models }));
         return;
       }
+      if (req.url?.startsWith("/share") && req.method === "GET") {
+        try {
+          const url = new URL(req.url, "http://localhost");
+          const path2 = url.pathname;
+          if (path2 === "/share/list") {
+            const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
+            const entries = await listRecent(limit);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify(
+                entries.map((e7) => ({
+                  id: e7.id,
+                  timestamp: e7.timestamp,
+                  model: e7.model,
+                  sessionId: e7.sessionId,
+                  requestSummary: e7.requestSummary,
+                  responseLength: e7.responseText.length
+                }))
+              )
+            );
+            return;
+          }
+          if (path2 === "/share/last") {
+            const sessionId = url.searchParams.get("sessionId") || void 0;
+            const entry = await getLast(sessionId);
+            if (!entry) {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "no responses yet" }));
+              return;
+            }
+            const preset = url.searchParams.get("as");
+            if (preset && isSharePreset(preset)) {
+              res.writeHead(200, {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache"
+              });
+              res.end(
+                JSON.stringify({
+                  id: entry.id,
+                  timestamp: entry.timestamp,
+                  model: entry.model,
+                  preset,
+                  rendered: transform(entry.responseText, preset)
+                })
+              );
+              return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(entry));
+            return;
+          }
+          const idMatch = path2.match(/^\/share\/(resp_[A-Za-z0-9_]+)(?:\/render)?$/);
+          if (idMatch) {
+            const id = idMatch[1];
+            const entry = await getById(id);
+            if (!entry) {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: `no response with id ${id}` }));
+              return;
+            }
+            const preset = url.searchParams.get("as");
+            if (preset && isSharePreset(preset)) {
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  id: entry.id,
+                  timestamp: entry.timestamp,
+                  model: entry.model,
+                  preset,
+                  rendered: transform(entry.responseText, preset)
+                })
+              );
+              return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(entry));
+            return;
+          }
+          res.writeHead(404, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "unknown share endpoint" }));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: `share failed: ${err instanceof Error ? err.message : String(err)}`
+            })
+          );
+        }
+        return;
+      }
       if (req.url?.startsWith("/images/") && req.method === "GET") {
         const filename = req.url.slice("/images/".length).split("?")[0].replace(/[^a-zA-Z0-9._-]/g, "");
         if (!filename) {
@@ -78267,7 +78797,7 @@ async function startProxy(options) {
           res.end("Bad request");
           return;
         }
-        const filePath = join8(IMAGE_DIR, filename);
+        const filePath = join9(IMAGE_DIR, filename);
         try {
           const s3 = await fsStat(filePath);
           if (!s3.isFile()) throw new Error("not a file");
@@ -78279,7 +78809,7 @@ async function startProxy(options) {
             webp: "image/webp",
             gif: "image/gif"
           };
-          const data = await readFile(filePath);
+          const data = await readFile2(filePath);
           res.writeHead(200, {
             "Content-Type": mime[ext] ?? "application/octet-stream",
             "Content-Length": data.length
@@ -78298,7 +78828,7 @@ async function startProxy(options) {
           res.end("Bad request");
           return;
         }
-        const filePath = join8(AUDIO_DIR, filename);
+        const filePath = join9(AUDIO_DIR, filename);
         try {
           const s3 = await fsStat(filePath);
           if (!s3.isFile()) throw new Error("not a file");
@@ -78309,7 +78839,7 @@ async function startProxy(options) {
             ogg: "audio/ogg",
             m4a: "audio/mp4"
           };
-          const data = await readFile(filePath);
+          const data = await readFile2(filePath);
           res.writeHead(200, {
             "Content-Type": mime[ext] ?? "audio/mpeg",
             "Content-Length": data.length
@@ -78328,7 +78858,7 @@ async function startProxy(options) {
           res.end("Bad request");
           return;
         }
-        const filePath = join8(VIDEO_DIR, filename);
+        const filePath = join9(VIDEO_DIR, filename);
         try {
           const s3 = await fsStat(filePath);
           if (!s3.isFile()) throw new Error("not a file");
@@ -78338,7 +78868,7 @@ async function startProxy(options) {
             webm: "video/webm",
             mov: "video/quicktime"
           };
-          const data = await readFile(filePath);
+          const data = await readFile2(filePath);
           res.writeHead(200, {
             "Content-Type": mime[ext] ?? "video/mp4",
             "Content-Length": data.length
@@ -78449,7 +78979,7 @@ async function startProxy(options) {
             }
           }
           if (result.data?.length) {
-            await mkdir3(IMAGE_DIR, { recursive: true });
+            await mkdir4(IMAGE_DIR, { recursive: true });
             const port2 = server.address()?.port ?? 8402;
             for (const img of result.data) {
               const dataUriMatch = img.url?.match(/^data:(image\/\w+);base64,(.+)$/);
@@ -78457,7 +78987,7 @@ async function startProxy(options) {
                 const [, mimeType, b64] = dataUriMatch;
                 const ext = mimeType === "image/jpeg" ? "jpg" : mimeType.split("/")[1] ?? "png";
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-                await writeFile2(join8(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
+                await writeFile2(join9(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
                 img.url = `http://localhost:${port2}/images/${filename}`;
                 console.log(`[ClawRouter] Image saved \u2192 ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
@@ -78468,7 +78998,7 @@ async function startProxy(options) {
                     const ext = contentType.includes("jpeg") || contentType.includes("jpg") ? "jpg" : contentType.includes("webp") ? "webp" : "png";
                     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                     const buf = Buffer.from(await imgResp.arrayBuffer());
-                    await writeFile2(join8(IMAGE_DIR, filename), buf);
+                    await writeFile2(join9(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port2}/images/${filename}`;
                     console.log(`[ClawRouter] Image downloaded & saved \u2192 ${img.url}`);
                   }
@@ -78565,7 +79095,7 @@ async function startProxy(options) {
             return;
           }
           if (result.data?.length) {
-            await mkdir3(IMAGE_DIR, { recursive: true });
+            await mkdir4(IMAGE_DIR, { recursive: true });
             const port2 = server.address()?.port ?? 8402;
             for (const img of result.data) {
               const dataUriMatch = img.url?.match(/^data:(image\/\w+);base64,(.+)$/);
@@ -78573,7 +79103,7 @@ async function startProxy(options) {
                 const [, mimeType, b64] = dataUriMatch;
                 const ext = mimeType === "image/jpeg" ? "jpg" : mimeType.split("/")[1] ?? "png";
                 const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-                await writeFile2(join8(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
+                await writeFile2(join9(IMAGE_DIR, filename), Buffer.from(b64, "base64"));
                 img.url = `http://localhost:${port2}/images/${filename}`;
                 console.log(`[ClawRouter] Image saved \u2192 ${img.url}`);
               } else if (img.url?.startsWith("https://") || img.url?.startsWith("http://")) {
@@ -78584,7 +79114,7 @@ async function startProxy(options) {
                     const ext = contentType.includes("jpeg") || contentType.includes("jpg") ? "jpg" : contentType.includes("webp") ? "webp" : "png";
                     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                     const buf = Buffer.from(await imgResp.arrayBuffer());
-                    await writeFile2(join8(IMAGE_DIR, filename), buf);
+                    await writeFile2(join9(IMAGE_DIR, filename), buf);
                     img.url = `http://localhost:${port2}/images/${filename}`;
                     console.log(`[ClawRouter] Image downloaded & saved \u2192 ${img.url}`);
                   }
@@ -78653,7 +79183,7 @@ async function startProxy(options) {
             return;
           }
           if (result.data?.length) {
-            await mkdir3(AUDIO_DIR, { recursive: true });
+            await mkdir4(AUDIO_DIR, { recursive: true });
             const port2 = server.address()?.port ?? 8402;
             for (const track of result.data) {
               if (track.url?.startsWith("https://") || track.url?.startsWith("http://")) {
@@ -78664,7 +79194,7 @@ async function startProxy(options) {
                     const ext = contentType.includes("wav") ? "wav" : "mp3";
                     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                     const buf = Buffer.from(await audioResp.arrayBuffer());
-                    await writeFile2(join8(AUDIO_DIR, filename), buf);
+                    await writeFile2(join9(AUDIO_DIR, filename), buf);
                     track.url = `http://localhost:${port2}/audio/${filename}`;
                     console.log(`[ClawRouter] Audio saved \u2192 ${track.url}`);
                   }
@@ -78795,7 +79325,7 @@ async function startProxy(options) {
             }
           }
           if (finalResult.data?.length) {
-            await mkdir3(VIDEO_DIR, { recursive: true });
+            await mkdir4(VIDEO_DIR, { recursive: true });
             const port2 = server.address()?.port ?? 8402;
             for (const clip of finalResult.data) {
               if (clip.url?.startsWith("https://") || clip.url?.startsWith("http://")) {
@@ -78806,7 +79336,7 @@ async function startProxy(options) {
                     const ext = contentType.includes("webm") ? "webm" : contentType.includes("quicktime") ? "mov" : "mp4";
                     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
                     const buf = Buffer.from(await videoResp.arrayBuffer());
-                    await writeFile2(join8(VIDEO_DIR, filename), buf);
+                    await writeFile2(join9(VIDEO_DIR, filename), buf);
                     clip.url = `http://localhost:${port2}/videos/${filename}`;
                     console.log(`[ClawRouter] Video saved \u2192 ${clip.url}`);
                   }
@@ -79157,6 +79687,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
   let responseInputTokens;
   let responseOutputTokens;
   let requestHadError = false;
+  let requestSummaryForStore = "";
   const isChatCompletion = req.url?.includes("/chat/completions");
   const sessionId = getSessionId(req.headers);
   let effectiveSessionId = sessionId;
@@ -79169,6 +79700,16 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
       let bodyModified = false;
       const parsedMessages = Array.isArray(parsed.messages) ? parsed.messages : [];
       const lastUserMsg = [...parsedMessages].reverse().find((m) => m.role === "user");
+      {
+        const c = lastUserMsg?.content;
+        let promptText = "";
+        if (typeof c === "string") {
+          promptText = c;
+        } else if (Array.isArray(c)) {
+          promptText = c.filter((b) => typeof b === "object" && b !== null && b.type === "text").map((b) => b.text ?? "").join(" ").trim();
+        }
+        requestSummaryForStore = summarizeRequest(promptText);
+      }
       hasTools = Array.isArray(parsed.tools) && parsed.tools.length > 0;
       const rawLastContent = lastUserMsg?.content;
       const lastContent = typeof rawLastContent === "string" ? rawLastContent : Array.isArray(rawLastContent) ? rawLastContent.filter((b) => b.type === "text").map((b) => b.text ?? "").join(" ") : "";
@@ -80991,6 +81532,14 @@ data: [DONE]
         );
       }
     }
+    if (accumulatedContent && isChatCompletion) {
+      void appendResponse({
+        sessionId,
+        model: actualModelUsed || void 0,
+        requestSummary: requestSummaryForStore,
+        responseText: accumulatedContent
+      });
+    }
     if (estimatedCostMicros !== void 0) {
       balanceMonitor.deductEstimated(estimatedCostMicros);
     }
@@ -81324,8 +81873,8 @@ import {
   renameSync
 } from "fs";
 import { readFile as readFileAsync } from "fs/promises";
-import { homedir as homedir7 } from "os";
-import { join as join10, dirname as dirname3 } from "path";
+import { homedir as homedir8 } from "os";
+import { join as join11, dirname as dirname3 } from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
 init_accounts();
 
@@ -82221,8 +82770,8 @@ init_solana_balance();
 // src/spend-control.ts
 import * as fs from "fs";
 import * as path from "path";
-import { homedir as homedir6 } from "os";
-var WALLET_DIR2 = path.join(homedir6(), ".openclaw", "blockrun");
+import { homedir as homedir7 } from "os";
+var WALLET_DIR2 = path.join(homedir7(), ".openclaw", "blockrun");
 var HOUR_MS = 60 * 60 * 1e3;
 var DAY_MS = 24 * HOUR_MS;
 var FileSpendControlStorage = class {
@@ -82539,18 +83088,18 @@ async function waitForProxyHealth(port, timeoutMs = 3e3) {
   return false;
 }
 function getPackageRoot() {
-  return join10(dirname3(fileURLToPath2(import.meta.url)), "..");
+  return join11(dirname3(fileURLToPath2(import.meta.url)), "..");
 }
 function installSkillsToWorkspace(logger) {
   try {
     const packageRoot = getPackageRoot();
-    const bundledSkillsDir = join10(packageRoot, "skills");
+    const bundledSkillsDir = join11(packageRoot, "skills");
     if (!existsSync3(bundledSkillsDir)) {
       return;
     }
     const profile = (process["env"].OPENCLAW_PROFILE ?? "").trim().toLowerCase();
     const workspaceDirName = profile && profile !== "default" ? `workspace-${profile}` : "workspace";
-    const workspaceSkillsDir = join10(homedir7(), ".openclaw", workspaceDirName, "skills");
+    const workspaceSkillsDir = join11(homedir8(), ".openclaw", workspaceDirName, "skills");
     mkdirSync3(workspaceSkillsDir, { recursive: true });
     const INTERNAL_SKILLS = /* @__PURE__ */ new Set(["release"]);
     const entries = readdirSync(bundledSkillsDir, { withFileTypes: true });
@@ -82559,10 +83108,10 @@ function installSkillsToWorkspace(logger) {
       if (!entry.isDirectory()) continue;
       const skillName = entry.name;
       if (INTERNAL_SKILLS.has(skillName)) continue;
-      const srcSkillFile = join10(bundledSkillsDir, skillName, "SKILL.md");
+      const srcSkillFile = join11(bundledSkillsDir, skillName, "SKILL.md");
       if (!existsSync3(srcSkillFile)) continue;
-      const destDir = join10(workspaceSkillsDir, skillName);
-      const destSkillFile = join10(destDir, "SKILL.md");
+      const destDir = join11(workspaceSkillsDir, skillName);
+      const destSkillFile = join11(destDir, "SKILL.md");
       let needsUpdate = true;
       if (existsSync3(destSkillFile)) {
         try {
@@ -82593,9 +83142,14 @@ function isGatewayMode() {
   const args = process.argv;
   return args.includes("gateway");
 }
+function isBlockrunWebSearchDisabled(config) {
+  if (process.env.BLOCKRUN_WEB_SEARCH?.toLowerCase() === "off") return true;
+  const cfg = config ?? {};
+  return cfg.tools?.web?.search?.enabled === false;
+}
 function injectModelsConfig(logger, options = {}) {
-  const configDir = join10(homedir7(), ".openclaw");
-  const configPath = join10(configDir, "openclaw.json");
+  const configDir = join11(homedir8(), ".openclaw");
+  const configPath = join11(configDir, "openclaw.json");
   let config = {};
   let needsWrite = false;
   if (!existsSync3(configDir)) {
@@ -82775,7 +83329,7 @@ function injectModelsConfig(logger, options = {}) {
       `Removed legacy tools.web.search.provider=${BLOCKRUN_EXA_PROVIDER_ID} (auto-detected at runtime now)`
     );
   }
-  if (searchCfg.enabled !== true) {
+  if (!isBlockrunWebSearchDisabled(config) && searchCfg.enabled !== true) {
     searchCfg.enabled = true;
     needsWrite = true;
   }
@@ -82801,7 +83355,7 @@ function injectModelsConfig(logger, options = {}) {
   }
 }
 function injectAuthProfile(logger) {
-  const agentsDir = join10(homedir7(), ".openclaw", "agents");
+  const agentsDir = join11(homedir8(), ".openclaw", "agents");
   if (!existsSync3(agentsDir)) {
     try {
       mkdirSync3(agentsDir, { recursive: true });
@@ -82818,8 +83372,8 @@ function injectAuthProfile(logger) {
       agents = ["main", ...agents];
     }
     for (const agentId of agents) {
-      const authDir = join10(agentsDir, agentId, "agent");
-      const authPath = join10(authDir, "auth-profiles.json");
+      const authDir = join11(agentsDir, agentId, "agent");
+      const authPath = join11(authDir, "auth-profiles.json");
       if (!existsSync3(authDir)) {
         try {
           mkdirSync3(authDir, { recursive: true });
@@ -83103,8 +83657,8 @@ function startProxyAfterPortProbe(api, startupGeneration) {
     );
   });
 }
-var IMAGE_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "images");
-var AUDIO_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "audio");
+var IMAGE_DIR2 = join11(homedir8(), ".openclaw", "blockrun", "images");
+var AUDIO_DIR2 = join11(homedir8(), ".openclaw", "blockrun", "audio");
 function parseGenArgs(raw) {
   const promptParts = [];
   let model;
@@ -83200,7 +83754,7 @@ function buildImageGenerationProvider() {
         (result.data ?? []).map(async (img) => {
           const filename = img.url?.split("/images/").pop();
           if (!filename) throw new Error(`Unexpected image URL format: ${img.url}`);
-          const filePath = join10(IMAGE_DIR2, filename);
+          const filePath = join11(IMAGE_DIR2, filename);
           const buffer2 = await readFileAsync(filePath);
           const ext = filename.split(".").pop()?.toLowerCase() ?? "png";
           const mimeType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "webp" ? "image/webp" : "image/png";
@@ -83252,7 +83806,7 @@ function buildMusicGenerationProvider() {
         (result.data ?? []).map(async (track) => {
           const filename = track.url?.split("/audio/").pop();
           if (!filename) throw new Error(`Unexpected audio URL format: ${track.url}`);
-          const filePath = join10(AUDIO_DIR2, filename);
+          const filePath = join11(AUDIO_DIR2, filename);
           const buffer2 = await readFileAsync(filePath);
           const ext = filename.split(".").pop()?.toLowerCase() ?? "mp3";
           const mimeType = ext === "wav" ? "audio/wav" : "audio/mpeg";
@@ -83276,7 +83830,7 @@ function buildMusicGenerationProvider() {
     }
   };
 }
-var VIDEO_DIR2 = join10(homedir7(), ".openclaw", "blockrun", "videos");
+var VIDEO_DIR2 = join11(homedir8(), ".openclaw", "blockrun", "videos");
 function buildVideoGenerationProvider() {
   return {
     id: "blockrun",
@@ -83327,7 +83881,7 @@ function buildVideoGenerationProvider() {
         (result.data ?? []).map(async (clip) => {
           const filename = clip.url?.split("/videos/").pop();
           if (!filename) throw new Error(`Unexpected video URL format: ${clip.url}`);
-          const filePath = join10(VIDEO_DIR2, filename);
+          const filePath = join11(VIDEO_DIR2, filename);
           const buffer2 = await readFileAsync(filePath);
           const ext = filename.split(".").pop()?.toLowerCase() ?? "mp4";
           const mimeType = ext === "webm" ? "video/webm" : ext === "mov" ? "video/quicktime" : "video/mp4";
@@ -83635,8 +84189,11 @@ var plugin = {
         "OpenClaw runtime does not expose registerVideoGenerationProvider(); BlockRun video models unavailable on this version."
       );
     }
+    const webSearchDisabled = isBlockrunWebSearchDisabled(api.config);
     if (typeof api.registerWebSearchProvider === "function") {
-      api.registerWebSearchProvider(blockrunExaWebSearchProvider);
+      if (!webSearchDisabled) {
+        api.registerWebSearchProvider(blockrunExaWebSearchProvider);
+      }
     } else {
       api.logger.warn(
         "OpenClaw runtime does not expose registerWebSearchProvider(); blockrun-exa search is unavailable on this version."
@@ -83664,7 +84221,13 @@ var plugin = {
     if (shouldLogRegistration) {
       api.logger.info("BlockRun provider registered (55+ models via x402)");
       if (typeof api.registerWebSearchProvider === "function") {
-        api.logger.info(`Registered BlockRun web_search provider (${BLOCKRUN_EXA_PROVIDER_ID})`);
+        if (webSearchDisabled) {
+          api.logger.info(
+            "BlockRun web search disabled (BLOCKRUN_WEB_SEARCH=off or tools.web.search.enabled=false)"
+          );
+        } else {
+          api.logger.info(`Registered BlockRun web_search provider (${BLOCKRUN_EXA_PROVIDER_ID})`);
+        }
       }
       if (runtimeMcpRemoved) {
         api.logger.info(
@@ -83934,7 +84497,7 @@ ${errText}`
     }
     resetProxyStartupState();
     try {
-      const configPath = join10(homedir7(), ".openclaw", "openclaw.json");
+      const configPath = join11(homedir8(), ".openclaw", "openclaw.json");
       if (existsSync3(configPath)) {
         const config = JSON.parse(readTextFileSync(configPath));
         if (config.models?.providers?.blockrun) {
@@ -83970,11 +84533,11 @@ ${errText}`
       api.logger.warn(`Config cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     try {
-      const agentsDir = join10(homedir7(), ".openclaw", "agents");
+      const agentsDir = join11(homedir8(), ".openclaw", "agents");
       if (existsSync3(agentsDir)) {
         for (const entry of readdirSync(agentsDir, { withFileTypes: true })) {
           if (!entry.isDirectory()) continue;
-          const authPath = join10(agentsDir, entry.name, "agent", "auth-profiles.json");
+          const authPath = join11(agentsDir, entry.name, "agent", "auth-profiles.json");
           if (!existsSync3(authPath)) continue;
           try {
             const store = JSON.parse(readTextFileSync(authPath));
@@ -84038,6 +84601,7 @@ export {
   injectModelsConfig,
   isAgenticModel,
   isBalanceError,
+  isBlockrunWebSearchDisabled,
   isEmptyWalletError,
   isInsufficientFundsError,
   isRetryable,

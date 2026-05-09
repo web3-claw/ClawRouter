@@ -78,10 +78,10 @@ openclaw gateway restart
   "tools": {
     "web": {
       "search": {
-        "enabled": false
-      }
-    }
-  }
+        "enabled": false,
+      },
+    },
+  },
 }
 ```
 

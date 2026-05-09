@@ -93,6 +93,14 @@ import { PROXY_PORT } from "./config.js";
 import { SessionJournal } from "./journal.js";
 import { applyUpstreamProxy } from "./upstream-proxy.js";
 import { extractTextualToolCalls } from "./textual-tool-calls.js";
+import {
+  appendResponse,
+  getById,
+  getLast,
+  listRecent,
+  summarizeRequest,
+} from "./response-store.js";
+import { isSharePreset, transform } from "./share-formatters.js";
 
 const BLOCKRUN_API = "https://blockrun.ai/api";
 const BLOCKRUN_SOLANA_API = "https://sol.blockrun.ai/api";
@@ -1977,6 +1985,101 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
         return;
       }
 
+      // --- Share routes: serve persisted response bodies for `clawrouter share` ---
+      if (req.url?.startsWith("/share") && req.method === "GET") {
+        try {
+          const url = new URL(req.url, "http://localhost");
+          const path = url.pathname;
+          // /share/list?limit=20
+          if (path === "/share/list") {
+            const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
+            const entries = await listRecent(limit);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify(
+                entries.map((e) => ({
+                  id: e.id,
+                  timestamp: e.timestamp,
+                  model: e.model,
+                  sessionId: e.sessionId,
+                  requestSummary: e.requestSummary,
+                  responseLength: e.responseText.length,
+                })),
+              ),
+            );
+            return;
+          }
+          // /share/last
+          if (path === "/share/last") {
+            const sessionId = url.searchParams.get("sessionId") || undefined;
+            const entry = await getLast(sessionId);
+            if (!entry) {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "no responses yet" }));
+              return;
+            }
+            const preset = url.searchParams.get("as");
+            if (preset && isSharePreset(preset)) {
+              res.writeHead(200, {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-cache",
+              });
+              res.end(
+                JSON.stringify({
+                  id: entry.id,
+                  timestamp: entry.timestamp,
+                  model: entry.model,
+                  preset,
+                  rendered: transform(entry.responseText, preset),
+                }),
+              );
+              return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(entry));
+            return;
+          }
+          // /share/:id  or  /share/:id/render?as=preset
+          const idMatch = path.match(/^\/share\/(resp_[A-Za-z0-9_]+)(?:\/render)?$/);
+          if (idMatch) {
+            const id = idMatch[1];
+            const entry = await getById(id);
+            if (!entry) {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: `no response with id ${id}` }));
+              return;
+            }
+            const preset = url.searchParams.get("as");
+            if (preset && isSharePreset(preset)) {
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  id: entry.id,
+                  timestamp: entry.timestamp,
+                  model: entry.model,
+                  preset,
+                  rendered: transform(entry.responseText, preset),
+                }),
+              );
+              return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(entry));
+            return;
+          }
+          res.writeHead(404, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "unknown share endpoint" }));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: `share failed: ${err instanceof Error ? err.message : String(err)}`,
+            }),
+          );
+        }
+        return;
+      }
+
       // --- Serve locally cached images (~/.openclaw/blockrun/images/) ---
       if (req.url?.startsWith("/images/") && req.method === "GET") {
         const filename = req.url
@@ -3156,6 +3259,7 @@ async function proxyRequest(
   let responseInputTokens: number | undefined;
   let responseOutputTokens: number | undefined;
   let requestHadError = false; // Set to true when all models fail → used in logUsage
+  let requestSummaryForStore = ""; // Truncated user prompt — captured for response-store entry
   const isChatCompletion = req.url?.includes("/chat/completions");
 
   // Extract session ID early for journal operations (header-only at this point)
@@ -3176,6 +3280,23 @@ async function proxyRequest(
         ? (parsed.messages as Array<{ role: string; content: unknown }>)
         : [];
       const lastUserMsg = [...parsedMessages].reverse().find((m) => m.role === "user");
+
+      // Capture a short prompt summary for the response-store entry (used by
+      // `clawrouter share list` to identify which response is which).
+      {
+        const c = lastUserMsg?.content;
+        let promptText = "";
+        if (typeof c === "string") {
+          promptText = c;
+        } else if (Array.isArray(c)) {
+          promptText = (c as Array<{ type?: string; text?: string }>)
+            .filter((b) => typeof b === "object" && b !== null && b.type === "text")
+            .map((b) => b.text ?? "")
+            .join(" ")
+            .trim();
+        }
+        requestSummaryForStore = summarizeRequest(promptText);
+      }
 
       // Early tool detection for ALL request types (explicit model + routing profile).
       // The routing-profile branch may re-assign below (no-op since same value).
@@ -4824,7 +4945,10 @@ async function proxyRequest(
         await new Promise<void>((resolve) => setTimeout(resolve, 500));
         if (!globalController.signal.aborted) {
           const retryController = new AbortController();
-          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutForModel(tryModel));
+          const retryTimeoutId = setTimeout(
+            () => retryController.abort(),
+            timeoutForModel(tryModel),
+          );
           const retrySignal = AbortSignal.any([globalController.signal, retryController.signal]);
           const retryResult = await tryModelRequest(
             upstreamUrl,
@@ -5632,6 +5756,18 @@ async function proxyRequest(
           `[ClawRouter] Recorded ${events.length} events to session journal for session ${sessionId.slice(0, 8)}...`,
         );
       }
+    }
+
+    // --- Response Store: persist full response for `clawrouter share` ---
+    // Fire-and-forget; errors are swallowed inside appendResponse so they never
+    // affect the request flow. Skips silently if BLOCKRUN_RESPONSE_STORE=off.
+    if (accumulatedContent && isChatCompletion) {
+      void appendResponse({
+        sessionId,
+        model: actualModelUsed || undefined,
+        requestSummary: requestSummaryForStore,
+        responseText: accumulatedContent,
+      });
     }
 
     // --- Optimistic balance deduction after successful response ---
