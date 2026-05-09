@@ -25,6 +25,7 @@ Complete reference for ClawRouter configuration options.
 | `CLAWROUTER_SOLANA_RPC_URL` | `https://api.mainnet-beta.solana.com` | Solana RPC endpoint for USDC balance checks.                             |
 | `CLAWROUTER_DISABLED`       | `false`                               | Set to `true` to disable smart routing (pass requests through as-is).    |
 | `CLAWROUTER_WORKER`         | -                                     | Set to `1` to enable Worker Mode (earn USDC by running health checks).   |
+| `BLOCKRUN_WEB_SEARCH`       | (auto-enabled)                        | Set to `off` to disable BlockRun's Exa web search provider registration. |
 
 ### BLOCKRUN_WALLET_KEY
 
@@ -58,6 +59,37 @@ openclaw gateway restart
 - A warning is logged if the existing proxy uses a different wallet
 
 **Valid values:** 1-65535 (integers only). Invalid values fall back to 8402.
+
+### BLOCKRUN_WEB_SEARCH
+
+Disable BlockRun's bundled Exa web search provider. By default ClawRouter calls `registerWebSearchProvider(blockrun-exa)` and lets OpenClaw auto-detect it as the active search provider; if you'd rather use a different provider (or no web search at all), turn it off.
+
+**Two equivalent opt-out paths:**
+
+```bash
+# Path 1: env var (CI / one-off runs)
+export BLOCKRUN_WEB_SEARCH=off
+openclaw gateway restart
+```
+
+```jsonc
+// Path 2: persistent — edit ~/.openclaw/openclaw.json
+{
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": false
+      }
+    }
+  }
+}
+```
+
+When disabled:
+
+- ClawRouter skips `registerWebSearchProvider()` so blockrun-exa never gets wired up.
+- `injectModelsConfig` leaves your `tools.web.search.enabled = false` alone instead of flipping it back to `true` on every plugin load.
+- The legacy `tools.web.search.provider = "blockrun-exa"` migration still runs (that's correctness — it's an invalid value rejected by OpenClaw 2026.5.2+ validators, regardless of whether you want search enabled).
 
 ### CLAWROUTER_SOLANA_RPC_URL
 

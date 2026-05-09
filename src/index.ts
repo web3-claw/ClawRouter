@@ -195,6 +195,27 @@ function isGatewayMode(): boolean {
 }
 
 /**
+ * Detect whether BlockRun's web search provider should be disabled.
+ *
+ * Two opt-out paths:
+ * - `BLOCKRUN_WEB_SEARCH=off` env var (case-insensitive) — for CI / one-off runs.
+ * - `tools.web.search.enabled === false` in `~/.openclaw/openclaw.json` — persistent,
+ *   per-user opt-out. Without a check here, `injectModelsConfig` would re-flip
+ *   `enabled` to `true` on every plugin load and `register()` would always wire
+ *   blockrun-exa back up.
+ *
+ * When disabled: `injectModelsConfig` leaves `enabled` untouched and `register()`
+ * skips `registerWebSearchProvider`. The on-disk migration that strips the legacy
+ * `provider: blockrun-exa` field still runs regardless — that's correctness, not
+ * opt-in.
+ */
+function isBlockrunWebSearchDisabled(config?: unknown): boolean {
+  if (process.env.BLOCKRUN_WEB_SEARCH?.toLowerCase() === "off") return true;
+  const cfg = (config ?? {}) as { tools?: { web?: { search?: { enabled?: unknown } } } };
+  return cfg.tools?.web?.search?.enabled === false;
+}
+
+/**
  * Inject BlockRun models config into OpenClaw config file.
  * This is required because registerProvider() alone doesn't make models available.
  *
@@ -465,7 +486,11 @@ function injectModelsConfig(
       `Removed legacy tools.web.search.provider=${BLOCKRUN_EXA_PROVIDER_ID} (auto-detected at runtime now)`,
     );
   }
-  if (searchCfg.enabled !== true) {
+  // Auto-enable search by default, but RESPECT explicit opt-out.
+  // If the user (or env BLOCKRUN_WEB_SEARCH=off) has signaled "disabled",
+  // leave the field alone — otherwise their opt-out gets clobbered on every
+  // plugin load and they'd be stuck with blockrun-exa coming back to life.
+  if (!isBlockrunWebSearchDisabled(config) && searchCfg.enabled !== true) {
     searchCfg.enabled = true;
     needsWrite = true;
   }
@@ -1603,8 +1628,11 @@ const plugin: OpenClawPluginDefinition = {
         "OpenClaw runtime does not expose registerVideoGenerationProvider(); BlockRun video models unavailable on this version.",
       );
     }
+    const webSearchDisabled = isBlockrunWebSearchDisabled(api.config as unknown);
     if (typeof api.registerWebSearchProvider === "function") {
-      api.registerWebSearchProvider(blockrunExaWebSearchProvider);
+      if (!webSearchDisabled) {
+        api.registerWebSearchProvider(blockrunExaWebSearchProvider);
+      }
     } else {
       api.logger.warn(
         "OpenClaw runtime does not expose registerWebSearchProvider(); blockrun-exa search is unavailable on this version.",
@@ -1656,7 +1684,13 @@ const plugin: OpenClawPluginDefinition = {
     if (shouldLogRegistration) {
       api.logger.info("BlockRun provider registered (55+ models via x402)");
       if (typeof api.registerWebSearchProvider === "function") {
-        api.logger.info(`Registered BlockRun web_search provider (${BLOCKRUN_EXA_PROVIDER_ID})`);
+        if (webSearchDisabled) {
+          api.logger.info(
+            "BlockRun web search disabled (BLOCKRUN_WEB_SEARCH=off or tools.web.search.enabled=false)",
+          );
+        } else {
+          api.logger.info(`Registered BlockRun web_search provider (${BLOCKRUN_EXA_PROVIDER_ID})`);
+        }
       }
       if (runtimeMcpRemoved) {
         api.logger.info(
@@ -2086,7 +2120,7 @@ export default plugin;
 export { startProxy, getProxyPort } from "./proxy.js";
 
 // Re-export setup helpers for the `clawrouter setup` CLI command
-export { injectModelsConfig, injectAuthProfile };
+export { injectModelsConfig, injectAuthProfile, isBlockrunWebSearchDisabled };
 export type {
   ProxyOptions,
   ProxyHandle,
