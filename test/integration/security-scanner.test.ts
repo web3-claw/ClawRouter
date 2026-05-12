@@ -70,28 +70,40 @@ describe("OpenClaw security scanner", () => {
   beforeAll(async () => {
     distDir = resolveClawrouterDist();
 
-    // Locate openclaw's skill-scanner chunk in its dist/
+    // Locate openclaw's skill-scanner chunk in its dist/.
+    // 2026.5.7 ships two skill-scanner-*.js chunks: one minified with mangled exports
+    // and one with proper names. Iterate all and pick the one exporting
+    // scanDirectoryWithSummary; fall back to "first function export" for pre-2026.5.4 builds.
     const openclawDist = resolveOpenclawDist();
     try {
       const files = readdirSync(openclawDist);
-      const scannerFile = files.find((f) => f.startsWith("skill-scanner"));
-      if (!scannerFile) {
+      const scannerFiles = files.filter((f) => f.startsWith("skill-scanner"));
+      if (scannerFiles.length === 0) {
         scannerLoadError = `skill-scanner chunk not found in ${openclawDist}`;
         return;
       }
-      const scannerPath = resolve(openclawDist, scannerFile);
-      const mod = (await import(pathToFileURL(scannerPath).href)) as Record<string, unknown>;
-      // 2026.5.4+ re-exports the function under its proper name.
-      // Older builds minified it; fall back to "first function export" for those.
-      const named = mod.scanDirectoryWithSummary;
-      const fn =
-        typeof named === "function"
-          ? (named as ScanFn)
-          : (Object.values(mod).find((v) => typeof v === "function") as ScanFn | undefined);
-      if (fn) {
-        scanDirectoryWithSummary = fn;
-      } else {
-        scannerLoadError = `No function export found in ${scannerFile}`;
+      for (const scannerFile of scannerFiles) {
+        const scannerPath = resolve(openclawDist, scannerFile);
+        const mod = (await import(pathToFileURL(scannerPath).href)) as Record<string, unknown>;
+        if (typeof mod.scanDirectoryWithSummary === "function") {
+          scanDirectoryWithSummary = mod.scanDirectoryWithSummary as ScanFn;
+          break;
+        }
+      }
+      if (!scanDirectoryWithSummary) {
+        const firstScannerPath = resolve(openclawDist, scannerFiles[0]);
+        const mod = (await import(pathToFileURL(firstScannerPath).href)) as Record<
+          string,
+          unknown
+        >;
+        const fn = Object.values(mod).find((v) => typeof v === "function") as
+          | ScanFn
+          | undefined;
+        if (fn) {
+          scanDirectoryWithSummary = fn;
+        } else {
+          scannerLoadError = `No scanDirectoryWithSummary export found across ${scannerFiles.length} skill-scanner chunks`;
+        }
       }
     } catch (err) {
       scannerLoadError = `Could not load openclaw scanner: ${String(err)}`;

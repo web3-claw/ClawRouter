@@ -4,6 +4,19 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.189 — May 12, 2026
+
+- **Dependency refresh: x402 2.9 → 2.11, viem 2.47 → 2.48, openclaw devDep 2026.5.4 → 2026.5.7.** Routine in-range upgrade pass — no API breakage, all 531 tests green, typecheck + lint clean. Bumps via `npm update` (semver-safe) covered:
+  - `@x402/core`, `@x402/evm`, `@x402/fetch`, `@x402/svm` → 2.11.0 (the payment-protocol stack; 2.10 + 2.11 are bugfix-only over the 2.9 line we shipped in v0.12.182).
+  - `viem` → 2.48.11 (Ethereum RPC client used for Base USDC balance checks; the `mainnet.base.org` RPC failures visible in `~/.openclaw/logs/gateway.err.log` are external network reliability, not viem bugs — but staying on tip-of-2.x means we pick up any improved retry/timeout logic when it ships).
+  - `openclaw` (devDep) → 2026.5.7 (no plugin API surface changes affecting us; we still declare `compat.minGatewayVersion = 2026.5.2` for the strict-validation regime we adapted to in v0.12.184/186).
+  - `@scure/bip32` 2.0.1 → 2.2.0, `prettier` 3.8.1 → 3.8.3, `eslint` 10.2.0 → 10.3.0, `typescript-eslint` 8.58.1 → 8.59.3, `vitest` 4.1.3 → 4.1.6 — all in-range.
+- **`@solana/kit` deliberately held at v5.5.1.** `npm view` shows v6.9.0 available, but `@x402/svm@2.11.0`'s nested transitive dependency tree still pins to `@solana/kit@5.5.1` (deduped to a single copy in `npm ls`). Bumping ClawRouter's top-level pin to v6 would re-introduce the dual-version split that caused `transaction_simulation_failed` on Solana payments (root-caused on 2026-03-06; see memory `feedback_solana_kit_version_split`). When `@x402/svm` updates its nested pin, we follow — not before.
+- **Test fix for OpenClaw 2026.5.7 dist layout.** `test/integration/security-scanner.test.ts` was crashing with `Cannot read properties of undefined (reading 'length')` against the new openclaw build. Root cause: 2026.5.7 ships **two** `skill-scanner-*.js` chunks in `node_modules/openclaw/dist/` — one minified (with mangled exports `a, i, n, r, t`) and one with proper names (`scanDirectoryWithSummary` et al.). The test's `files.find((f) => f.startsWith("skill-scanner"))` picked the FIRST one alphabetically (`skill-scanner-DP5fYVFn.js`, the mangled one), found no `scanDirectoryWithSummary` named export, fell through to "first function export" — which returned the wrong function (something like `clearSkillScanCacheForTest`), returning `undefined`. Fixed by iterating **all** `skill-scanner-*` chunks and picking the one that actually exports `scanDirectoryWithSummary`. The pre-2026.5.4 "first function export" fallback path is preserved for older builds (Docker e2e harness still tests against the long tail).
+- **No runtime changes; no shipped behavior changes.** Pure dependency hygiene + one test-harness fix. Existing users see identical proxy behavior; the upgrade matters mainly for users on bare `npm install -g` (who get the newer x402 client when they reinstall) and for Docker/CI environments running the e2e tests against fresh OpenClaw versions.
+
+---
+
 ## v0.12.188 — May 9, 2026
 
 - **`clawrouter share` — convert the most recent assistant response into IM-flavored markdown for paste-and-share.** The pain point: OpenClaw renders gorgeous markdown via Warp+SSH, but copy-paste to IM mangles tables / `###` headings / bold. This is a real community ask — upstream [openclaw#7909 "Add plain text copy option"](https://github.com/openclaw/openclaw/issues/7909) has been OPEN since 2026-02-03 with 4 comments and a volunteer (juliabush) but no merged fix; codex review on 2026-04-30 confirms maintainers haven't given UX direction. ClawRouter sits at a unique vantage point — it sees every response body the model emits — so we can ship a CLI-side fix in days while the upstream UI fix waits. Six IM presets, each tuned to the target dialect:
