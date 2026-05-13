@@ -4,6 +4,12 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.190 — May 13, 2026
+
+- **`/imagegen` slash command renamed to `/cr-imagegen` to resolve Telegram channel-command collision** ([#165](https://github.com/BlockRunAI/ClawRouter/issues/165)). Telegram bot integrations reserve `/imagegen` for their own image-gen bots (Hugging Face Spaces et al.), and OpenClaw's runtime emits `Plugin command "/imagegen" conflicts with an existing Telegram command` when ClawRouter registered the same name. The `api.registerCommand` at `src/index.ts:1768` now registers `cr-imagegen` so OpenClaw's command registry no longer fights the channel. Backward compatibility preserved: typing legacy `/imagegen <prompt>` in chat still works — the `src/proxy.ts` chat-prefix interceptor accepts both `/cr-imagegen` and `/imagegen` (slice length adjusts to whichever prefix matched). User-facing help text, partner-tool footer, README, `docs/image-generation.md`, and `skills/imagegen/SKILL.md` all updated to lead with the new name while noting the legacy form remains accepted. `/videogen` left untouched — no collision reported in the field yet, and unnecessary churn is unnecessary churn.
+
+---
+
 ## v0.12.189 — May 12, 2026
 
 - **Dependency refresh: x402 2.9 → 2.11, viem 2.47 → 2.48, openclaw devDep 2026.5.4 → 2026.5.7.** Routine in-range upgrade pass — no API breakage, all 531 tests green, typecheck + lint clean. Bumps via `npm update` (semver-safe) covered:

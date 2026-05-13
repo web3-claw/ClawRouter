@@ -218,13 +218,15 @@ Request → Weighted Scorer (15 dimensions) → Tier → Best Model → Response
 
 ## Image Generation
 
-Generate images directly from chat with `/imagegen`:
+Generate images directly from chat with `/cr-imagegen`:
 
 ```
-/imagegen a dog dancing on the beach
-/imagegen --model dall-e-3 a futuristic city at sunset
-/imagegen --model banana-pro --size 2048x2048 mountain landscape
+/cr-imagegen a dog dancing on the beach
+/cr-imagegen --model dall-e-3 a futuristic city at sunset
+/cr-imagegen --model banana-pro --size 2048x2048 mountain landscape
 ```
+
+> The slash command is `/cr-imagegen` to avoid colliding with Telegram channel commands. Typing `/imagegen` in chat still works for backward compatibility.
 
 | Model                        | Provider              | Price        | Max Size  |
 | ---------------------------- | --------------------- | ------------ | --------- |

@@ -965,7 +965,7 @@ const IMAGE_DIR = join(homedir(), ".openclaw", "blockrun", "images");
 const AUDIO_DIR = join(homedir(), ".openclaw", "blockrun", "audio");
 
 /**
- * Parse a `/imagegen` or `/videogen` args string.
+ * Parse a `/cr-imagegen` or `/videogen` args string.
  * Supports `--model=<alias>`, `--size=<WxH>`, `--n=<int>`, `--duration=<int>`.
  * Everything else — in order — is joined into the prompt.
  */
@@ -1757,15 +1757,21 @@ const plugin: OpenClawPluginDefinition = {
           }
           lines.push("");
         }
-        lines.push("Tool-call any of these in chat, or use `/imagegen` / `/videogen` directly.");
+        lines.push(
+          "Tool-call any of these in chat, or use `/cr-imagegen` / `/videogen` directly.",
+        );
 
         return { text: lines.join("\n") };
       },
     });
 
-    // /imagegen <prompt> [--model=alias] [--size=1024x1024] [--n=1]
+    // /cr-imagegen <prompt> [--model=alias] [--size=1024x1024] [--n=1]
+    // Renamed from /imagegen — Telegram channels reserve /imagegen for their own
+    // image-gen bots, and OpenClaw's runtime emits a collision warning when both
+    // claim the same prefix. The `/imagegen` chat-prefix path in proxy.ts still
+    // works for backward compatibility.
     api.registerCommand({
-      name: "imagegen",
+      name: "cr-imagegen",
       description: "Generate an image (BlockRun image models, paid via wallet)",
       acceptsArgs: true,
       requireAuth: false,
@@ -1773,7 +1779,7 @@ const plugin: OpenClawPluginDefinition = {
         const parsed = parseGenArgs(ctx.args ?? "");
         if (!parsed.prompt) {
           return {
-            text: "Usage: `/imagegen <prompt> [--model=<alias>] [--size=1024x1024] [--n=1]`\n\nAliases: `nano-banana` (default), `banana-pro`, `dalle`, `gpt-image`, `flux`, `grok-imagine`, `grok-imagine-pro`, `cogview`.",
+            text: "Usage: `/cr-imagegen <prompt> [--model=<alias>] [--size=1024x1024] [--n=1]`\n\nAliases: `nano-banana` (default), `banana-pro`, `dalle`, `gpt-image`, `flux`, `grok-imagine`, `grok-imagine-pro`, `cogview`.",
           };
         }
         const model = resolveModelAlias(parsed.model ?? "nano-banana");
@@ -1885,7 +1891,7 @@ const plugin: OpenClawPluginDefinition = {
     api.registerCommand(createExcludeCommand());
     if (shouldLogRegistration) {
       api.logger.info(
-        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /imagegen, /videogen",
+        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen",
       );
     }
 

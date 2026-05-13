@@ -331,13 +331,15 @@ print(result["data"][0]["url"])
 
 When using ClawRouter with OpenClaw, generate and edit images directly from any conversation:
 
-### `/imagegen` — Generate images
+### `/cr-imagegen` — Generate images
 
 ```
-/imagegen a dog dancing on the beach
-/imagegen --model dall-e-3 a futuristic city at sunset
-/imagegen --model banana-pro --size 2048x2048 mountain landscape
+/cr-imagegen a dog dancing on the beach
+/cr-imagegen --model dall-e-3 a futuristic city at sunset
+/cr-imagegen --model banana-pro --size 2048x2048 mountain landscape
 ```
+
+> Registered slash command: `/cr-imagegen`. The `cr-` prefix avoids colliding with Telegram channels that reserve `/imagegen` for their own image-gen bots. Typing the legacy `/imagegen` in chat still works for backward compatibility.
 
 | Flag      | Default       | Description           |
 | --------- | ------------- | --------------------- |

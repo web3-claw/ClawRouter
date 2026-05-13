@@ -3469,11 +3469,19 @@ async function proxyRequest(
         return;
       }
 
-      // --- /imagegen command: generate an image via BlockRun image API ---
-      if (lastContent.startsWith("/imagegen")) {
-        const imageArgs = lastContent.slice("/imagegen".length).trim();
+      // --- /cr-imagegen (and legacy /imagegen) command: generate an image via BlockRun image API ---
+      // The OpenClaw plugin command is registered as `/cr-imagegen` to avoid
+      // colliding with Telegram channel commands. The legacy `/imagegen` prefix
+      // is still accepted here for backward compatibility in chat input.
+      const imagegenMatch = lastContent.startsWith("/cr-imagegen")
+        ? "/cr-imagegen"
+        : lastContent.startsWith("/imagegen")
+          ? "/imagegen"
+          : null;
+      if (imagegenMatch) {
+        const imageArgs = lastContent.slice(imagegenMatch.length).trim();
 
-        // Parse optional flags: /imagegen --model dall-e-3 --size 1792x1024 a cute cat
+        // Parse optional flags: /cr-imagegen --model dall-e-3 --size 1792x1024 a cute cat
         let imageModel = "google/nano-banana";
         let imageSize = "1024x1024";
         let imagePrompt = imageArgs;
@@ -3509,7 +3517,7 @@ async function proxyRequest(
 
         if (!imagePrompt) {
           const errorText = [
-            "Usage: /imagegen <prompt>",
+            "Usage: /cr-imagegen <prompt>",
             "",
             "Options:",
             "  --model <model>  Model to use (default: nano-banana)",
@@ -3523,9 +3531,11 @@ async function proxyRequest(
             "  flux              Black Forest Flux 1.1 Pro — $0.04/image",
             "",
             "Examples:",
-            "  /imagegen a cat wearing sunglasses",
-            "  /imagegen --model dall-e-3 a futuristic city at sunset",
-            "  /imagegen --model banana-pro --size 2048x2048 mountain landscape",
+            "  /cr-imagegen a cat wearing sunglasses",
+            "  /cr-imagegen --model dall-e-3 a futuristic city at sunset",
+            "  /cr-imagegen --model banana-pro --size 2048x2048 mountain landscape",
+            "",
+            "Note: `/imagegen` is still accepted in chat for backward compatibility.",
           ].join("\n");
 
           const completionId = `chatcmpl-image-${Date.now()}`;

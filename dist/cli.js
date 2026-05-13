@@ -82252,8 +82252,9 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         console.log(`[ClawRouter] /debug command \u2192 ${debugRouting.tier} | ${debugRouting.model}`);
         return;
       }
-      if (lastContent.startsWith("/imagegen")) {
-        const imageArgs = lastContent.slice("/imagegen".length).trim();
+      const imagegenMatch = lastContent.startsWith("/cr-imagegen") ? "/cr-imagegen" : lastContent.startsWith("/imagegen") ? "/imagegen" : null;
+      if (imagegenMatch) {
+        const imageArgs = lastContent.slice(imagegenMatch.length).trim();
         let imageModel = "google/nano-banana";
         let imageSize = "1024x1024";
         let imagePrompt = imageArgs;
@@ -82283,7 +82284,7 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
         }
         if (!imagePrompt) {
           const errorText = [
-            "Usage: /imagegen <prompt>",
+            "Usage: /cr-imagegen <prompt>",
             "",
             "Options:",
             "  --model <model>  Model to use (default: nano-banana)",
@@ -82297,9 +82298,11 @@ async function proxyRequest(req, res, apiBase, payFetch, options, routerOpts, de
             "  flux              Black Forest Flux 1.1 Pro \u2014 $0.04/image",
             "",
             "Examples:",
-            "  /imagegen a cat wearing sunglasses",
-            "  /imagegen --model dall-e-3 a futuristic city at sunset",
-            "  /imagegen --model banana-pro --size 2048x2048 mountain landscape"
+            "  /cr-imagegen a cat wearing sunglasses",
+            "  /cr-imagegen --model dall-e-3 a futuristic city at sunset",
+            "  /cr-imagegen --model banana-pro --size 2048x2048 mountain landscape",
+            "",
+            "Note: `/imagegen` is still accepted in chat for backward compatibility."
           ].join("\n");
           const completionId = `chatcmpl-image-${Date.now()}`;
           const timestamp = Math.floor(Date.now() / 1e3);
@@ -87029,12 +87032,14 @@ var init_index = __esm({
               }
               lines.push("");
             }
-            lines.push("Tool-call any of these in chat, or use `/imagegen` / `/videogen` directly.");
+            lines.push(
+              "Tool-call any of these in chat, or use `/cr-imagegen` / `/videogen` directly."
+            );
             return { text: lines.join("\n") };
           }
         });
         api.registerCommand({
-          name: "imagegen",
+          name: "cr-imagegen",
           description: "Generate an image (BlockRun image models, paid via wallet)",
           acceptsArgs: true,
           requireAuth: false,
@@ -87042,7 +87047,7 @@ var init_index = __esm({
             const parsed = parseGenArgs(ctx.args ?? "");
             if (!parsed.prompt) {
               return {
-                text: "Usage: `/imagegen <prompt> [--model=<alias>] [--size=1024x1024] [--n=1]`\n\nAliases: `nano-banana` (default), `banana-pro`, `dalle`, `gpt-image`, `flux`, `grok-imagine`, `grok-imagine-pro`, `cogview`."
+                text: "Usage: `/cr-imagegen <prompt> [--model=<alias>] [--size=1024x1024] [--n=1]`\n\nAliases: `nano-banana` (default), `banana-pro`, `dalle`, `gpt-image`, `flux`, `grok-imagine`, `grok-imagine-pro`, `cogview`."
               };
             }
             const model = resolveModelAlias(parsed.model ?? "nano-banana");
@@ -87145,7 +87150,7 @@ ${errText}`
         api.registerCommand(createExcludeCommand());
         if (shouldLogRegistration) {
           api.logger.info(
-            "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /imagegen, /videogen"
+            "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen"
           );
         }
         api.registerService({
