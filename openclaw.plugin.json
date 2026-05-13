@@ -1,7 +1,7 @@
 {
   "id": "clawrouter",
   "name": "ClawRouter",
-  "description": "Smart LLM router — 41+ models, x402 micropayments, 92% cost savings",
+  "description": "Smart LLM router — 55+ models, x402 micropayments, 92% cost savings",
   "skills": ["./skills"],
   "configSchema": {
     "type": "object",
