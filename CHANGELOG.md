@@ -4,6 +4,12 @@ All notable changes to ClawRouter.
 
 ---
 
+## v0.12.191 — May 14, 2026
+
+- **`free/deepseek-v4-pro` delisted from the model picker** — NVIDIA's V4 Pro deployment has been hung since 2026-04-30 (verified: connection hangs indefinitely, no bytes returned in 300s). The model was still showing in the OpenClaw picker as `[Free] DeepSeek V4 Pro`, misleading users who selected it into getting V4 Flash via BlockRun's server-side redirect. Fix: removed from `src/top-models.json` (picker) and `BLOCKRUN_MODELS` registry; all aliases that previously pointed at it (`free/deepseek-v4-pro`, `nvidia/deepseek-v4-pro`, `nvidia/deepseek-v3.2`, `free/deepseek-v3.2`, `deepseek-free`, `deepseek-v4-pro`, `v4-pro`) now redirect directly to `free/deepseek-v4-flash` at the ClawRouter level, skipping the double-hop through BlockRun's redirect. `free/deepseek-v4-flash` (1M context, MMLU-Pro 86.2) remains the active free DeepSeek option. The entry will be restored if and when NVIDIA brings the V4 Pro deployment back online.
+
+---
+
 ## v0.12.190 — May 13, 2026
 
 - **`/imagegen` slash command renamed to `/cr-imagegen` to resolve Telegram channel-command collision** ([#165](https://github.com/BlockRunAI/ClawRouter/issues/165)). Telegram bot integrations reserve `/imagegen` for their own image-gen bots (Hugging Face Spaces et al.), and OpenClaw's runtime emits `Plugin command "/imagegen" conflicts with an existing Telegram command` when ClawRouter registered the same name. The `api.registerCommand` at `src/index.ts:1768` now registers `cr-imagegen` so OpenClaw's command registry no longer fights the channel. Backward compatibility preserved: typing legacy `/imagegen <prompt>` in chat still works — the `src/proxy.ts` chat-prefix interceptor accepts both `/cr-imagegen` and `/imagegen` (slice length adjusts to whichever prefix matched). User-facing help text, partner-tool footer, README, `docs/image-generation.md`, and `skills/imagegen/SKILL.md` all updated to lead with the new name while noting the legacy form remains accepted. `/videogen` left untouched — no collision reported in the field yet, and unnecessary churn is unnecessary churn.
