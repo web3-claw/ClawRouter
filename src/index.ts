@@ -965,6 +965,78 @@ const IMAGE_DIR = join(homedir(), ".openclaw", "blockrun", "images");
 const AUDIO_DIR = join(homedir(), ".openclaw", "blockrun", "audio");
 
 /**
+ * Parse a `/cr-call` args string.
+ *
+ * Shape: `/cr-call +14155552671 "Tell them X" [--voice nat] [--max-duration 5] [--from +1...] [--language en-US]`
+ *
+ * - First token starting with `+` is `to` (E.164 destination).
+ * - All remaining non-flag tokens are joined into `task` (the prompt for the AI agent).
+ *   Quoted spans stay intact.
+ * - Flags accept both `--key value` (space-separated) and `--key=value` forms.
+ */
+export function parseCallArgs(raw: string): {
+  to?: string;
+  task: string;
+  voice?: string;
+  max_duration?: number;
+  from?: string;
+  language?: string;
+} {
+  let to: string | undefined;
+  let voice: string | undefined;
+  let from: string | undefined;
+  let language: string | undefined;
+  let max_duration: number | undefined;
+  const taskParts: string[] = [];
+  // Tokenize: keep "quoted spans" together as a single token (sans quotes).
+  const tokens = raw.trim().match(/"[^"]*"|\S+/g) ?? [];
+  for (let i = 0; i < tokens.length; i++) {
+    const raw = tokens[i];
+    const tok = raw.startsWith('"') && raw.endsWith('"') ? raw.slice(1, -1) : raw;
+    // --key=value form
+    const eqMatch = tok.match(/^--(voice|max-duration|max_duration|from|language|lang)=(.+)$/);
+    if (eqMatch) {
+      const [, key, value] = eqMatch;
+      if (key === "voice") voice = value;
+      else if (key === "max-duration" || key === "max_duration") max_duration = Number(value);
+      else if (key === "from") from = value;
+      else if (key === "language" || key === "lang") language = value;
+      continue;
+    }
+    // --key value form
+    const spaceMatch = tok.match(/^--(voice|max-duration|max_duration|from|language|lang)$/);
+    if (spaceMatch) {
+      const next = tokens[i + 1];
+      if (next !== undefined) {
+        const value =
+          next.startsWith('"') && next.endsWith('"') ? next.slice(1, -1) : next;
+        const key = spaceMatch[1];
+        if (key === "voice") voice = value;
+        else if (key === "max-duration" || key === "max_duration") max_duration = Number(value);
+        else if (key === "from") from = value;
+        else if (key === "language" || key === "lang") language = value;
+        i++;
+      }
+      continue;
+    }
+    // First +E.164-shaped token wins as `to`
+    if (!to && /^\+\d{6,15}$/.test(tok)) {
+      to = tok;
+      continue;
+    }
+    taskParts.push(tok);
+  }
+  return {
+    to,
+    task: taskParts.join(" ").trim(),
+    voice,
+    from,
+    language,
+    ...(Number.isFinite(max_duration) ? { max_duration } : {}),
+  };
+}
+
+/**
  * Parse a `/cr-imagegen` or `/videogen` args string.
  * Supports `--model=<alias>`, `--size=<WxH>`, `--n=<int>`, `--duration=<int>`.
  * Everything else — in order — is joined into the prompt.
@@ -1874,6 +1946,87 @@ const plugin: OpenClawPluginDefinition = {
       },
     });
 
+    // /cr-call <+E.164> "<task>" [--voice nat] [--max-duration 5] [--from +1...] [--language en-US]
+    // Places a REAL outbound AI voice call via BlockRun → Bland.ai. Returns
+    // immediately with call_id + poll_url; the call itself runs in the cloud
+    // for up to 30 min. Use `clawrouter phone numbers list` to see wallet-owned
+    // numbers usable as `--from`. The `cr-` prefix avoids the Telegram-channel
+    // collision pattern that bit `/imagegen` in v0.12.190 — `/call` and
+    // `/phone` are even more commonly reserved by chat platforms than
+    // `/imagegen` was, so we don't register either bare form here.
+    api.registerCommand({
+      name: "cr-call",
+      description: "Place an AI voice call via BlockRun + Bland.ai (paid from wallet, $0.54/call)",
+      acceptsArgs: true,
+      requireAuth: false,
+      handler: async (ctx: PluginCommandContext) => {
+        const parsed = parseCallArgs(ctx.args ?? "");
+        if (!parsed.to || !parsed.task) {
+          return {
+            text:
+              'Usage: `/cr-call +1<E.164-number> "<what the AI should say>" [--voice nat] [--max-duration 5] [--from +1<owned-number>] [--language en-US]`\n\n' +
+              "Voices: `nat` (default), `josh`, `maya`, `june`, `paige`, `derek`, `florian`.\n\n" +
+              "⚠️ Places a REAL phone call. $0.54 per call (covers up to 30 minutes). " +
+              "Use `clawrouter phone numbers list` to see wallet-owned numbers usable as `--from`.",
+          };
+        }
+        const port = getProxyPort();
+        try {
+          const resp = await fetch(`http://127.0.0.1:${port}/v1/voice/call`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              to: parsed.to,
+              task: parsed.task,
+              ...(parsed.voice ? { voice: parsed.voice } : {}),
+              ...(parsed.from ? { from: parsed.from } : {}),
+              ...(parsed.language ? { language: parsed.language } : {}),
+              ...(parsed.max_duration !== undefined
+                ? { max_duration: parsed.max_duration }
+                : {}),
+            }),
+            signal: AbortSignal.timeout(60_000),
+          });
+          if (!resp.ok) {
+            const errText = await resp.text().catch(() => "");
+            if (resp.status === 402) {
+              return {
+                text: `Insufficient wallet balance for voice call ($0.54). Top up with \`/wallet\`.\n\n${errText}`,
+              };
+            }
+            return { text: `Voice call failed (${resp.status}): ${errText}` };
+          }
+          const result = (await resp.json()) as {
+            call_id?: string;
+            poll_url?: string;
+            status?: string;
+          };
+          if (!result.call_id) {
+            return { text: `Voice call accepted but no call_id returned: ${JSON.stringify(result)}` };
+          }
+          const lines = [
+            `📞 Calling **${parsed.to}** (call_id: \`${result.call_id}\`)`,
+            "",
+            `Status: ${result.status ?? "queued"}`,
+          ];
+          if (result.poll_url) {
+            lines.push(`Poll: \`GET ${result.poll_url}\``);
+          } else {
+            lines.push(`Poll: \`GET http://localhost:${port}/v1/voice/call/${result.call_id}\``);
+          }
+          lines.push(
+            "",
+            "Call runs in the cloud for up to 30 min. Transcript + recording appear once status is `completed`.",
+          );
+          return { text: lines.join("\n") };
+        } catch (err) {
+          return {
+            text: `Voice call error: ${err instanceof Error ? err.message : String(err)}`,
+          };
+        }
+      },
+    });
+
     // Register commands synchronously so OpenClaw sees them during the register() call.
     // These factories are plain functions (no top-level await) — marking them async
     // caused .then() callbacks to fire after register() returned, making OpenClaw miss them.
@@ -1891,7 +2044,7 @@ const plugin: OpenClawPluginDefinition = {
     api.registerCommand(createExcludeCommand());
     if (shouldLogRegistration) {
       api.logger.info(
-        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen",
+        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen, /cr-call",
       );
     }
 

@@ -1494,6 +1494,65 @@ const VIDEO_PRICING: Record<string, { pricePerSecond: number; defaultDurationSec
   "bytedance/seedance-2.0": { pricePerSecond: 0.3, defaultDurationSeconds: 5 },
 };
 
+// Phone & Voice pricing (must match server's PHONE_PRICING/BLAND_PRICING in
+// blockrun/src/lib/twilio.ts + bland.ts). Keys are server-side operation paths
+// relative to /v1/. estimatePhoneCost() does longest-prefix matching so
+// `/v1/voice/call/abc123` (poll URL) resolves to the same $0.54 row as the
+// initiating POST — actual cost is read from the x402 payment header when
+// available, this table is just the telemetry fallback for the rare path
+// where paymentStore is empty.
+const PHONE_PRICING: Record<string, number> = {
+  "phone/lookup/fraud": 0.05,
+  "phone/lookup": 0.01,
+  "phone/numbers/buy": 5.0,
+  "phone/numbers/renew": 5.0,
+  "phone/numbers/list": 0.001,
+  "phone/numbers/release": 0,
+  "voice/call": 0.54,
+};
+
+export function estimatePhoneCost(urlPath: string): number {
+  const op = urlPath.replace(/^\/v1\//, "").split("?")[0];
+  // Sort by length desc so /phone/lookup/fraud wins over /phone/lookup.
+  for (const key of Object.keys(PHONE_PRICING).sort((a, b) => b.length - a.length)) {
+    if (op === key || op.startsWith(`${key}/`)) return PHONE_PRICING[key];
+  }
+  return 0.05; // safe fallback for unknown phone/voice operation
+}
+
+/**
+ * Resolve the telemetry-only cost to log for a /v1/phone or /v1/voice request.
+ *
+ * Logging policy (telemetry only — actual settlement is always server-dictated via x402):
+ *
+ *  1. If we captured an actual x402 payment amount > 0, use that — the
+ *     authoritative truth from the payment header.
+ *  2. Otherwise (paymentStore empty: cached pre-auth, FREE endpoints, or
+ *     failed settlement), fall back to PHONE_PRICING **only when all three
+ *     gates hold**:
+ *       • the request is to /v1/phone or /v1/voice (`isPhone`)
+ *       • the upstream returned 2xx (so settlement plausibly succeeded)
+ *       • the method was POST (the GET `/v1/voice/call/{id}` poll endpoint is
+ *         FREE upstream — without this gate every transcript poll would be
+ *         miscounted as another $0.54 voice call)
+ *  3. Else log $0 — never inflate stats with phantom charges the wallet didn't see.
+ */
+export function resolvePhoneTelemetryCost(args: {
+  paidAmount: number;
+  isPhone: boolean;
+  upstreamStatus: number;
+  method: string | undefined;
+  urlPath: string;
+}): number {
+  if (args.paidAmount > 0) return args.paidAmount;
+  const upstreamSucceeded = args.upstreamStatus >= 200 && args.upstreamStatus < 300;
+  const isPostRequest = (args.method ?? "").toUpperCase() === "POST";
+  if (args.isPhone && upstreamSucceeded && isPostRequest) {
+    return estimatePhoneCost(args.urlPath);
+  }
+  return args.paidAmount;
+}
+
 /**
  * Estimate the cost of a video generation request (pricePerSecond × duration + 5% margin).
  */
@@ -1536,11 +1595,15 @@ async function proxyPaidApiRequest(
   const upstreamUrl = `${apiBase}${req.url}`;
   const isBlockrunExa = req.url?.startsWith("/v1/exa/") ?? false;
   const isModalSandbox = req.url?.startsWith("/v1/modal/") ?? false;
+  const isPhone =
+    (req.url?.startsWith("/v1/phone/") ?? false) || (req.url?.startsWith("/v1/voice/") ?? false);
   const requestLabel = isBlockrunExa
     ? "BlockRun Exa"
     : isModalSandbox
       ? "Modal Sandbox"
-      : "Partner";
+      : isPhone
+        ? "Phone/Voice"
+        : "Partner";
 
   // Collect request body
   const bodyChunks: Buffer[] = [];
@@ -1596,18 +1659,38 @@ async function proxyPaidApiRequest(
   console.log(`[ClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
 
   // Log paid tool usage with actual x402 payment amount.
-  const requestCost = getActualPaymentUsd();
+  // Phone/voice telemetry rules — see resolvePhoneTelemetryCost.
+  const paidAmount = getActualPaymentUsd();
+  const requestCost = resolvePhoneTelemetryCost({
+    paidAmount,
+    isPhone,
+    upstreamStatus: upstream.status,
+    method: req.method,
+    urlPath: req.url ?? "",
+  });
   logUsage({
     timestamp: new Date().toISOString(),
-    model: isBlockrunExa ? "blockrun-exa" : isModalSandbox ? "modal-sandbox" : "partner",
-    tier: "PARTNER",
+    model: isBlockrunExa
+      ? "blockrun-exa"
+      : isModalSandbox
+        ? "modal-sandbox"
+        : isPhone
+          ? (req.url ?? "").replace(/^\/v1\//, "").split("?")[0] // e.g. "phone/lookup", "voice/call"
+          : "partner",
+    tier: isPhone ? "PHONE" : "PARTNER",
     cost: requestCost,
     baselineCost: requestCost,
     savings: 0,
     latencyMs,
     partnerId:
       (req.url?.split("?")[0] ?? "").replace(/^\/v1\//, "").replace(/\//g, "_") || "unknown",
-    service: isBlockrunExa ? "web_search" : isModalSandbox ? "modal" : "partner",
+    service: isBlockrunExa
+      ? "web_search"
+      : isModalSandbox
+        ? "modal"
+        : isPhone
+          ? "phone"
+          : "partner",
   }).catch(() => {});
 }
 
@@ -2778,8 +2861,14 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
       }
 
       // --- Handle paid API paths (/v1/partner/*, /v1/pm/*, /v1/exa/*, /v1/modal/*,
-      // /v1/stocks/*, /v1/usstock/*, /v1/crypto/*, /v1/fx/*, /v1/commodity/*) ---
-      if (req.url?.match(/^\/v1\/(?:partner|pm|exa|modal|stocks|usstock|crypto|fx|commodity)\//)) {
+      // /v1/stocks/*, /v1/usstock/*, /v1/crypto/*, /v1/fx/*, /v1/commodity/*,
+      // /v1/phone/* (Twilio number intelligence + provisioning),
+      // /v1/voice/* (Bland.ai outbound AI voice calls)) ---
+      if (
+        req.url?.match(
+          /^\/v1\/(?:partner|pm|exa|modal|stocks|usstock|crypto|fx|commodity|phone|voice)\//,
+        )
+      ) {
         try {
           await proxyPaidApiRequest(
             req,

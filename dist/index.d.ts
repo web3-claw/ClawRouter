@@ -1587,7 +1587,7 @@ type PartnerServiceParam = {
     description: string;
     required: boolean;
 };
-type PartnerCategory = "Prediction markets" | "Market data" | "Image & Video";
+type PartnerCategory = "Prediction markets" | "Market data" | "Image & Video" | "Communications";
 type PartnerServiceDefinition = {
     /** Unique service ID used in tool names: blockrun_{id} */
     id: string;
@@ -1719,6 +1719,24 @@ declare function injectModelsConfig(logger: {
 declare function injectAuthProfile(logger: {
     info: (msg: string) => void;
 }): void;
+/**
+ * Parse a `/cr-call` args string.
+ *
+ * Shape: `/cr-call +14155552671 "Tell them X" [--voice nat] [--max-duration 5] [--from +1...] [--language en-US]`
+ *
+ * - First token starting with `+` is `to` (E.164 destination).
+ * - All remaining non-flag tokens are joined into `task` (the prompt for the AI agent).
+ *   Quoted spans stay intact.
+ * - Flags accept both `--key value` (space-separated) and `--key=value` forms.
+ */
+declare function parseCallArgs(raw: string): {
+    to?: string;
+    task: string;
+    voice?: string;
+    max_duration?: number;
+    from?: string;
+    language?: string;
+};
 declare const plugin: OpenClawPluginDefinition;
 
-export { type AggregatedStats, BALANCE_THRESHOLDS, BLOCKRUN_MODELS, type BalanceInfo, BalanceMonitor, type CachedLLMResponse, type CachedResponse, type CheckResult, DEFAULT_RETRY_CONFIG, DEFAULT_ROUTING_CONFIG, DEFAULT_SESSION_CONFIG, type DailyStats, type DerivedKeys, EmptyWalletError, FileSpendControlStorage, InMemorySpendControlStorage, InsufficientFundsError, type InsufficientFundsInfo, type LowBalanceInfo, MODEL_ALIASES, OPENCLAW_MODELS, PARTNER_SERVICES, type PartnerServiceDefinition, type PartnerToolDefinition, type PaymentChain, type ProxyHandle, type ProxyOptions, RequestDeduplicator, ResponseCache, type ResponseCacheConfig, type RetryConfig, type RoutingConfig, type RoutingDecision, RpcError, type SessionConfig, type SessionEntry, SessionStore, type SolanaBalanceInfo, SolanaBalanceMonitor, SpendControl, type SpendControlOptions, type SpendControlStorage, type SpendLimits, type SpendRecord, type SpendWindow, type SpendingStatus, type SufficiencyResult, type Tier, type UsageEntry, type WalletConfig, type WalletResolution, blockrunProvider, buildPartnerTools, buildProviderModels, calculateModelCost, clearStats, plugin as default, deriveAllKeys, deriveEvmKey, deriveSolanaKeyBytes, fetchWithRetry, formatDuration, formatStatsAscii, generateWalletMnemonic, getAgenticModels, getFallbackChain, getFallbackChainFiltered, getModelContextWindow, getPartnerService, getProxyPort, getSessionId, getStats, hashRequestContent, injectAuthProfile, injectModelsConfig, isAgenticModel, isBalanceError, isBlockrunWebSearchDisabled, isEmptyWalletError, isInsufficientFundsError, isRetryable, isRpcError, isValidMnemonic, loadPaymentChain, logUsage, resolveModelAlias, resolvePaymentChain, route, savePaymentChain, setupSolana, startProxy };
+export { type AggregatedStats, BALANCE_THRESHOLDS, BLOCKRUN_MODELS, type BalanceInfo, BalanceMonitor, type CachedLLMResponse, type CachedResponse, type CheckResult, DEFAULT_RETRY_CONFIG, DEFAULT_ROUTING_CONFIG, DEFAULT_SESSION_CONFIG, type DailyStats, type DerivedKeys, EmptyWalletError, FileSpendControlStorage, InMemorySpendControlStorage, InsufficientFundsError, type InsufficientFundsInfo, type LowBalanceInfo, MODEL_ALIASES, OPENCLAW_MODELS, PARTNER_SERVICES, type PartnerServiceDefinition, type PartnerToolDefinition, type PaymentChain, type ProxyHandle, type ProxyOptions, RequestDeduplicator, ResponseCache, type ResponseCacheConfig, type RetryConfig, type RoutingConfig, type RoutingDecision, RpcError, type SessionConfig, type SessionEntry, SessionStore, type SolanaBalanceInfo, SolanaBalanceMonitor, SpendControl, type SpendControlOptions, type SpendControlStorage, type SpendLimits, type SpendRecord, type SpendWindow, type SpendingStatus, type SufficiencyResult, type Tier, type UsageEntry, type WalletConfig, type WalletResolution, blockrunProvider, buildPartnerTools, buildProviderModels, calculateModelCost, clearStats, plugin as default, deriveAllKeys, deriveEvmKey, deriveSolanaKeyBytes, fetchWithRetry, formatDuration, formatStatsAscii, generateWalletMnemonic, getAgenticModels, getFallbackChain, getFallbackChainFiltered, getModelContextWindow, getPartnerService, getProxyPort, getSessionId, getStats, hashRequestContent, injectAuthProfile, injectModelsConfig, isAgenticModel, isBalanceError, isBlockrunWebSearchDisabled, isEmptyWalletError, isInsufficientFundsError, isRetryable, isRpcError, isValidMnemonic, loadPaymentChain, logUsage, parseCallArgs, resolveModelAlias, resolvePaymentChain, route, savePaymentChain, setupSolana, startProxy };

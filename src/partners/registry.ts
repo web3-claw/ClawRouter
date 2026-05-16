@@ -13,7 +13,11 @@ export type PartnerServiceParam = {
   required: boolean;
 };
 
-export type PartnerCategory = "Prediction markets" | "Market data" | "Image & Video";
+export type PartnerCategory =
+  | "Prediction markets"
+  | "Market data"
+  | "Image & Video"
+  | "Communications";
 
 export type PartnerServiceDefinition = {
   /** Unique service ID used in tool names: blockrun_{id} */
@@ -767,6 +771,263 @@ export const PARTNER_SERVICES: PartnerServiceDefinition[] = [
     example: {
       input: { model: "bytedance/seedance-1.5-pro", prompt: "a cat waving", duration_seconds: 5 },
       description: "Generate a 5-second Seedance video",
+    },
+  },
+  // ---------------------------------------------------------------------------
+  // BlockRun — Phone & Voice (Twilio number intelligence + Bland.ai voice calls)
+  // ---------------------------------------------------------------------------
+  {
+    id: "phone_lookup",
+    name: "Phone Number Lookup",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Carrier + line type for an E.164 number",
+    description:
+      "Look up carrier name, line type (mobile / landline / voip), and country for any phone number. " +
+      "Use to verify a phone number, detect VoIP/spam patterns, or route messages. " +
+      "Does NOT place a call — purely metadata. " +
+      "Returns: carrier name, line_type, country, mobile_country_code, mobile_network_code.",
+    proxyPath: "/phone/lookup",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "Phone number in E.164 format, e.g. '+14155552671'.",
+        required: true,
+      },
+    ],
+    pricing: { perUnit: "$0.01", unit: "lookup", minimum: "$0.01", maximum: "$0.01" },
+    example: {
+      input: { phoneNumber: "+14155552671" },
+      description: "Check carrier and line type for a US number",
+    },
+  },
+  {
+    id: "phone_lookup_fraud",
+    name: "Phone Fraud Risk Lookup",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "SIM swap + call-forwarding fraud signals",
+    description:
+      "Detect fraud signals on a phone number: SIM swap recency, call forwarding status, line-type-intelligence. " +
+      "Use BEFORE sending sensitive SMS codes or initiating account-recovery flows. " +
+      "Returns: carrier + line type (same as lookup) PLUS sim_swap.last_sim_swap and call_forwarding signals.",
+    proxyPath: "/phone/lookup/fraud",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "Phone number in E.164 format, e.g. '+14155552671'.",
+        required: true,
+      },
+    ],
+    pricing: { perUnit: "$0.05", unit: "lookup", minimum: "$0.05", maximum: "$0.05" },
+    example: {
+      input: { phoneNumber: "+14155552671" },
+      description: "Check SIM-swap + forwarding fraud risk for an account-recovery candidate",
+    },
+  },
+  {
+    id: "phone_numbers_buy",
+    name: "Provision Phone Number",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Buy a US/CA number (30-day lease)",
+    description:
+      "Purchase a US or Canadian phone number tied to the wallet, leased for 30 days. " +
+      "Use only when the user has explicitly asked to acquire a phone number. " +
+      "Number is bound to the wallet's payer address and can be used as 'from' in voice_call. " +
+      "Returns: phone_number (E.164), expires_at (ISO), chain.",
+    proxyPath: "/phone/numbers/buy",
+    method: "POST",
+    params: [
+      {
+        name: "country",
+        type: "string",
+        description: "Country code: 'US' or 'CA'.",
+        required: true,
+      },
+      {
+        name: "areaCode",
+        type: "string",
+        description: "Optional 3-digit area code preference (e.g. '415'). Best-effort match.",
+        required: false,
+      },
+    ],
+    pricing: { perUnit: "$5.00", unit: "number (30 days)", minimum: "$5.00", maximum: "$5.00" },
+    example: {
+      input: { country: "US", areaCode: "415" },
+      description: "Buy a San Francisco area-code number for 30 days",
+    },
+  },
+  {
+    id: "phone_numbers_renew",
+    name: "Renew Phone Number Lease",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Extend a number's lease 30 days",
+    description:
+      "Extend an existing wallet-owned number's lease by 30 days. " +
+      "Use before expiry to keep the number; numbers not renewed are released back to the pool. " +
+      "Returns: phone_number, new expires_at (ISO).",
+    proxyPath: "/phone/numbers/renew",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "E.164 number you currently own (from phone_numbers_list).",
+        required: true,
+      },
+    ],
+    pricing: { perUnit: "$5.00", unit: "renewal (30 days)", minimum: "$5.00", maximum: "$5.00" },
+    example: {
+      input: { phoneNumber: "+14155551234" },
+      description: "Extend a number's lease another 30 days",
+    },
+  },
+  {
+    id: "phone_numbers_list",
+    name: "List Wallet's Phone Numbers",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Wallet's active numbers + expiry",
+    description:
+      "List phone numbers currently owned by the calling wallet, with lease expiry timestamps. " +
+      "Use to see what numbers are available as 'from' in voice_call, or to decide which to renew/release. " +
+      "Returns: array of { phone_number, expires_at, country, chain }.",
+    proxyPath: "/phone/numbers/list",
+    method: "POST",
+    params: [],
+    pricing: { perUnit: "$0.001", unit: "request", minimum: "$0.001", maximum: "$0.001" },
+    example: {
+      input: {},
+      description: "List all numbers owned by this wallet",
+    },
+  },
+  {
+    id: "phone_numbers_release",
+    name: "Release Phone Number",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Release a number (free)",
+    description:
+      "Release a wallet-owned phone number back to the pool before its lease expires. " +
+      "Use when the user explicitly asks to give up a number; no refund. " +
+      "Returns: { released: true, phone_number }.",
+    proxyPath: "/phone/numbers/release",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "E.164 number you own (from phone_numbers_list).",
+        required: true,
+      },
+    ],
+    pricing: { perUnit: "free", unit: "release", minimum: "$0", maximum: "$0" },
+    example: {
+      input: { phoneNumber: "+14155551234" },
+      description: "Release a number",
+    },
+  },
+  {
+    id: "voice_call",
+    name: "AI Voice Call (Outbound)",
+    partner: "BlockRun (Bland.ai)",
+    category: "Communications",
+    shortDescription: "Bland.ai outbound call, up to 30 min",
+    description:
+      "Place a REAL outbound phone call via Bland.ai's AI agent. The agent speaks the supplied task, " +
+      "listens to the recipient, and produces a transcript + optional recording. " +
+      "⚠️ SAFETY: This places a real call to a real phone number — only invoke when the user has explicitly asked " +
+      "to place a call. Server enforces an emergency-number blocklist. Initiation is synchronous: returns " +
+      "{ call_id, poll_url, status } immediately; the call itself runs in the cloud for up to 30 minutes. " +
+      "Poll via voice_status to retrieve transcript/recording.",
+    proxyPath: "/voice/call",
+    method: "POST",
+    params: [
+      {
+        name: "to",
+        type: "string",
+        description: "Destination phone number in E.164 format (e.g. '+14155552671').",
+        required: true,
+      },
+      {
+        name: "task",
+        type: "string",
+        description:
+          "What the AI should say or accomplish during the call (free-form natural language).",
+        required: true,
+      },
+      {
+        name: "from",
+        type: "string",
+        description:
+          "Optional caller ID — must be a wallet-owned number from phone_numbers_list. If omitted, Bland.ai picks a default outbound number.",
+        required: false,
+      },
+      {
+        name: "voice",
+        type: "string",
+        description:
+          "Voice preset: nat (default), josh, maya, june, paige, derek, florian, or a custom Bland.ai voice ID.",
+        required: false,
+      },
+      {
+        name: "max_duration",
+        type: "number",
+        description: "Maximum call length in minutes (1–30, default 5).",
+        required: false,
+      },
+      {
+        name: "language",
+        type: "string",
+        description: "Spoken language ISO code, e.g. 'en-US' (default), 'es-ES', 'zh-CN'.",
+        required: false,
+      },
+    ],
+    pricing: {
+      perUnit: "$0.54",
+      unit: "call (≤30 min)",
+      minimum: "$0.54",
+      maximum: "$0.54",
+    },
+    example: {
+      input: {
+        to: "+14155552671",
+        task: "Call and confirm the 3pm Thursday meeting; reschedule if they can't make it.",
+        max_duration: 5,
+      },
+      description: "Call to confirm an appointment",
+    },
+  },
+  {
+    id: "voice_status",
+    name: "Voice Call Status",
+    partner: "BlockRun (Bland.ai)",
+    category: "Communications",
+    shortDescription: "Poll status, transcript, recording",
+    description:
+      "Poll the status of a voice call placed via voice_call. Free — no x402 payment. " +
+      "Returns: status (queued|in_progress|completed|failed), transcript array, duration_seconds, " +
+      "recording_url (when completed), error (when failed). Poll every 10–30s while in_progress.",
+    proxyPath: "/voice/call/:callId",
+    method: "GET",
+    params: [
+      {
+        name: "callId",
+        type: "string",
+        description: "Call ID returned by voice_call.",
+        required: true,
+      },
+    ],
+    pricing: { perUnit: "free", unit: "poll", minimum: "$0", maximum: "$0" },
+    example: {
+      input: { callId: "call_abc123" },
+      description: "Check on a placed call",
     },
   },
 ];

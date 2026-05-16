@@ -47,6 +47,12 @@ Usage:
   clawrouter share <id> [--as=<im>]    # Convert a specific response by id
   clawrouter share last --all          # Write all 6 IM variants to /tmp/
                                        # IM presets: feishu, slack, discord, telegram, whatsapp, plain
+  clawrouter phone numbers list                  # List wallet's active phone numbers + expiry
+  clawrouter phone numbers buy <US|CA> [--area-code <code>]   # Buy 30-day number lease ($5)
+  clawrouter phone numbers renew <+E.164>        # Extend lease 30 days ($5)
+  clawrouter phone numbers release <+E.164>      # Release a wallet-owned number (free)
+  clawrouter phone lookup <+E.164>               # Carrier + line type ($0.01)
+  clawrouter phone fraud <+E.164>                # SIM-swap + forwarding fraud signals ($0.05)
 
 Options:
   --version, -v     Show version number
@@ -364,6 +370,133 @@ async function cmdStats(port: number, days: number): Promise<void> {
   }
 }
 
+/**
+ * `clawrouter phone ...` — wallet-facing phone CLI.
+ *
+ * All operations POST to the local proxy at `/v1/phone/...` (or `/v1/voice/...`),
+ * which transparently handles x402 payment via the wallet. The CLI just renders
+ * upstream JSON in a human format.
+ */
+async function cmdPhone(
+  port: number,
+  subcommand: "numbers" | "lookup" | "fraud",
+  numbersAction: "list" | "buy" | "renew" | "release" | undefined,
+  arg: string | undefined,
+  areaCode: string | undefined,
+): Promise<void> {
+  const base = `http://127.0.0.1:${port}`;
+
+  async function postJson(path: string, body: unknown): Promise<unknown> {
+    const resp = await fetch(`${base}${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const text = await resp.text();
+    if (!resp.ok) {
+      if (resp.status === 402) {
+        throw new Error(`Insufficient wallet balance (HTTP 402). Fund wallet via clawrouter wallet.\n${text}`);
+      }
+      throw new Error(`HTTP ${resp.status}: ${text}`);
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
+  function fmtExpiry(expiresAt: string): string {
+    const ms = new Date(expiresAt).getTime();
+    if (!Number.isFinite(ms)) return expiresAt;
+    const days = Math.round((ms - Date.now()) / (1000 * 60 * 60 * 24));
+    const dateStr = new Date(ms).toISOString().split("T")[0];
+    if (days < 0) return `${dateStr} (expired ${-days}d ago)`;
+    if (days <= 2) return `${dateStr} (in ${days}d) ⚠ renew soon`;
+    return `${dateStr} (in ${days}d)`;
+  }
+
+  try {
+    if (subcommand === "numbers") {
+      if (!numbersAction || numbersAction === "list") {
+        const result = (await postJson("/v1/phone/numbers/list", {})) as {
+          numbers?: Array<{ phone_number: string; expires_at: string; country?: string }>;
+        };
+        const numbers = result.numbers ?? [];
+        if (numbers.length === 0) {
+          console.log("\nNo phone numbers owned by this wallet.\n");
+          console.log("Buy one with: clawrouter phone numbers buy US [--area-code 415]\n");
+          return;
+        }
+        console.log(`\nActive numbers (${numbers.length}):\n`);
+        const numWidth = Math.max(...numbers.map((n) => n.phone_number.length), 16);
+        for (const n of numbers) {
+          const country = (n.country ?? "??").padEnd(3);
+          console.log(`  ${n.phone_number.padEnd(numWidth)}  ${country}  expires ${fmtExpiry(n.expires_at)}`);
+        }
+        console.log();
+      } else if (numbersAction === "buy") {
+        const country = (arg ?? "").toUpperCase();
+        if (country !== "US" && country !== "CA") {
+          console.error("✗ Country must be 'US' or 'CA'");
+          console.error("  Usage: clawrouter phone numbers buy <US|CA> [--area-code <code>]");
+          process.exit(1);
+        }
+        const body: Record<string, string> = { country };
+        if (areaCode) body.areaCode = areaCode;
+        console.log(`\nBuying ${country} number${areaCode ? ` (area code ${areaCode})` : ""}... ($5.00 / 30-day lease)\n`);
+        const result = (await postJson("/v1/phone/numbers/buy", body)) as {
+          phone_number?: string;
+          expires_at?: string;
+        };
+        if (result.phone_number) {
+          console.log(`  ✓ ${result.phone_number}`);
+          if (result.expires_at) console.log(`    expires ${fmtExpiry(result.expires_at)}`);
+          console.log();
+        } else {
+          console.log(JSON.stringify(result, null, 2));
+        }
+      } else if (numbersAction === "renew") {
+        if (!arg) {
+          console.error("✗ Usage: clawrouter phone numbers renew <+E.164-number>");
+          process.exit(1);
+        }
+        console.log(`\nRenewing ${arg}... ($5.00 / +30 days)\n`);
+        const result = (await postJson("/v1/phone/numbers/renew", { phoneNumber: arg })) as {
+          phone_number?: string;
+          expires_at?: string;
+        };
+        console.log(`  ✓ ${result.phone_number ?? arg}`);
+        if (result.expires_at) console.log(`    expires ${fmtExpiry(result.expires_at)}`);
+        console.log();
+      } else if (numbersAction === "release") {
+        if (!arg) {
+          console.error("✗ Usage: clawrouter phone numbers release <+E.164-number>");
+          process.exit(1);
+        }
+        console.log(`\nReleasing ${arg}...\n`);
+        await postJson("/v1/phone/numbers/release", { phoneNumber: arg });
+        console.log(`  ✓ Released ${arg}\n`);
+      }
+    } else if (subcommand === "lookup" || subcommand === "fraud") {
+      if (!arg) {
+        console.error(`✗ Usage: clawrouter phone ${subcommand} <+E.164-number>`);
+        process.exit(1);
+      }
+      const path = subcommand === "fraud" ? "/v1/phone/lookup/fraud" : "/v1/phone/lookup";
+      const price = subcommand === "fraud" ? "$0.05" : "$0.01";
+      console.log(`\nLooking up ${arg}... (${price})\n`);
+      const result = await postJson(path, { phoneNumber: arg });
+      console.log(JSON.stringify(result, null, 2));
+      console.log();
+    }
+  } catch (err) {
+    console.error(`✗ ${err instanceof Error ? err.message : String(err)}`);
+    console.error(`  Is the proxy running on port ${port}? (start: npx @blockrun/clawrouter)`);
+    process.exit(1);
+  }
+}
+
 async function cmdCache(port: number): Promise<void> {
   try {
     const data = (await queryProxy("/cache", port)) as Record<string, unknown>;
@@ -498,6 +631,12 @@ function parseArgs(args: string[]): {
   sharePreset?: string;
   shareLimit: number;
   shareAll: boolean;
+  // Phone commands
+  phone: boolean;
+  phoneSubcommand?: "numbers" | "lookup" | "fraud";
+  phoneNumbersAction?: "list" | "buy" | "renew" | "release";
+  phoneArg?: string;
+  phoneAreaCode?: string;
 } {
   const result = {
     version: false,
@@ -525,6 +664,11 @@ function parseArgs(args: string[]): {
     sharePreset: undefined as string | undefined,
     shareLimit: 20,
     shareAll: false,
+    phone: false,
+    phoneSubcommand: undefined as "numbers" | "lookup" | "fraud" | undefined,
+    phoneNumbersAction: undefined as "list" | "buy" | "renew" | "release" | undefined,
+    phoneArg: undefined as string | undefined,
+    phoneAreaCode: undefined as string | undefined,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -594,6 +738,44 @@ function parseArgs(args: string[]): {
       i++;
     } else if (arg === "setup") {
       result.setup = true;
+    } else if (arg === "phone") {
+      result.phone = true;
+      const next = args[i + 1];
+      if (next === "numbers") {
+        result.phoneSubcommand = "numbers";
+        const action = args[i + 2];
+        if (action === "list" || action === "buy" || action === "renew" || action === "release") {
+          result.phoneNumbersAction = action;
+          i += 2;
+          // Capture positional arg for buy/renew/release
+          const positional = args[i + 1];
+          if (positional && !positional.startsWith("--")) {
+            result.phoneArg = positional;
+            i++;
+          }
+          // Optional --area-code flag (buy only)
+          while (i + 1 < args.length) {
+            const flag = args[i + 1];
+            if (flag === "--area-code" && args[i + 2]) {
+              result.phoneAreaCode = args[i + 2];
+              i += 2;
+            } else if (flag.startsWith("--area-code=")) {
+              result.phoneAreaCode = flag.slice("--area-code=".length);
+              i++;
+            } else break;
+          }
+        } else {
+          i++;
+        }
+      } else if (next === "lookup" || next === "fraud") {
+        result.phoneSubcommand = next;
+        i++;
+        const positional = args[i + 1];
+        if (positional && !positional.startsWith("--")) {
+          result.phoneArg = positional;
+          i++;
+        }
+      }
     } else if (arg === "share") {
       result.share = true;
       // Next positional arg is target: "last" | "list" | resp_<id>
@@ -677,6 +859,22 @@ async function main(): Promise<void> {
 
   if (args.share) {
     await cmdShare(queryPort, args.shareTarget, args.sharePreset, args.shareLimit, args.shareAll);
+    process.exit(0);
+  }
+
+  if (args.phone) {
+    if (!args.phoneSubcommand) {
+      console.error("✗ Usage: clawrouter phone <numbers|lookup|fraud> ...");
+      console.error("  See: clawrouter --help");
+      process.exit(1);
+    }
+    await cmdPhone(
+      queryPort,
+      args.phoneSubcommand,
+      args.phoneNumbersAction,
+      args.phoneArg,
+      args.phoneAreaCode,
+    );
     process.exit(0);
   }
 

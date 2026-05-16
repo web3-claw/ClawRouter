@@ -284,6 +284,56 @@ Edit existing images with `/img2img`:
 
 **API endpoint:** `POST http://localhost:8402/v1/images/image2image` — see [full docs](docs/image-generation.md#post-v1imagesimage2image).
 
+## Phone & Voice Calls
+
+Verify phone numbers and place AI-powered outbound voice calls directly from chat. Phone intelligence runs on Twilio; voice calls use Bland.ai. Payment is automatic via x402 from the wallet.
+
+```
+/cr-call +14155552671 "Hi, this is calling to confirm tomorrow's 3pm meeting"
+/cr-call +14155552671 "Order a large pepperoni for delivery" --voice josh --max-duration 10
+```
+
+Calls are **fire-and-forget**: the request returns a `call_id` and `poll_url` immediately. The call itself runs in the cloud for up to 30 minutes. Poll `GET /v1/voice/call/{call_id}` (or `clawrouter share`/transcripts dashboard) to retrieve the transcript and recording when status is `completed`.
+
+| Operation                         | Provider | Price                        |
+| --------------------------------- | -------- | ---------------------------- |
+| Phone lookup (carrier, line type) | Twilio   | $0.01                        |
+| Fraud check (SIM-swap, fwd)       | Twilio   | $0.05                        |
+| Buy phone number (30-day lease)   | Twilio   | $5.00                        |
+| Renew lease (+30 days)            | Twilio   | $5.00                        |
+| List wallet's owned numbers       | Twilio   | $0.001                       |
+| Release a number                  | Twilio   | free                         |
+| **AI voice call (≤30 min)**       | Bland.ai | **$0.54 flat per call**      |
+| Poll call status / transcript     | Bland.ai | free                         |
+
+**CLI for wallet-owned numbers:**
+
+```bash
+clawrouter phone numbers list                              # See active numbers + expiry
+clawrouter phone numbers buy US --area-code 415            # Provision a SF number
+clawrouter phone numbers renew +14155551234                # Extend 30 days
+clawrouter phone numbers release +14155551234              # Release
+clawrouter phone lookup +14155552671                       # Carrier + line type
+clawrouter phone fraud +14155552671                        # SIM-swap + fwd signals
+```
+
+**HTTP API:**
+
+```bash
+# Place a call
+curl -X POST http://localhost:8402/v1/voice/call \
+  -H "Content-Type: application/json" \
+  -d '{"to":"+14155552671","task":"Confirm the 3pm Thursday meeting.","max_duration":5}'
+# → { "call_id": "call_abc123", "poll_url": "/v1/voice/call/call_abc123", "status": "queued" }
+
+# Poll for transcript
+curl http://localhost:8402/v1/voice/call/call_abc123
+```
+
+LLM agents discover all eight operations as `blockrun_phone_*` / `blockrun_voice_*` tools (see `/partners`).
+
+> ⚠️ `blockrun_voice_call` and `/cr-call` place a **real** outbound phone call. Server enforces an emergency-number blocklist; choose `--from` from wallet-owned numbers via `phone numbers list`.
+
 ---
 
 ## Models & Pricing

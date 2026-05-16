@@ -58373,7 +58373,6 @@ var top_models_default = [
   "free/gpt-oss-120b",
   "free/gpt-oss-20b",
   "free/mistral-small-4-119b",
-  "free/deepseek-v4-pro",
   "free/deepseek-v4-flash",
   "free/qwen3-next-80b-a3b-thinking",
   "free/qwen3-coder-480b",
@@ -58486,11 +58485,14 @@ var MODEL_ALIASES = {
   "gpt-20b": "free/gpt-oss-20b",
   "nvidia/gpt-oss-120b": "free/gpt-oss-120b",
   "nvidia/gpt-oss-20b": "free/gpt-oss-20b",
-  "nvidia/deepseek-v3.2": "free/deepseek-v4-pro",
-  // v3.2 phased out 2026-04-29 → v4-pro
-  "free/deepseek-v3.2": "free/deepseek-v4-pro",
+  "nvidia/deepseek-v3.2": "free/deepseek-v4-flash",
+  // v3.2 → v4-flash (v4-pro NVIDIA hung 2026-04-30)
+  "free/deepseek-v3.2": "free/deepseek-v4-flash",
   // local pin redirect
-  "nvidia/deepseek-v4-pro": "free/deepseek-v4-pro",
+  "nvidia/deepseek-v4-pro": "free/deepseek-v4-flash",
+  // V4 Pro NVIDIA hung 2026-04-30
+  "free/deepseek-v4-pro": "free/deepseek-v4-flash",
+  // V4 Pro delisted — redirect pinned callers
   "nvidia/deepseek-v4-flash": "free/deepseek-v4-flash",
   "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "free/nemotron-3-nano-omni-30b-a3b-reasoning",
   "nvidia/qwen3-coder-480b": "free/qwen3-coder-480b",
@@ -58511,11 +58513,13 @@ var MODEL_ALIASES = {
   "free/mistral-large-3-675b": "free/mistral-small-4-119b",
   "free/devstral-2-123b": "free/qwen3-coder-480b",
   // Free model shorthand aliases
-  "deepseek-free": "free/deepseek-v4-pro",
-  // upgraded from v3.2 (2026-04-29)
-  "deepseek-v4-pro": "free/deepseek-v4-pro",
+  "deepseek-free": "free/deepseek-v4-flash",
+  // V4 Pro NVIDIA hung 2026-04-30 → flash
+  "deepseek-v4-pro": "free/deepseek-v4-flash",
+  // free shorthand → flash (pro hung)
   "deepseek-v4-flash": "free/deepseek-v4-flash",
-  "v4-pro": "free/deepseek-v4-pro",
+  "v4-pro": "free/deepseek-v4-flash",
+  // V4 Pro NVIDIA hung → flash
   "v4-flash": "free/deepseek-v4-flash",
   "mistral-free": "free/mistral-small-4-119b",
   "glm-free": "free/glm-4.7",
@@ -59273,19 +59277,6 @@ var BLOCKRUN_MODELS = [
     outputPrice: 0,
     contextWindow: 128e3,
     maxOutput: 16384
-  },
-  {
-    // V4 Pro: 1.6T MoE / 49B active, 1M context. MMLU-Pro 87.5, GPQA 90.1,
-    // SWE-bench 80.6, LiveCodeBench 93.5. NIM ~150 tok/s on Blackwell.
-    // Strongest free reasoning model — phases out free/deepseek-v3.2.
-    id: "free/deepseek-v4-pro",
-    name: "[Free] DeepSeek V4 Pro",
-    version: "v4-pro",
-    inputPrice: 0,
-    outputPrice: 0,
-    contextWindow: 1e6,
-    maxOutput: 16384,
-    reasoning: true
   },
   {
     // V4 Flash: 284B / 13B active MoE, 1M context. ~5x faster than V4 Pro.
@@ -78511,10 +78502,8 @@ var FREE_MODELS = /* @__PURE__ */ new Set([
   "free/gpt-oss-20b",
   "free/mistral-small-4-119b",
   // 114 tok/s — fastest free chat
-  "free/deepseek-v4-pro",
-  // 1M ctx, MMLU-Pro 87.5 — strongest free reasoning
   "free/deepseek-v4-flash",
-  // 1M ctx, ~5x faster than v4-pro
+  // 1M ctx DeepSeek V4 Flash (V4 Pro NVIDIA hung 2026-04-30)
   "free/qwen3-next-80b-a3b-thinking",
   // 116 tok/s reasoning
   "free/qwen3-coder-480b",
@@ -79236,6 +79225,31 @@ var VIDEO_PRICING = {
   "bytedance/seedance-2.0-fast": { pricePerSecond: 0.15, defaultDurationSeconds: 5 },
   "bytedance/seedance-2.0": { pricePerSecond: 0.3, defaultDurationSeconds: 5 }
 };
+var PHONE_PRICING = {
+  "phone/lookup/fraud": 0.05,
+  "phone/lookup": 0.01,
+  "phone/numbers/buy": 5,
+  "phone/numbers/renew": 5,
+  "phone/numbers/list": 1e-3,
+  "phone/numbers/release": 0,
+  "voice/call": 0.54
+};
+function estimatePhoneCost(urlPath) {
+  const op = urlPath.replace(/^\/v1\//, "").split("?")[0];
+  for (const key of Object.keys(PHONE_PRICING).sort((a, b) => b.length - a.length)) {
+    if (op === key || op.startsWith(`${key}/`)) return PHONE_PRICING[key];
+  }
+  return 0.05;
+}
+function resolvePhoneTelemetryCost(args) {
+  if (args.paidAmount > 0) return args.paidAmount;
+  const upstreamSucceeded = args.upstreamStatus >= 200 && args.upstreamStatus < 300;
+  const isPostRequest = (args.method ?? "").toUpperCase() === "POST";
+  if (args.isPhone && upstreamSucceeded && isPostRequest) {
+    return estimatePhoneCost(args.urlPath);
+  }
+  return args.paidAmount;
+}
 function estimateVideoCost(model, durationSeconds) {
   const p = VIDEO_PRICING[model];
   if (!p) return 0.4 * 1.05;
@@ -79254,7 +79268,8 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   const upstreamUrl = `${apiBase}${req.url}`;
   const isBlockrunExa = req.url?.startsWith("/v1/exa/") ?? false;
   const isModalSandbox = req.url?.startsWith("/v1/modal/") ?? false;
-  const requestLabel = isBlockrunExa ? "BlockRun Exa" : isModalSandbox ? "Modal Sandbox" : "Partner";
+  const isPhone = (req.url?.startsWith("/v1/phone/") ?? false) || (req.url?.startsWith("/v1/voice/") ?? false);
+  const requestLabel = isBlockrunExa ? "BlockRun Exa" : isModalSandbox ? "Modal Sandbox" : isPhone ? "Phone/Voice" : "Partner";
   const bodyChunks = [];
   for await (const chunk of req) {
     bodyChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -79290,17 +79305,24 @@ async function proxyPaidApiRequest(req, res, apiBase, payFetch, getActualPayment
   res.end();
   const latencyMs = Date.now() - startTime;
   console.log(`[ClawRouter] ${requestLabel} response: ${upstream.status} (${latencyMs}ms)`);
-  const requestCost = getActualPaymentUsd();
+  const paidAmount = getActualPaymentUsd();
+  const requestCost = resolvePhoneTelemetryCost({
+    paidAmount,
+    isPhone,
+    upstreamStatus: upstream.status,
+    method: req.method,
+    urlPath: req.url ?? ""
+  });
   logUsage({
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    model: isBlockrunExa ? "blockrun-exa" : isModalSandbox ? "modal-sandbox" : "partner",
-    tier: "PARTNER",
+    model: isBlockrunExa ? "blockrun-exa" : isModalSandbox ? "modal-sandbox" : isPhone ? (req.url ?? "").replace(/^\/v1\//, "").split("?")[0] : "partner",
+    tier: isPhone ? "PHONE" : "PARTNER",
     cost: requestCost,
     baselineCost: requestCost,
     savings: 0,
     latencyMs,
     partnerId: (req.url?.split("?")[0] ?? "").replace(/^\/v1\//, "").replace(/\//g, "_") || "unknown",
-    service: isBlockrunExa ? "web_search" : isModalSandbox ? "modal" : "partner"
+    service: isBlockrunExa ? "web_search" : isModalSandbox ? "modal" : isPhone ? "phone" : "partner"
   }).catch(() => {
   });
 }
@@ -80238,7 +80260,9 @@ async function startProxy(options) {
         }
         return;
       }
-      if (req.url?.match(/^\/v1\/(?:partner|pm|exa|modal|stocks|usstock|crypto|fx|commodity)\//)) {
+      if (req.url?.match(
+        /^\/v1\/(?:partner|pm|exa|modal|stocks|usstock|crypto|fx|commodity|phone|voice)\//
+      )) {
         try {
           await proxyPaidApiRequest(
             req,
@@ -83321,6 +83345,231 @@ var PARTNER_SERVICES = [
       input: { model: "bytedance/seedance-1.5-pro", prompt: "a cat waving", duration_seconds: 5 },
       description: "Generate a 5-second Seedance video"
     }
+  },
+  // ---------------------------------------------------------------------------
+  // BlockRun — Phone & Voice (Twilio number intelligence + Bland.ai voice calls)
+  // ---------------------------------------------------------------------------
+  {
+    id: "phone_lookup",
+    name: "Phone Number Lookup",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Carrier + line type for an E.164 number",
+    description: "Look up carrier name, line type (mobile / landline / voip), and country for any phone number. Use to verify a phone number, detect VoIP/spam patterns, or route messages. Does NOT place a call \u2014 purely metadata. Returns: carrier name, line_type, country, mobile_country_code, mobile_network_code.",
+    proxyPath: "/phone/lookup",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "Phone number in E.164 format, e.g. '+14155552671'.",
+        required: true
+      }
+    ],
+    pricing: { perUnit: "$0.01", unit: "lookup", minimum: "$0.01", maximum: "$0.01" },
+    example: {
+      input: { phoneNumber: "+14155552671" },
+      description: "Check carrier and line type for a US number"
+    }
+  },
+  {
+    id: "phone_lookup_fraud",
+    name: "Phone Fraud Risk Lookup",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "SIM swap + call-forwarding fraud signals",
+    description: "Detect fraud signals on a phone number: SIM swap recency, call forwarding status, line-type-intelligence. Use BEFORE sending sensitive SMS codes or initiating account-recovery flows. Returns: carrier + line type (same as lookup) PLUS sim_swap.last_sim_swap and call_forwarding signals.",
+    proxyPath: "/phone/lookup/fraud",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "Phone number in E.164 format, e.g. '+14155552671'.",
+        required: true
+      }
+    ],
+    pricing: { perUnit: "$0.05", unit: "lookup", minimum: "$0.05", maximum: "$0.05" },
+    example: {
+      input: { phoneNumber: "+14155552671" },
+      description: "Check SIM-swap + forwarding fraud risk for an account-recovery candidate"
+    }
+  },
+  {
+    id: "phone_numbers_buy",
+    name: "Provision Phone Number",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Buy a US/CA number (30-day lease)",
+    description: "Purchase a US or Canadian phone number tied to the wallet, leased for 30 days. Use only when the user has explicitly asked to acquire a phone number. Number is bound to the wallet's payer address and can be used as 'from' in voice_call. Returns: phone_number (E.164), expires_at (ISO), chain.",
+    proxyPath: "/phone/numbers/buy",
+    method: "POST",
+    params: [
+      {
+        name: "country",
+        type: "string",
+        description: "Country code: 'US' or 'CA'.",
+        required: true
+      },
+      {
+        name: "areaCode",
+        type: "string",
+        description: "Optional 3-digit area code preference (e.g. '415'). Best-effort match.",
+        required: false
+      }
+    ],
+    pricing: { perUnit: "$5.00", unit: "number (30 days)", minimum: "$5.00", maximum: "$5.00" },
+    example: {
+      input: { country: "US", areaCode: "415" },
+      description: "Buy a San Francisco area-code number for 30 days"
+    }
+  },
+  {
+    id: "phone_numbers_renew",
+    name: "Renew Phone Number Lease",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Extend a number's lease 30 days",
+    description: "Extend an existing wallet-owned number's lease by 30 days. Use before expiry to keep the number; numbers not renewed are released back to the pool. Returns: phone_number, new expires_at (ISO).",
+    proxyPath: "/phone/numbers/renew",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "E.164 number you currently own (from phone_numbers_list).",
+        required: true
+      }
+    ],
+    pricing: { perUnit: "$5.00", unit: "renewal (30 days)", minimum: "$5.00", maximum: "$5.00" },
+    example: {
+      input: { phoneNumber: "+14155551234" },
+      description: "Extend a number's lease another 30 days"
+    }
+  },
+  {
+    id: "phone_numbers_list",
+    name: "List Wallet's Phone Numbers",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Wallet's active numbers + expiry",
+    description: "List phone numbers currently owned by the calling wallet, with lease expiry timestamps. Use to see what numbers are available as 'from' in voice_call, or to decide which to renew/release. Returns: array of { phone_number, expires_at, country, chain }.",
+    proxyPath: "/phone/numbers/list",
+    method: "POST",
+    params: [],
+    pricing: { perUnit: "$0.001", unit: "request", minimum: "$0.001", maximum: "$0.001" },
+    example: {
+      input: {},
+      description: "List all numbers owned by this wallet"
+    }
+  },
+  {
+    id: "phone_numbers_release",
+    name: "Release Phone Number",
+    partner: "BlockRun (Twilio)",
+    category: "Communications",
+    shortDescription: "Release a number (free)",
+    description: "Release a wallet-owned phone number back to the pool before its lease expires. Use when the user explicitly asks to give up a number; no refund. Returns: { released: true, phone_number }.",
+    proxyPath: "/phone/numbers/release",
+    method: "POST",
+    params: [
+      {
+        name: "phoneNumber",
+        type: "string",
+        description: "E.164 number you own (from phone_numbers_list).",
+        required: true
+      }
+    ],
+    pricing: { perUnit: "free", unit: "release", minimum: "$0", maximum: "$0" },
+    example: {
+      input: { phoneNumber: "+14155551234" },
+      description: "Release a number"
+    }
+  },
+  {
+    id: "voice_call",
+    name: "AI Voice Call (Outbound)",
+    partner: "BlockRun (Bland.ai)",
+    category: "Communications",
+    shortDescription: "Bland.ai outbound call, up to 30 min",
+    description: "Place a REAL outbound phone call via Bland.ai's AI agent. The agent speaks the supplied task, listens to the recipient, and produces a transcript + optional recording. \u26A0\uFE0F SAFETY: This places a real call to a real phone number \u2014 only invoke when the user has explicitly asked to place a call. Server enforces an emergency-number blocklist. Initiation is synchronous: returns { call_id, poll_url, status } immediately; the call itself runs in the cloud for up to 30 minutes. Poll via voice_status to retrieve transcript/recording.",
+    proxyPath: "/voice/call",
+    method: "POST",
+    params: [
+      {
+        name: "to",
+        type: "string",
+        description: "Destination phone number in E.164 format (e.g. '+14155552671').",
+        required: true
+      },
+      {
+        name: "task",
+        type: "string",
+        description: "What the AI should say or accomplish during the call (free-form natural language).",
+        required: true
+      },
+      {
+        name: "from",
+        type: "string",
+        description: "Optional caller ID \u2014 must be a wallet-owned number from phone_numbers_list. If omitted, Bland.ai picks a default outbound number.",
+        required: false
+      },
+      {
+        name: "voice",
+        type: "string",
+        description: "Voice preset: nat (default), josh, maya, june, paige, derek, florian, or a custom Bland.ai voice ID.",
+        required: false
+      },
+      {
+        name: "max_duration",
+        type: "number",
+        description: "Maximum call length in minutes (1\u201330, default 5).",
+        required: false
+      },
+      {
+        name: "language",
+        type: "string",
+        description: "Spoken language ISO code, e.g. 'en-US' (default), 'es-ES', 'zh-CN'.",
+        required: false
+      }
+    ],
+    pricing: {
+      perUnit: "$0.54",
+      unit: "call (\u226430 min)",
+      minimum: "$0.54",
+      maximum: "$0.54"
+    },
+    example: {
+      input: {
+        to: "+14155552671",
+        task: "Call and confirm the 3pm Thursday meeting; reschedule if they can't make it.",
+        max_duration: 5
+      },
+      description: "Call to confirm an appointment"
+    }
+  },
+  {
+    id: "voice_status",
+    name: "Voice Call Status",
+    partner: "BlockRun (Bland.ai)",
+    category: "Communications",
+    shortDescription: "Poll status, transcript, recording",
+    description: "Poll the status of a voice call placed via voice_call. Free \u2014 no x402 payment. Returns: status (queued|in_progress|completed|failed), transcript array, duration_seconds, recording_url (when completed), error (when failed). Poll every 10\u201330s while in_progress.",
+    proxyPath: "/voice/call/:callId",
+    method: "GET",
+    params: [
+      {
+        name: "callId",
+        type: "string",
+        description: "Call ID returned by voice_call.",
+        required: true
+      }
+    ],
+    pricing: { perUnit: "free", unit: "poll", minimum: "$0", maximum: "$0" },
+    example: {
+      input: { callId: "call_abc123" },
+      description: "Check on a placed call"
+    }
   }
 ];
 function getPartnerService(id) {
@@ -84532,6 +84781,55 @@ function startProxyAfterPortProbe(api, startupGeneration) {
 }
 var IMAGE_DIR2 = join11(homedir8(), ".openclaw", "blockrun", "images");
 var AUDIO_DIR2 = join11(homedir8(), ".openclaw", "blockrun", "audio");
+function parseCallArgs(raw) {
+  let to;
+  let voice;
+  let from14;
+  let language;
+  let max_duration;
+  const taskParts = [];
+  const tokens = raw.trim().match(/"[^"]*"|\S+/g) ?? [];
+  for (let i = 0; i < tokens.length; i++) {
+    const raw2 = tokens[i];
+    const tok = raw2.startsWith('"') && raw2.endsWith('"') ? raw2.slice(1, -1) : raw2;
+    const eqMatch = tok.match(/^--(voice|max-duration|max_duration|from|language|lang)=(.+)$/);
+    if (eqMatch) {
+      const [, key, value] = eqMatch;
+      if (key === "voice") voice = value;
+      else if (key === "max-duration" || key === "max_duration") max_duration = Number(value);
+      else if (key === "from") from14 = value;
+      else if (key === "language" || key === "lang") language = value;
+      continue;
+    }
+    const spaceMatch = tok.match(/^--(voice|max-duration|max_duration|from|language|lang)$/);
+    if (spaceMatch) {
+      const next = tokens[i + 1];
+      if (next !== void 0) {
+        const value = next.startsWith('"') && next.endsWith('"') ? next.slice(1, -1) : next;
+        const key = spaceMatch[1];
+        if (key === "voice") voice = value;
+        else if (key === "max-duration" || key === "max_duration") max_duration = Number(value);
+        else if (key === "from") from14 = value;
+        else if (key === "language" || key === "lang") language = value;
+        i++;
+      }
+      continue;
+    }
+    if (!to && /^\+\d{6,15}$/.test(tok)) {
+      to = tok;
+      continue;
+    }
+    taskParts.push(tok);
+  }
+  return {
+    to,
+    task: taskParts.join(" ").trim(),
+    voice,
+    from: from14,
+    language,
+    ...Number.isFinite(max_duration) ? { max_duration } : {}
+  };
+}
 function parseGenArgs(raw) {
   const promptParts = [];
   let model;
@@ -85263,6 +85561,70 @@ ${errText}`
         }
       }
     });
+    api.registerCommand({
+      name: "cr-call",
+      description: "Place an AI voice call via BlockRun + Bland.ai (paid from wallet, $0.54/call)",
+      acceptsArgs: true,
+      requireAuth: false,
+      handler: async (ctx) => {
+        const parsed = parseCallArgs(ctx.args ?? "");
+        if (!parsed.to || !parsed.task) {
+          return {
+            text: 'Usage: `/cr-call +1<E.164-number> "<what the AI should say>" [--voice nat] [--max-duration 5] [--from +1<owned-number>] [--language en-US]`\n\nVoices: `nat` (default), `josh`, `maya`, `june`, `paige`, `derek`, `florian`.\n\n\u26A0\uFE0F Places a REAL phone call. $0.54 per call (covers up to 30 minutes). Use `clawrouter phone numbers list` to see wallet-owned numbers usable as `--from`.'
+          };
+        }
+        const port = getProxyPort();
+        try {
+          const resp = await fetch(`http://127.0.0.1:${port}/v1/voice/call`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              to: parsed.to,
+              task: parsed.task,
+              ...parsed.voice ? { voice: parsed.voice } : {},
+              ...parsed.from ? { from: parsed.from } : {},
+              ...parsed.language ? { language: parsed.language } : {},
+              ...parsed.max_duration !== void 0 ? { max_duration: parsed.max_duration } : {}
+            }),
+            signal: AbortSignal.timeout(6e4)
+          });
+          if (!resp.ok) {
+            const errText = await resp.text().catch(() => "");
+            if (resp.status === 402) {
+              return {
+                text: `Insufficient wallet balance for voice call ($0.54). Top up with \`/wallet\`.
+
+${errText}`
+              };
+            }
+            return { text: `Voice call failed (${resp.status}): ${errText}` };
+          }
+          const result = await resp.json();
+          if (!result.call_id) {
+            return { text: `Voice call accepted but no call_id returned: ${JSON.stringify(result)}` };
+          }
+          const lines = [
+            `\u{1F4DE} Calling **${parsed.to}** (call_id: \`${result.call_id}\`)`,
+            "",
+            `Status: ${result.status ?? "queued"}`
+          ];
+          if (result.poll_url) {
+            lines.push(`Poll: \`GET ${result.poll_url}\``);
+          } else {
+            lines.push(`Poll: \`GET http://localhost:${port}/v1/voice/call/${result.call_id}\``);
+          }
+          lines.push(
+            "",
+            "Call runs in the cloud for up to 30 min. Transcript + recording appear once status is `completed`."
+          );
+          return { text: lines.join("\n") };
+        } catch (err) {
+          return {
+            text: `Voice call error: ${err instanceof Error ? err.message : String(err)}`
+          };
+        }
+      }
+    });
     api.registerCommand(createWalletCommand(api));
     try {
       const blockrunAlias = createWalletCommand(api);
@@ -85274,7 +85636,7 @@ ${errText}`
     api.registerCommand(createExcludeCommand());
     if (shouldLogRegistration) {
       api.logger.info(
-        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen"
+        "Commands registered: /wallet, /blockrun, /stats, /exclude, /partners, /cr-imagegen, /videogen, /cr-call"
       );
     }
     api.registerService({
@@ -85484,6 +85846,7 @@ export {
   isValidMnemonic,
   loadPaymentChain,
   logUsage,
+  parseCallArgs,
   resolveModelAlias,
   resolvePaymentChain,
   route,
